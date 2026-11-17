@@ -53,7 +53,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/xigai-check"
           xcrun simctl bootstatus "$PHONE" -b
-          xcrun simctl status_bar "$PHONE" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState unplugged --batteryLevel 100
+          xcrun simctl status_bar "$PHONE" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState discharging --batteryLevel 100
           xcrun simctl install "$PHONE" "$RUNNER_TEMP/xigai-ios/Build/Products/Debug-iphonesimulator/App.app"
           xcrun simctl launch "$PHONE" "$APP_ID"
           swiftc mobile/tests/verify-ios-smoke.swift -o "$RUNNER_TEMP/verify-ios"
