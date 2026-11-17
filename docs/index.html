@@ -315,7 +315,11 @@ a { color: var(--accent); }
   .types label { padding-inline: 7px; font-size: .81rem; }
   .quiz-actions { margin-top: 12px; }
 }
-@media (pointer: coarse) { .keys { display: none; } }
+@media (max-width: 350px) { .fields { grid-template-columns: 1fr; } }
+@media (pointer: coarse) {
+  .keys { display: none; }
+  select, input:not([type=checkbox]) { font-size: 1rem; }
+}
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .glass { background: #f4f8f4; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
