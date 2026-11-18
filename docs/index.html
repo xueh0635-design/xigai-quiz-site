@@ -340,11 +340,10 @@ a { color: var(--accent); }
   bottom: var(--dock-pad);
   left: var(--dock-pad);
   width: calc((100% - 2 * var(--dock-pad)) / 4);
-  border: 1px solid #6bb396b8;
+  border: 1px solid #f9fffcdb;
   border-radius: 28px;
-  background: radial-gradient(ellipse at 17% -2%, #ffffffdc, transparent 53%),
-    linear-gradient(154deg, #d4f8e784, #96d9b565);
-  box-shadow: 0 3px 9px #175e4a25, inset 0 2px 4px #ffffffc2, inset 0 -2px 5px #5eae882c;
+  background: radial-gradient(ellipse at 17% -2%, #ffffff45, transparent 53%), #ffffff0d;
+  box-shadow: 0 3px 9px #152e2825, inset 0 2px 4px #ffffff8a, inset 0 -2px 5px #27383216;
   transform: translate3d(calc(100% * var(--tab-position, var(--tab-index, 0))), 0, 0)
     scale(var(--tab-stretch, 1), var(--tab-squash, 1));
   translate: 0 0;
@@ -362,8 +361,8 @@ a { color: var(--accent); }
 }
 .tab-highlight::before {
   background: radial-gradient(ellipse at 23% 0%, #fff 0%, #ffffff8c 20%, transparent 56%),
-    radial-gradient(ellipse at 83% 106%, #dbfffcd9, transparent 56%);
-  box-shadow: inset 0 1px 3px #fff, inset 0 -2px 3px #8af3c44d;
+    radial-gradient(ellipse at 83% 106%, #ffffff71, transparent 56%);
+  box-shadow: inset 0 1px 3px #fff, inset 0 -2px 3px #f2fcff3d;
 }
 .tab-highlight::after {
   inset: 2px;
@@ -479,7 +478,7 @@ a { color: var(--accent); }
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .glass, .study-tabs.glass { background: #f4f8f4; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .tab-highlight[data-optics="webgl2"] { border-color: #739e8e; background: #dbefe4; filter: none; }
+  .tab-highlight[data-optics="webgl2"] { border-color: #788581; background: #f1f5f2; filter: none; }
   .tab-highlight[data-optics="webgl2"] .tab-lens-optics { visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1008,18 +1007,17 @@ void main() {
 
   float facing = 0.5 + 0.5 * dot(outward, normalize(vec2(-0.55, 0.84)));
   float reflection = schlick(normal.z) * (0.38 + 0.62 * facing);
-  float illumination = smoothstep(-0.85, 0.9, point.y / bounds.y);
-  vec3 color = mix(vec3(0.57, 0.82, 0.70), vec3(0.88, 0.97, 0.91), illumination);
-  color += vec3((green - 0.57) * 0.30 + reflection * 0.58);
-  color = mix(color, mix(vec3(0.28, 0.62, 0.51), vec3(0.96, 1.0, 0.98), facing), rim * 0.69);
   // Map spectral separation to violet and cyan light around the current bevel.
   float separation = smoothstep(0.018, 0.22, length(split.rb));
   float angle = dot(outward, normalize(vec2(0.8 * uFlow, 0.6)));
   float hue = smoothstep(-0.21, 0.24, blue - red + angle * 0.19);
   vec3 spectrum = mix(vec3(0.65, 0.35, 0.98), vec3(0.34, 0.90, 0.96), hue);
   float edgeFade = 1.0 - smoothstep(1.1, 4.4, depth);
-  color = mix(color, spectrum, activity * separation * edgeFade * 0.91);
-  float alpha = coverage * min(0.96, 0.54 + rim * 0.3 + reflection + uEnergy * 0.09);
+  float chromaAlpha = activity * separation * edgeFade * 0.72;
+  float clearAlpha = 0.012 + rim * (0.17 + facing * 0.31) + reflection * 0.48;
+  vec3 neutral = vec3(mix(0.72, 1.0, facing));
+  vec3 color = mix(neutral, spectrum, chromaAlpha / (clearAlpha + chromaAlpha));
+  float alpha = coverage * min(0.94, clearAlpha + chromaAlpha);
   outColor = vec4(clamp(color, 0.0, 1.0) * alpha, alpha);
 }`;
 
