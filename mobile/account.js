@@ -213,32 +213,45 @@ function connect(callbacks) {
   }
 
   async function authenticate(email, password, creatingAccount) {
-    email = email.trim();
-    if (!email || !password) return "请输入邮箱和密码。";
-    if (creatingAccount && password.length < 10) return "密码至少需要 10 个字符。";
+    email = email.trim().toLowerCase();
+    if (!email || !password) return { message: "请输入邮箱和密码。" };
+    if (creatingAccount && password.length < 10) return { message: "密码至少需要 10 个字符。" };
+    let existingAccount = false;
     try {
       if (creatingAccount) {
         const enrolled = await client.functions.invoke("quiz-register", { body: { email, password } });
         if (enrolled.error) {
-          const body = await enrolled.error.context?.json?.().catch(() => null);
-          return body?.message || "注册未完成，请检查网络后重试。";
+          const response = enrolled.error.context;
+          existingAccount = response?.status === 409;
+          if (!existingAccount) {
+            const body = await response?.json?.().catch(() => null);
+            return { message: body?.message || "注册未完成，请检查网络后重试。" };
+          }
         }
       }
       const response = await client.auth.signInWithPassword({ email, password });
       if (response.error || !response.data.user) {
-        return "登录未完成，请检查邮箱、密码和网络。";
+        if (response.error?.code === "invalid_credentials") {
+          return existingAccount
+            ? { message: "这个邮箱已注册。请用原来设置的密码登录。", switchToLogin: true }
+            : { message: "邮箱或密码不正确，请核对后重试。" };
+        }
+        return { message: existingAccount ? "这个邮箱已注册，暂时无法登录，请稍后重试。" : "暂时无法登录，请稍后重试。" };
       }
       switchAccount(response.data.user);
       return null;
     } catch {
-      return "连接失败，请稍后重试。";
+      return { message: "连接失败，请稍后重试。" };
     }
   }
 
   if (nativeUI) {
     window.QuizNativeAccount = {
       async run(action, email, password) {
-        if (action === "login" || action === "register") return authenticate(email, password, action === "register");
+        if (action === "login" || action === "register") {
+          const failure = await authenticate(email, password, action === "register");
+          return failure?.message ?? null;
+        }
         if (action === "logout") return signOut();
         if (action === "refresh") {
           await refresh();
@@ -263,8 +276,13 @@ function connect(callbacks) {
     toggleButton.disabled = true;
     message(creatingAccount ? "正在注册…" : "正在登录…");
     try {
-      const error = await authenticate(email, password, creatingAccount);
-      if (error) message(error);
+      const failure = await authenticate(email, password, creatingAccount);
+      if (failure?.switchToLogin) {
+        setRegistering(false);
+        passwordInput.value = "";
+        passwordInput.focus();
+      }
+      if (failure) message(failure.message);
       else closeDialog();
     } finally {
       submitButton.disabled = false;
