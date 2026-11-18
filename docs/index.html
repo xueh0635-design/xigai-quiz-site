@@ -722,13 +722,6 @@ a { color: var(--accent); }
 .profile-stats dd { grid-row: 1; margin: 0; font-size: 1.45rem; font-weight: 730; font-variant-numeric: tabular-nums; }
 .profile-account { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; justify-content: space-between; padding: 13px; border: 1px solid var(--line); border-radius: 15px; }
 .profile-account h3 { margin: 0; font-size: .95rem; }
-#open-practice-settings { margin-top: 14px; }
-#practice-settings-heading { margin: 14px 0; }
-#practice-settings-form { display: grid; gap: 13px; max-width: 420px; }
-#practice-settings-form label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
-.practice-group-toggle input { inline-size: 19px; block-size: 19px; margin: 0; accent-color: var(--accent); }
-#chapter-round-size { width: 9ch; }
-#chapter-ungrouped-note, #practice-settings-status { margin: 0; color: var(--muted); font-size: .87rem; }
 #android-updates { margin-top: 12px; }
 #update-status { flex: 1 1 12ch; margin: 0; color: var(--muted); font-size: .83rem; }
 #account-register-hint { color: var(--muted); font-size: .87rem; }
@@ -940,6 +933,11 @@ a { color: var(--accent); }
 
 </style>
   <style>
+.question-swipe-active {
+  touch-action: pan-y pinch-zoom;
+  overscroll-behavior-x: none;
+}
+
 #quiz.panel {
   --lesson-inset: clamp(15px, 4.5vw, 30px);
   width: min(100%, 720px);
@@ -948,7 +946,6 @@ a { color: var(--accent); }
   border: 0;
   background: transparent;
   box-shadow: none;
-  touch-action: pan-y pinch-zoom;
 }
 
 .lesson-header { margin-bottom: 14px; }
@@ -4719,7 +4716,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         </fieldset>
         <div class="actions">
           <button id="start" class="primary" type="submit">开始练习</button>
-          <button id="adventure-chapter-long" type="button">按章节设置练习</button>
+          <button id="adventure-chapter-long" type="button">练习整章</button>
           <span id="availability" role="status"></span>
         </div>
       </form>
@@ -4785,7 +4782,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
       <div class="actions">
         <button id="again" type="button" class="primary">返回章节</button>
         <button id="adventure-result-together" type="button" hidden>去营火找同桌</button>
-        <button id="review-round" type="button">回看本组</button>
+        <button id="review-round" type="button">回看本次</button>
         <button id="retry" type="button">重练本次错题</button>
       </div>
     </section>
@@ -5227,26 +5224,6 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
           <button id="update-download" class="primary" type="button" hidden>前往 GitHub 下载</button>
         </div>
       </section>
-      <button id="open-practice-settings" type="button">练习设置</button>
-    </section>
-    <section id="practice-settings" class="panel tab-page" hidden aria-labelledby="practice-settings-heading">
-      <button id="close-practice-settings" type="button">返回我的</button>
-      <h2 id="practice-settings-heading" tabindex="-1">练习设置</h2>
-      <form id="practice-settings-form">
-        <label class="practice-group-toggle">
-          <input id="chapter-grouping" type="checkbox" checked>
-          <span>章节练习按组进行</span>
-        </label>
-        <label id="chapter-round-size-field">
-          每组题数
-          <input id="chapter-round-size" type="number" inputmode="numeric" min="1" step="1" required>
-        </label>
-        <p id="chapter-ungrouped-note" hidden>直接连续练完该章剩余题目。已练完的章节可整章复习。</p>
-        <div class="actions">
-          <button class="primary" type="submit">保存设置</button>
-          <span id="practice-settings-status" role="status"></span>
-        </div>
-      </form>
     </section>
     <details id="review-panel" class="review">
       <summary>待核对题目 <span id="review-count"></span></summary>
@@ -8550,9 +8527,6 @@ const libraryTabs = {
 const tabDock = $("mobile-tabs");
 const tabButtons = [...tabDock.querySelectorAll("[data-study-tab]")];
 const nativeNavigation = window.webkit?.messageHandlers?.quizNativeUI;
-const practiceSettingsKey = "xigai-practice-settings-v1";
-const maxRoundSize = Math.max(1, questions.length);
-const defaultRoundSize = Math.min(20, maxRoundSize);
 const chapterTopics = {
   "新增（必刷）": "综合考点",
   "导论": "理论的形成、内容与地位",
@@ -8589,21 +8563,6 @@ let pageMotion;
 let sync = null;
 let desk = null;
 let state = guestState();
-let practiceSettings = readPracticeSettings();
-
-function readPracticeSettings() {
-  const defaults = { grouped: true, roundSize: defaultRoundSize };
-  try {
-    const saved = JSON.parse(localStorage.getItem(practiceSettingsKey)) || {};
-    return {
-      grouped: saved.grouped !== false,
-      roundSize: Number.isInteger(saved.roundSize) && saved.roundSize >= 1 && saved.roundSize <= maxRoundSize
-        ? saved.roundSize : defaults.roundSize,
-    };
-  } catch {
-    return defaults;
-  }
-}
 
 function guestState() {
   try {
@@ -8633,7 +8592,8 @@ function saveSession(extra = []) {
 }
 
 function view(name) {
-  for (const id of ["setup", "quiz", "result", "library", "desk", "profile", "practice-settings"]) $(id).hidden = id !== name;
+  for (const id of ["setup", "quiz", "result", "library", "desk", "profile"]) $(id).hidden = id !== name;
+  document.documentElement.classList.toggle("question-swipe-active", name === "quiz");
   $("overview").hidden = name !== "setup";
   desk?.show(name === "desk");
 }
@@ -8774,47 +8734,31 @@ function makeChapterCard(chapter, total) {
   landmark.alt = "";
   medallion.append(landmark);
   card.append(medallion, description, arrow);
-  card.onclick = () => startAdventure(chapter);
+  card.onclick = () => openChapter(chapter);
   return card;
 }
 
-function reviewOrder(pool) {
-  return [...pool].sort((a, b) => {
-    const first = state.history[a.id];
-    const second = state.history[b.id];
-    return Number(Boolean(second?.wrong)) - Number(Boolean(first?.wrong)) || (first?.last || 0) - (second?.last || 0);
-  });
+function chapterForSession(session) {
+  if (chapterPools.has(session?.quickChapter)) return session.quickChapter;
+  return session?.adventure ? byId.get(session.ids?.[0])?.chapter : null;
 }
 
-function remainingChapterQuestions(chapter, session) {
-  const seen = new Set(session?.ids);
-  const remaining = (chapterPools.get(chapter) || []).filter((item) => !seen.has(item.id));
-  return session?.chapterReview ? reviewOrder(remaining) : remaining.filter((item) => !state.history[item.id]);
+function canResumeSession() {
+  const session = state.session;
+  if (current()) return true;
+  const pool = chapterPools.get(chapterForSession(session));
+  return Boolean(pool?.some((item) => !session.results[item.id]));
 }
 
-function openChapter(chapter) {
+function openChapter(chapter = nextRouteChapter()) {
   $("advanced-settings").open = false;
-  const session = state.session?.quickChapter === chapter ? state.session : null;
-  if (session && current()) {
+  if (chapterForSession(state.session) === chapter && canResumeSession()) {
     resumeQuestion();
     return;
   }
   const pool = chapterPools.get(chapter);
   if (!pool?.length) return;
-  const remaining = remainingChapterQuestions(chapter, session);
-  const chapterReview = !remaining.length || Boolean(session?.chapterReview);
-  const ordered = remaining.length ? remaining : reviewOrder(pool);
-  const { grouped, roundSize } = practiceSettings;
-  const round = grouped ? ordered.slice(0, roundSize) : ordered;
-  const ids = round.map((item) => item.id);
-  if (session && remaining.length) {
-    session.groupStart = session.ids.length;
-    session.ids.push(...ids);
-    session.ungrouped = !grouped;
-    showStartedQuestion();
-    return;
-  }
-  start(ids, "practice", { quickChapter: chapter, ungrouped: !grouped, chapterReview });
+  start(pool.map((item) => item.id), "practice", { quickChapter: chapter, adventure: true });
 }
 
 function inScope(item, scope) {
@@ -8866,33 +8810,32 @@ function renderLibrary() {
 }
 
 function nextRouteChapter() {
-  if (state.session?.adventure && current()) return current().chapter;
+  const chapter = chapterForSession(state.session);
+  if (chapter && canResumeSession()) return chapter;
   for (const [chapter, pool] of chapterPools) {
     if (pool.some((item) => !state.history[item.id])) return chapter;
   }
   return chapterPools.keys().next().value;
 }
 
-function startAdventure(chapter = nextRouteChapter()) {
-  if (state.session?.adventure && current()?.chapter === chapter) {
-    resumeQuestion();
-    return;
-  }
-  const pool = chapterPools.get(chapter) || [];
-  const pending = pool.filter((item) => !state.history[item.id]);
-  const ids = (pending.length ? pending : reviewOrder(pool)).map((item) => item.id);
-  if (ids.length) start(ids, "practice", { adventure: true, routeUnlimited: true });
-}
-
-function extendLegacyRoute(item) {
+function expandChapterSession() {
   const session = state.session;
-  if (!session.adventure || session.routeUnlimited) return;
-  const pool = chapterPools.get(item.chapter) || [];
+  const chapter = chapterForSession(session);
+  const pool = chapterPools.get(chapter);
+  if (!pool) return;
   const included = new Set(session.ids);
-  const pending = pool.filter((candidate) => !state.history[candidate.id]);
-  const additions = (pending.length ? pending : reviewOrder(pool)).filter((candidate) => !included.has(candidate.id));
-  session.ids.push(...additions.map((candidate) => candidate.id));
-  session.routeUnlimited = true;
+  const missing = pool.map((item) => item.id).filter((id) => !included.has(id));
+  if (!missing.length && current()) return;
+  // Preserve the saved order, current question and drafts when expanding an old session.
+  const previousLength = session.ids.length;
+  session.ids.push(...missing);
+  if (session.index >= previousLength) {
+    session.index = session.ids.findIndex((id) => !session.results[id]);
+    if (session.index < 0) session.index = session.ids.length - 1;
+    const id = session.ids[session.index];
+    session.selected = session.drafts?.[id] || [];
+    if (session.drafts) delete session.drafts[id];
+  }
   saveSession();
 }
 
@@ -8902,15 +8845,15 @@ function renderAdventure(chapter) {
     const last = answer?.last;
     return count + Number(byId.has(id) && Number.isFinite(last) && last > 0 && last <= 9999999999999 && studyDay.format(last) === day);
   }, 0);
-  const resume = state.session?.adventure && current();
+  const resume = chapterForSession(state.session) === chapter && canResumeSession();
   const pool = chapterPools.get(chapter) || [];
   const learned = pool.filter((item) => state.history[item.id]).length;
   $("route-world-canvas").dataset.progress = String(pool.length ? learned / pool.length : 0);
-  $("adventure-target").textContent = chapter ? `${chapter} · ${learned === pool.length ? "回顾这条路线" : `还可探索 ${pool.length - learned} 题`}` : "题库准备中";
+  $("adventure-target").textContent = chapter ? `${chapter} · 共 ${pool.length} 题` : "题库准备中";
   $("adventure-today").textContent = `今天已练 ${practiced} 题 · 本章 ${learned} / ${pool.length}`;
   $("adventure-goal").max = Math.max(1, pool.length);
   $("adventure-goal").value = learned;
-  $("adventure-start").textContent = resume ? "继续这站" : "开始探索";
+  $("adventure-start").textContent = resume ? "继续本章" : "开始探索";
   $("adventure-start").disabled = !chapter;
 }
 
@@ -8953,10 +8896,14 @@ function updateAvailability() {
     if (step === "next") card.setAttribute("aria-current", "step");
     else card.removeAttribute("aria-current");
   }
-  const resumeItem = current();
-  $("resume").hidden = !resumeItem;
-  if (resumeItem) {
-    $("resume-detail").textContent = `${state.session.quickChapter || resumeItem.chapter} · ${state.session.index + 1} / ${state.session.ids.length}`;
+  const resume = canResumeSession();
+  $("resume").hidden = !resume;
+  if (resume) {
+    const session = state.session;
+    const chapter = chapterForSession(session);
+    $("resume-detail").textContent = chapter
+      ? `${chapter} · 共 ${chapterPools.get(chapter).length} 题`
+      : `${current().chapter} · ${session.index + 1} / ${session.ids.length}`;
   }
   if (!$("library").hidden) renderLibrary();
   window.QuizChapterPicker?.refresh();
@@ -8995,7 +8942,7 @@ function current() {
   return byId.get(state.session?.ids[state.session.index]);
 }
 
-function goToQuestion(index) {
+function goToQuestion(index, { swipe = false } = {}) {
   const session = state.session;
   if (!byId.has(session?.ids[index]) || index === session.index) return;
   const direction = Math.sign(index - session.index);
@@ -9012,7 +8959,7 @@ function goToQuestion(index) {
   renderQuestion();
   window.scrollTo(0, 0);
   $("question").focus({ preventScroll: true });
-  animatePage(direction * 12, 0);
+  if (!swipe) animatePage(direction * 12, 0);
 }
 
 function checksOnTap(item) {
@@ -9143,7 +9090,7 @@ function renderQuestion() {
       ? `教材参考 · ${item.study.reference.chapter} · 第 ${item.study.reference.page} 页`
       : "题库口径 · 暂未定位到直接教材依据";
   }
-  renderRelated(result && !session.adventure && session.index >= (session.groupStart || 0) ? item.related || [] : [], session);
+  renderRelated(result && !chapterForSession(session) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = memoryMode
     ? "先回忆答案，再按 Enter 显示解析"
     : fill ? "按 Enter 提交或下一题" : tapCheck ? "按 A–H 作答，Enter 进入下一题" : "按 A–H 选择，Enter 提交或下一题";
@@ -9157,9 +9104,9 @@ function focusAnswer() {
 }
 
 function resumeQuestion() {
+  expandChapterSession();
   const item = current();
   if (!item) return;
-  extendLegacyRoute(item);
   renderQuestion();
   window.scrollTo(0, 0);
   if (state.session.results[item.id]) focusAnswer();
@@ -9217,11 +9164,10 @@ function next() {
   session.selected = [];
   saveSession();
   const memoryMode = session.mode === "memory";
-  const round = session.ids.slice(session.groupStart || 0);
+  const round = session.ids;
   const wrong = round.filter((id) => !session.results[id]?.correct);
-  const chapter = session.quickChapter;
-  const hasNew = chapter && remainingChapterQuestions(chapter, session).length > 0;
-  $("result-title").textContent = session.adventure ? "这一站走完了" : memoryMode ? "本次背诵完成" : hasNew ? "本阶段练习完成" : "本次练习完成";
+  const chapter = chapterForSession(session);
+  $("result-title").textContent = chapter ? "本章练习完成" : memoryMode ? "本次背诵完成" : "本次练习完成";
   $("score").textContent = memoryMode ? `已复习 ${round.length} 道。`
     : `答对 ${round.length - wrong.length} 道，共 ${round.length} 道。`;
   $("retry").hidden = memoryMode;
@@ -9230,13 +9176,12 @@ function next() {
   $("adventure-result").hidden = !session.adventure;
   $("adventure-result-together").hidden = !session.adventure;
   if (session.adventure) {
-    $("adventure-result-stops").textContent = `本轮练完 ${round.length} 题`;
+    $("adventure-result-stops").textContent = `本章练完 ${round.length} 题`;
     $("adventure-result-streak").textContent = `最高连中 ${streak(round, session.results).highest} 题`;
   }
-  $("review-round").textContent = session.ungrouped ? "回看本次" : "回看本组";
-  const continueLabel = practiceSettings.grouped ? "练下一组" : "继续练习";
-  $("again").textContent = session.adventure ? "回路线" : hasNew ? continueLabel : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
-  $("again").onclick = hasNew ? () => openChapter(chapter) : () => showTab(selectedTab, true);
+  $("review-round").textContent = chapter ? "回看本章" : "回看本次";
+  $("again").textContent = libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
+  $("again").onclick = () => showTab(selectedTab, true);
   view("result");
   window.scrollTo(0, 0);
   $("again").focus();
@@ -9258,7 +9203,7 @@ $("fill-answer").oninput = (event) => {
   saveSession();
 };
 $("resume").onclick = resumeQuestion;
-$("adventure-start").onclick = () => startAdventure();
+$("adventure-start").onclick = () => openChapter();
 $("adventure-chapter-long").onclick = () => openChapter($("chapter").value);
 $("adventure-together").onclick = () => showTab("desk", true);
 $("adventure-result-together").onclick = () => showTab("desk", true);
@@ -9290,52 +9235,97 @@ document.addEventListener("keydown", (event) => {
 
 function connectQuestionSwipe() {
   const quiz = $("quiz");
+  const horizontalRatio = 1.12;
   let gesture = null;
+  let swipeMotion;
 
-  quiz.addEventListener("touchstart", (event) => {
+  function canSwipe() {
+    return !quiz.hidden && current() && !document.querySelector("dialog[open]");
+  }
+
+  function clearGesture() {
+    const start = gesture;
     gesture = null;
-    if (event.touches.length !== 1 || event.target.closest("input, textarea, [contenteditable]") ||
+    quiz.style.removeProperty("translate");
+    return start;
+  }
+
+  function settle(offset, switched) {
+    if (reducedMotion.matches || !offset) return;
+    swipeMotion = quiz.animate([
+      { translate: `${offset}px 0` },
+      { translate: "0 0" },
+    ], { duration: switched ? 125 : 105, easing: "ease-out" });
+  }
+
+  document.addEventListener("touchstart", (event) => {
+    if (gesture) clearGesture();
+    if (!canSwipe() || event.touches.length !== 1 ||
+        event.target.closest("input, textarea, select, [contenteditable]") ||
         window.getSelection()?.toString()) return;
     const touch = event.touches[0];
     const session = state.session;
-    gesture = { id: touch.identifier, x: touch.clientX, y: touch.clientY, session, index: session.index };
+    gesture = {
+      id: touch.identifier, x: touch.clientX, y: touch.clientY, time: event.timeStamp,
+      session, index: session.index, offset: 0,
+    };
   }, { passive: true });
 
-  quiz.addEventListener("touchmove", (event) => {
+  document.addEventListener("touchmove", (event) => {
     if (!gesture) return;
     const touch = event.touches[0];
-    if (event.touches.length !== 1 || touch.identifier !== gesture.id || !event.cancelable) {
-      gesture = null;
+    if (!canSwipe() || event.touches.length !== 1 || touch.identifier !== gesture.id || !event.cancelable) {
+      clearGesture();
       return;
     }
+    const dx = touch.clientX - gesture.x;
+    const dy = Math.abs(touch.clientY - gesture.y);
+    const horizontal = Math.abs(dx);
     if (!gesture.horizontal) {
-      const dx = Math.abs(touch.clientX - gesture.x);
-      const dy = Math.abs(touch.clientY - gesture.y);
-      if (dy >= 10 && dy >= dx) {
-        gesture = null;
+      if (dy >= 7 && dy >= horizontal) {
+        clearGesture();
         return;
       }
-      if (dx < 12 || dx < dy * 1.4) return;
+      if (horizontal < 6 || horizontal < dy * horizontalRatio) return;
       gesture.horizontal = true;
+      pageMotion?.cancel();
+      swipeMotion?.cancel();
     }
     event.preventDefault();
-  }, { passive: false });
+    if (reducedMotion.matches) return;
+    const available = byId.has(gesture.session.ids[gesture.index - Math.sign(dx)]);
+    gesture.offset = Math.sign(dx) * Math.min(24, horizontal * (available ? .4 : .16));
+    quiz.style.translate = `${gesture.offset}px 0`;
+  }, { passive: false, capture: true });
 
-  quiz.addEventListener("touchend", (event) => {
-    const start = gesture;
-    gesture = null;
-    if (!start?.horizontal || quiz.hidden || state.session !== start.session ||
+  document.addEventListener("touchend", (event) => {
+    if (!gesture) return;
+    const start = clearGesture();
+    if (!canSwipe() || state.session !== start.session ||
         state.session.index !== start.index) return;
     const touch = [...event.changedTouches].find((point) => point.identifier === start.id);
     if (!touch) return;
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
-    if (Math.abs(dx) >= 56 && Math.abs(dx) >= Math.abs(dy) * 1.4) {
-      goToQuestion(start.index - Math.sign(dx));
+    const distance = Math.abs(dx);
+    const quickFlick = event.timeStamp - start.time <= 140;
+    const swipe = distance >= (quickFlick ? 10 : 16) && distance >= Math.abs(dy) * horizontalRatio;
+    // A horizontal drag over a button should never activate that button.
+    if ((start.horizontal || swipe) && event.cancelable) event.preventDefault();
+    const index = start.index - Math.sign(dx);
+    if (swipe && byId.has(start.session.ids[index])) {
+      swipeMotion?.cancel();
+      pageMotion?.cancel();
+      goToQuestion(index, { swipe: true });
+      settle(-Math.sign(dx) * 12, true);
+    } else {
+      settle(start.offset, false);
     }
-  }, { passive: true });
+  }, { passive: false, capture: true });
 
-  quiz.addEventListener("touchcancel", () => { gesture = null; }, { passive: true });
+  document.addEventListener("touchcancel", () => {
+    if (gesture) settle(clearGesture().offset, false);
+  }, { passive: true });
 }
 
 connectQuestionSwipe();
@@ -9485,6 +9475,7 @@ function connectTabLens() {
   }
 
   tabDock.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "touch" && !$("quiz").hidden) return;
     const index = tabButtons.indexOf(event.target.closest("[data-study-tab]"));
     if (!event.isPrimary || event.button !== 0 || gesture || index < 0) return;
     const first = tabButtons[0].getBoundingClientRect();
@@ -9570,43 +9561,6 @@ $("library-more").onclick = () => {
   $("library-list").children[firstNewIndex]?.focus();
 };
 $("profile-account").onclick = () => $("account-button").click();
-
-function updatePracticeSettingsForm() {
-  const grouped = $("chapter-grouping").checked;
-  $("chapter-round-size-field").hidden = !grouped;
-  $("chapter-round-size").disabled = !grouped;
-  $("chapter-ungrouped-note").hidden = grouped;
-  $("practice-settings-status").textContent = "";
-}
-
-$("open-practice-settings").onclick = () => {
-  $("chapter-grouping").checked = practiceSettings.grouped;
-  $("chapter-round-size").max = maxRoundSize;
-  $("chapter-round-size").value = practiceSettings.roundSize;
-  updatePracticeSettingsForm();
-  view("practice-settings");
-  window.scrollTo(0, 0);
-  $("practice-settings-heading").focus({ preventScroll: true });
-  animatePage(0, 9);
-};
-$("close-practice-settings").onclick = () => {
-  showTab("profile", true);
-  $("open-practice-settings").focus();
-};
-$("chapter-grouping").onchange = updatePracticeSettingsForm;
-$("chapter-round-size").oninput = () => { $("practice-settings-status").textContent = ""; };
-$("practice-settings-form").onsubmit = (event) => {
-  event.preventDefault();
-  const grouped = $("chapter-grouping").checked;
-  const roundSize = grouped ? $("chapter-round-size").valueAsNumber : practiceSettings.roundSize;
-  practiceSettings = { grouped, roundSize };
-  try {
-    localStorage.setItem(practiceSettingsKey, JSON.stringify(practiceSettings));
-    $("practice-settings-status").textContent = "设置已保存，下次开始练习时生效。";
-  } catch {
-    $("practice-settings-status").textContent = "当前可使用这些设置，关闭页面后可能需要重新设置。";
-  }
-};
 
 setup();
 desk = window.QuizDesk?.connect({
