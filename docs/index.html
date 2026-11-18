@@ -19,11 +19,11 @@
   --top-inset: env(safe-area-inset-top, 0px);
   --bottom-inset: env(safe-area-inset-bottom, 0px);
   --dock-space: calc(86px + var(--bottom-inset));
-  --sheet-surface: #f1f8f2;
-  --sheet-glass: radial-gradient(ellipse at 15% 0%, #fffdf6fa, transparent 60%),
-    linear-gradient(156deg, #eff9f4f5, #e5f4ebed);
-  --sheet-elevation: 0 20px 62px #142d2a4a, inset 0 1px 1px #fff;
-  --sheet-shade: #15312f40;
+  --sheet-surface: #f4f6f4;
+  --sheet-glass: linear-gradient(155deg, #ffffffde, #f7f8f8b8 51%, #ffffff97);
+  --sheet-filter: blur(18px) saturate(1.18);
+  --sheet-elevation: 0 18px 48px #202c2a3d, 0 2px 7px #202c2a20, inset 0 1px 1px #fff;
+  --sheet-shade: #19232238;
   font: 16px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
   color: var(--ink);
   background: var(--background);
@@ -352,9 +352,9 @@ a { color: var(--accent); }
   max-height: min(36rem, calc(100vh - 32px - var(--top-inset) - var(--bottom-inset)));
   max-height: min(36rem, calc(100dvh - 32px - var(--top-inset) - var(--bottom-inset)));
   margin: auto;
-  border: 1px solid #fff;
+  border: 1px solid #ffffffd9;
   padding: clamp(17px, 5vw, 26px);
-  border-radius: 27px;
+  border-radius: 30px;
   color: var(--ink);
   background: var(--sheet-surface);
   box-shadow: var(--sheet-elevation);
@@ -363,12 +363,11 @@ a { color: var(--accent); }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .account-dialog.glass {
     background: var(--sheet-glass);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: var(--sheet-filter);
+    backdrop-filter: var(--sheet-filter);
   }
 }
-.account-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
-.account-dialog-header h2 { margin: 0; }
+.account-dialog-header { margin-bottom: 15px; }
 .account-dialog form > label { display: block; margin-bottom: 13px; }
 .account-dialog input { display: block; width: 100%; margin-top: 5px; }
 .account-dialog button { border-radius: 999px; }
@@ -387,12 +386,18 @@ a { color: var(--accent); }
 .quiz-sheet[data-sheet-closing]::backdrop { animation: none; opacity: 0; }
 .quiz-sheet [data-sheet-handle] {
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  align-items: center;
+  gap: 8px;
   padding-block-start: 17px;
   touch-action: none;
   cursor: grab;
   -webkit-user-select: none;
   user-select: none;
 }
+.quiz-sheet [data-sheet-handle] h2 { grid-column: 2; margin: 0; text-align: center; }
+.quiz-sheet [data-sheet-handle] > button { grid-column: 3; justify-self: end; border-radius: 999px; }
 .quiz-sheet[data-sheet-dragging] [data-sheet-handle] { cursor: grabbing; }
 .quiz-sheet [data-sheet-handle]::before {
   position: absolute;
@@ -401,7 +406,7 @@ a { color: var(--accent); }
   width: 36px;
   height: 4px;
   border-radius: 999px;
-  background: #31564e59;
+  background: #24333260;
   transform: translateX(-50%);
   content: "";
 }
@@ -424,7 +429,8 @@ a { color: var(--accent); }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border-radius: 34px;
   transform: translateX(-50%);
-  box-shadow: 0 14px 37px #112e2967, 0 2px 5px #204c3622, inset 0 1px 1px #fff;
+  border-color: #ffffffd9;
+  box-shadow: 0 11px 29px #202d2b35, 0 2px 7px #202d2b1b, inset 0 1px 1px #fff;
   touch-action: pan-y;
   -webkit-user-select: none;
   user-select: none;
@@ -434,17 +440,15 @@ a { color: var(--accent); }
   z-index: -1;
   inset: 1px;
   border-radius: inherit;
-  border: 1px solid #ffffff89;
-  background: radial-gradient(ellipse at 74% 115%, #bbefd573, transparent 60%);
+  border: 1px solid #ffffff80;
   pointer-events: none;
   content: "";
 }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .study-tabs.glass {
-    background: radial-gradient(ellipse at 14% -8%, #ffffffdb, transparent 51%),
-      linear-gradient(157deg, #fff9, #e9f9f087 54%, #d6f7e6af);
-    -webkit-backdrop-filter: blur(17px) saturate(1.8);
-    backdrop-filter: blur(17px) saturate(1.8);
+    background: linear-gradient(155deg, #ffffffe0, #ffffffa1 49%, #ffffff79);
+    -webkit-backdrop-filter: blur(15px) saturate(1.15);
+    backdrop-filter: blur(15px) saturate(1.15);
   }
 }
 .tab-highlight {
@@ -454,10 +458,10 @@ a { color: var(--accent); }
   bottom: var(--dock-pad);
   left: var(--dock-pad);
   width: calc((100% - 2 * var(--dock-pad)) / 4);
-  border: 1px solid #f9fffcdb;
+  border: 1px solid #ffffffb0;
   border-radius: 28px;
-  background: radial-gradient(ellipse at 17% -2%, #ffffff45, transparent 53%), #ffffff0d;
-  box-shadow: 0 3px 9px #152e2825, inset 0 2px 4px #ffffff8a, inset 0 -2px 5px #27383216;
+  background: #0000000a;
+  box-shadow: 0 1px 4px #252f2d22, inset 0 1px 1px #ffffffb0, inset 0 -1px 3px #252f2d15;
   transform: translate3d(calc(100% * var(--tab-position, var(--tab-index, 0))), 0, 0)
     scale(var(--tab-stretch, 1), var(--tab-squash, 1));
   translate: 0 0;
@@ -476,18 +480,18 @@ a { color: var(--accent); }
 .tab-highlight::before {
   background: radial-gradient(ellipse at 23% 0%, #fff 0%, #ffffff8c 20%, transparent 56%),
     radial-gradient(ellipse at 83% 106%, #ffffff71, transparent 56%);
-  box-shadow: inset 0 1px 3px #fff, inset 0 -2px 3px #f2fcff3d;
+  box-shadow: inset 0 1px 3px #fff, inset 0 -2px 3px #ffffff3d;
 }
 .tab-highlight::after {
   inset: 2px;
-  box-shadow: 0 1px 2px #fff9, 0 6px 15px #1d6d5c46;
+  box-shadow: 0 1px 2px #fff9, 0 5px 13px #2433323b;
 }
 .tab-lens-optics { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; }
 .tab-highlight[data-optics="webgl2"] {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
-  filter: drop-shadow(0 3px 5px #175e4a38);
+  filter: drop-shadow(0 2px 3px #1925232e);
 }
 .tab-highlight[data-optics="webgl2"] .tab-lens-optics { visibility: visible; }
 .tab-highlight[data-optics="webgl2"]::before, .tab-highlight[data-optics="webgl2"]::after { display: none; }
@@ -501,14 +505,14 @@ a { color: var(--accent); }
   justify-items: center;
   gap: 3px;
   min-width: 0;
-  min-height: 50px;
+  min-height: 51px;
   padding: 3px 2px;
   border-color: transparent;
   border-radius: 28px;
   background: transparent;
-  color: #304e47;
-  font-size: .73rem;
-  font-weight: 650;
+  color: #253330;
+  font-size: .75rem;
+  font-weight: 620;
   line-height: 1.28;
   touch-action: pan-y;
   transition: color .16s ease-out, border-color .16s ease-out;
@@ -517,7 +521,7 @@ a { color: var(--accent); }
 .study-tabs button:not(:disabled):hover { border-color: transparent; }
 .study-tabs button:not(:disabled):active { transform: none; }
 .study-tabs:is([data-glass-pressed], [data-glass-pointer]) button:focus-visible { outline-color: transparent; }
-.study-tab-icon { position: relative; width: 21px; height: 21px; transition: transform .18s cubic-bezier(.2, .72, .34, 1); }
+.study-tab-icon { position: relative; width: 22px; height: 22px; transition: transform .18s cubic-bezier(.2, .72, .34, 1); }
 .study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: translateY(-1px) scale(1.1); }
 @media (hover: hover) { .study-tabs button:not(:disabled):hover { color: #084e40; } }
 .study-tab-icon::before, .study-tab-icon::after { position: absolute; box-sizing: border-box; content: ""; }
@@ -553,6 +557,8 @@ a { color: var(--accent); }
 .profile-stats dd { grid-row: 1; margin: 0; font-size: 1.45rem; font-weight: 730; font-variant-numeric: tabular-nums; }
 .profile-account { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; justify-content: space-between; padding: 13px; border: 1px solid var(--line); border-radius: 15px; }
 .profile-account h3 { margin: 0; font-size: .95rem; }
+#android-updates { margin-top: 12px; }
+#update-status { flex: 1 1 12ch; margin: 0; color: var(--muted); font-size: .83rem; }
 #account-register-hint { color: var(--muted); font-size: .87rem; }
 
 @media (max-width: 790px) {
@@ -570,7 +576,7 @@ a { color: var(--accent); }
   .overview .inventory { margin-bottom: 8px; }
   .overview-stats { margin-top: 12px; }
   .panel { border-radius: 22px; }
-  .account-dialog.glass { inset: auto 0 calc(10px + var(--bottom-inset)); }
+  .account-dialog.glass { inset: auto 0 calc(8px + var(--bottom-inset)); width: min(440px, calc(100% - 16px)); }
   .quiz-sheet { --sheet-rise: 32px; }
   .fields { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px 6px; }
   .fields label { grid-column: span 2; min-width: 0; }
@@ -664,19 +670,18 @@ a { color: var(--accent); }
   margin: auto;
   padding: 14px;
   overflow: hidden;
-  border: 1px solid #fff;
-  border-radius: 27px;
+  border: 1px solid #ffffffd9;
+  border-radius: 30px;
   color: var(--ink);
-  background: var(--sheet-surface, #f1f8f2);
-  box-shadow: var(--sheet-elevation, 0 20px 62px #142d2a4a, inset 0 1px 1px #fff);
+  background: var(--sheet-surface);
+  box-shadow: var(--sheet-elevation);
 }
 
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .chapter-picker.glass {
-    background: var(--sheet-glass, radial-gradient(ellipse at 15% 0%, #fffdf6fa, transparent 60%),
-      linear-gradient(156deg, #eff9f4f5, #e5f4ebed));
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    backdrop-filter: blur(24px) saturate(1.5);
+    background: var(--sheet-glass);
+    -webkit-backdrop-filter: var(--sheet-filter);
+    backdrop-filter: var(--sheet-filter);
   }
 }
 
@@ -687,20 +692,12 @@ a { color: var(--accent); }
 }
 
 .chapter-picker-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 1px 4px 0 9px;
+  padding-inline: 4px;
 }
-
-.chapter-picker-header h2 { margin: 0; }
-#chapter-picker-close { border-radius: 999px; }
 
 .chapter-picker-options {
   display: grid;
   align-content: start;
-  gap: 5px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -713,20 +710,23 @@ a { color: var(--accent); }
   align-items: center;
   justify-content: space-between;
   gap: 9px;
-  min-height: 46px;
+  min-height: 51px;
   padding: 8px 12px;
-  border: 1px solid #dce9e1;
-  border-radius: 14px;
+  border: 1px solid transparent;
+  border-bottom-color: #24333224;
+  border-radius: 0;
   text-align: left;
-  background: #ffffff94;
+  background: transparent;
 }
+.chapter-picker-options button:last-child { border-bottom-color: transparent; }
+.chapter-picker-options button:focus-visible { outline-offset: -3px; }
 
 .chapter-picker-options button[aria-selected=true] {
-  border-color: #91cbb5;
+  border-color: #34554c32;
+  border-radius: 12px;
   color: #174e42;
   font-weight: 700;
-  background: linear-gradient(145deg, #f1fbf3, #d6efe2);
-  box-shadow: inset 0 1px 1px #fff;
+  background: #ffffff48;
 }
 
 .chapter-picker-name { overflow-wrap: anywhere; }
@@ -749,7 +749,8 @@ a { color: var(--accent); }
   .fields .picker-field:nth-child(-n+2) { grid-column: span 3; }
   #order-picker-trigger { gap: 4px; padding-inline: 7px; }
   .chapter-picker.glass {
-    inset: auto 0 calc(10px + var(--bottom-inset));
+    inset: auto 0 calc(8px + var(--bottom-inset));
+    width: min(430px, calc(100% - 16px));
   }
 }
 
@@ -759,7 +760,7 @@ a { color: var(--accent); }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .chapter-picker.glass {
-    background: var(--sheet-surface, #f1f8f2);
+    background: var(--sheet-surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
@@ -1146,6 +1147,17 @@ a { color: var(--accent); }
         <h3>跨设备同步</h3>
         <button id="profile-account" type="button">登录或管理账号</button>
       </div>
+      <section id="android-updates" class="profile-account" aria-labelledby="update-heading" hidden>
+        <div>
+          <h3 id="update-heading">应用更新</h3>
+          <p id="update-status" role="status"></p>
+        </div>
+        <div class="actions">
+          <button id="update-check" type="button">检查更新</button>
+          <button id="update-notify" type="button">开启更新通知</button>
+          <button id="update-download" class="primary" type="button" hidden>前往 GitHub 下载</button>
+        </div>
+      </section>
     </section>
     <details id="review-panel" class="review">
       <summary>待核对题目 <span id="review-count"></span></summary>
@@ -1337,8 +1349,8 @@ void main() {
   vec3 spectrum = mix(vec3(0.65, 0.35, 0.98), vec3(0.34, 0.90, 0.96), hue);
   float edgeFade = 1.0 - smoothstep(1.1, 4.4, depth);
   float chromaAlpha = activity * separation * edgeFade * 0.72;
-  float clearAlpha = 0.012 + rim * (0.17 + facing * 0.31) + reflection * 0.48;
-  vec3 neutral = vec3(mix(0.72, 1.0, facing));
+  float clearAlpha = 0.018 + rim * (0.27 + facing * 0.34) + reflection * 0.48;
+  vec3 neutral = vec3(mix(0.55, 1.0, facing));
   vec3 color = mix(neutral, spectrum, chromaAlpha / (clearAlpha + chromaAlpha));
   float alpha = coverage * min(0.94, clearAlpha + chromaAlpha);
   outColor = vec4(clamp(color, 0.0, 1.0) * alpha, alpha);
@@ -1711,10 +1723,23 @@ function view(name) {
   $("overview").hidden = name !== "setup";
 }
 
+function animatePage(horizontal, vertical) {
+  pageMotion?.cancel();
+  if (reducedMotion.matches || !pageContent.animate) return;
+  pageMotion = pageContent.animate([
+    { opacity: .58, transform: `translate3d(${horizontal}px, ${vertical}px, 0)` },
+    { opacity: 1, transform: "translate3d(0, 0, 0)" },
+  ], { duration: 260, easing: "cubic-bezier(.22, .78, .24, 1)" });
+}
+
+reducedMotion.addEventListener("change", () => {
+  if (reducedMotion.matches) pageMotion?.cancel();
+});
+
 function showTab(tab, animate = false, fromNative = false) {
   const previousIndex = tabButtons.findIndex((button) => button.dataset.studyTab === selectedTab);
   if (nativeNavigation && !fromNative && selectedTab !== tab) {
-    nativeNavigation.postMessage({ kind: "tab", tab }).catch(() => {});
+    nativeNavigation.postMessage({ kind: "tab", tab, animate: animate && !reducedMotion.matches }).catch(() => {});
   }
   if (selectedTab !== tab) libraryLimit = libraryPageSize;
   selectedTab = tab;
@@ -1726,18 +1751,14 @@ function showTab(tab, animate = false, fromNative = false) {
   tabDock.style.setProperty("--tab-index", String(index));
   moveTabLens(index, animate);
   const library = libraryTabs[tab];
+  const destination = library ? "library" : tab === "profile" ? "profile" : "setup";
+  const changed = index !== previousIndex || $(destination).hidden;
   $("back").textContent = library ? `返回${library.title}` : "返回章节";
-  view(library ? "library" : tab === "profile" ? "profile" : "setup");
+  view(destination);
   updateAvailability();
   window.scrollTo(0, 0);
-  pageMotion?.cancel();
-  if (animate && index !== previousIndex && !reducedMotion.matches && pageContent.animate) {
-    const distance = Math.sign(index - previousIndex) * 12;
-    pageMotion = pageContent.animate([
-      { opacity: .7, transform: `translate3d(${distance}px, 4px, 0)` },
-      { opacity: 1, transform: "translate3d(0, 0, 0)" },
-    ], { duration: 215, easing: "cubic-bezier(.2, .72, .27, 1)" });
-  }
+  if (animate && changed) animatePage(Math.sign(index - previousIndex) * 12, index === previousIndex ? -9 : 0);
+  else if (changed) pageMotion?.cancel();
 }
 
 function filterScope(scope) {
@@ -1940,7 +1961,9 @@ function start(ids, mode = $("mode").value, quickChapter) {
   state.session = { sid: randomId(), ids, mode, index: 0, results: {}, selected: [], quickChapter };
   saveSession();
   renderQuestion();
+  window.scrollTo(0, 0);
   $("question").focus();
+  animatePage(0, 11);
 }
 
 function shuffled(items) {
@@ -2085,8 +2108,10 @@ function resumeQuestion() {
   const item = current();
   if (!item) return;
   renderQuestion();
+  window.scrollTo(0, 0);
   if (state.session.results[item.id]) focusAnswer();
   else $("question").focus();
+  animatePage(0, 11);
 }
 
 function normalizeFill(value) {
@@ -2124,7 +2149,9 @@ function next() {
   saveSession();
   if (session.index < session.ids.length) {
     renderQuestion();
+    window.scrollTo(0, 0);
     $("question").focus();
+    animatePage(12, 0);
     return;
   }
   const memoryMode = session.mode === "memory";
@@ -2138,9 +2165,11 @@ function next() {
   const chapter = session.quickChapter;
   const hasNew = chapter && chapterPools.get(chapter)?.some((item) => !state.history[item.id]);
   $("again").textContent = hasNew ? "练下一组" : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
-  $("again").onclick = hasNew ? () => openChapter(chapter) : () => showTab(selectedTab);
+  $("again").onclick = hasNew ? () => openChapter(chapter) : () => showTab(selectedTab, true);
   view("result");
+  window.scrollTo(0, 0);
   $("again").focus();
+  animatePage(0, 11);
 }
 
 $("setup-form").addEventListener("change", updateAvailability);
@@ -2160,7 +2189,7 @@ $("fill-answer").oninput = (event) => {
 $("resume").onclick = resumeQuestion;
 $("submit").onclick = submit;
 $("next").onclick = next;
-$("back").onclick = () => showTab(selectedTab);
+$("back").onclick = () => showTab(selectedTab, true);
 $("star").onclick = () => {
   const item = current();
   state.stars[item.id] = !state.stars[item.id];
@@ -2333,7 +2362,6 @@ function connectTabLens() {
   });
   reducedMotion.addEventListener("change", () => {
     if (!reducedMotion.matches) return;
-    pageMotion?.cancel();
     move(selection(), false);
   });
 
@@ -2350,14 +2378,14 @@ const moveTabLens = nativeNavigation ? () => {} : connectTabLens();
 if (nativeNavigation) {
   document.documentElement.setAttribute("data-native-tabs", "");
   window.QuizNativeUI = {
-    selectTab(tab) {
-      if (tabButtons.some((button) => button.dataset.studyTab === tab)) showTab(tab, false, true);
+    selectTab(tab, animate = true) {
+      if (tabButtons.some((button) => button.dataset.studyTab === tab)) showTab(tab, animate, true);
     },
   };
 }
 $("library-configure").onclick = () => {
   const scope = selectedTab;
-  showTab("practice");
+  showTab("practice", true);
   filterScope(scope);
 };
 $("library-more").onclick = () => {
@@ -2556,6 +2584,62 @@ $("profile-account").hidden = $("account-button").hidden;
   }
   window.QuizChapterPicker = { refresh };
   refresh();
+})();
+</script>
+<script>
+(() => {
+  "use strict";
+
+  const capacitor = window.Capacitor;
+  if (capacitor?.getPlatform?.() !== "android" || !capacitor.isPluginAvailable?.("QuizUpdate")) return;
+  const updates = capacitor.Plugins.QuizUpdate;
+  const panel = document.getElementById("android-updates");
+  const statusText = document.getElementById("update-status");
+  const checkButton = document.getElementById("update-check");
+  const notifyButton = document.getElementById("update-notify");
+  const downloadButton = document.getElementById("update-download");
+  let lastStatus;
+
+  function render(status, checked = false) {
+    lastStatus = status;
+    const current = `当前版本 ${status.currentVersionName}`;
+    statusText.textContent = status.available
+      ? `${current} · 可更新至 ${status.versionName}`
+      : status.checkFailed ? `${current} · 暂时无法检查更新`
+      : checked ? `${current} · 已是最新版` : current;
+    notifyButton.textContent = status.notificationsEnabled ? "关闭更新通知"
+      : status.notificationsBlocked ? "前往系统开启通知" : "开启更新通知";
+    downloadButton.hidden = !status.available;
+    panel.hidden = false;
+  }
+
+  async function act(button, action, done) {
+    button.disabled = true;
+    try {
+      done?.(await action());
+    } catch {
+      statusText.textContent = "操作未完成，请稍后重试。";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  checkButton.onclick = () => {
+    statusText.textContent = "正在检查更新…";
+    return act(checkButton, () => updates.check(), (status) => render(status, true));
+  };
+  notifyButton.onclick = () => act(notifyButton, async () => {
+    if (lastStatus?.notificationsEnabled) return updates.disableNotifications();
+    if (lastStatus?.notificationsBlocked) {
+      await updates.openNotificationSettings();
+      return updates.getStatus();
+    }
+    return updates.enableNotifications();
+  }, render);
+  downloadButton.onclick = () => act(downloadButton, () => updates.openRelease());
+
+  updates.addListener("updateStatus", (status) => render(status)).catch(() => {});
+  updates.getStatus().then((status) => { if (!lastStatus) render(status); }).catch(() => {});
 })();
 </script>
 </body>

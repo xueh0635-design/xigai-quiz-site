@@ -6,13 +6,14 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
         let name: String
         let title: String
         let symbol: String
+        let selectedSymbol: String
     }
 
     private let studyTabs = [
-        StudyTab(name: "practice", title: "练习", symbol: "square.and.pencil"),
-        StudyTab(name: "wrong", title: "错题", symbol: "xmark.circle"),
-        StudyTab(name: "starred", title: "收藏", symbol: "star"),
-        StudyTab(name: "profile", title: "我的", symbol: "person.crop.circle")
+        StudyTab(name: "practice", title: "练习", symbol: "square.and.pencil", selectedSymbol: "square.and.pencil"),
+        StudyTab(name: "wrong", title: "错题", symbol: "xmark.circle", selectedSymbol: "xmark.circle.fill"),
+        StudyTab(name: "starred", title: "收藏", symbol: "star", selectedSymbol: "star.fill"),
+        StudyTab(name: "profile", title: "我的", symbol: "person.crop.circle", selectedSymbol: "person.crop.circle.fill")
     ]
 
     private let content: UIViewController
@@ -34,7 +35,9 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
         delegate = self
         let hosts = studyTabs.enumerated().map { index, tab in
             let host = UIViewController()
-            host.tabBarItem = UITabBarItem(title: tab.title, image: UIImage(systemName: tab.symbol), tag: index)
+            let item = UITabBarItem(title: tab.title, image: UIImage(systemName: tab.symbol), tag: index)
+            item.selectedImage = UIImage(systemName: tab.selectedSymbol)
+            host.tabBarItem = item
             return host
         }
         setViewControllers(hosts, animated: false)
@@ -43,12 +46,20 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
         }
     }
 
-    func selectTab(_ name: String) {
+    func selectTab(_ name: String, animated: Bool) {
         guard let index = studyTabs.firstIndex(where: { $0.name == name }) else { return }
         loadViewIfNeeded()
         guard let host = viewControllers?[index] else { return }
         if selectedViewController !== host {
-            selectedViewController = host
+            if animated && !UIAccessibility.isReduceMotionEnabled {
+                UIView.animate(withDuration: 0.26, delay: 0,
+                               options: [.allowUserInteraction, .beginFromCurrentState, .curveEaseOut]) {
+                    self.selectedViewController = host
+                    self.view.layoutIfNeeded()
+                }
+            } else {
+                selectedViewController = host
+            }
         }
         attachContent(to: host)
     }
@@ -62,26 +73,28 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
 
     private func attachContent(to host: UIViewController) {
         guard content.parent !== host else { return }
+        // The live WebView animates its own page. Keep the host transfer in the same layout pass.
+        UIView.performWithoutAnimation {
+            if content.parent != nil {
+                content.willMove(toParent: nil)
+                NSLayoutConstraint.deactivate(contentConstraints)
+                content.view.removeFromSuperview()
+                content.removeFromParent()
+            }
 
-        // Keep the Capacitor controller and its live web session across tab changes.
-        if content.parent != nil {
-            content.willMove(toParent: nil)
-            NSLayoutConstraint.deactivate(contentConstraints)
-            content.view.removeFromSuperview()
-            content.removeFromParent()
+            host.addChild(content)
+            let contentView = content.view!
+            contentView.translatesAutoresizingMaskIntoConstraints = false
+            host.view.addSubview(contentView)
+            contentConstraints = [
+                contentView.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
+                contentView.trailingAnchor.constraint(equalTo: host.view.trailingAnchor),
+                contentView.topAnchor.constraint(equalTo: host.view.topAnchor),
+                contentView.bottomAnchor.constraint(equalTo: host.view.bottomAnchor)
+            ]
+            NSLayoutConstraint.activate(contentConstraints)
+            host.view.layoutIfNeeded()
+            content.didMove(toParent: host)
         }
-
-        host.addChild(content)
-        let contentView = content.view!
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        host.view.addSubview(contentView)
-        contentConstraints = [
-            contentView.leadingAnchor.constraint(equalTo: host.view.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: host.view.trailingAnchor),
-            contentView.topAnchor.constraint(equalTo: host.view.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: host.view.bottomAnchor)
-        ]
-        NSLayoutConstraint.activate(contentConstraints)
-        content.didMove(toParent: host)
     }
 }

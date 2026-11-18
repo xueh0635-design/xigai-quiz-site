@@ -15,8 +15,9 @@ final class QuizBridgeViewController: CAPBridgeViewController {
 
     func selectWebTab(_ tab: String) {
         webView?.callAsyncJavaScript(
-            "window.QuizNativeUI?.selectTab(tab);",
-            arguments: ["tab": tab], in: nil, in: .page, completionHandler: nil
+            "window.QuizNativeUI?.selectTab(tab, animate);",
+            arguments: ["tab": tab, "animate": !UIAccessibility.isReduceMotionEnabled],
+            in: nil, in: .page, completionHandler: nil
         )
     }
 
@@ -30,7 +31,7 @@ final class QuizBridgeViewController: CAPBridgeViewController {
         }
 
         if kind == "tab", let tab = body["tab"] as? String {
-            nativeTabs?.selectTab(tab)
+            nativeTabs?.selectTab(tab, animated: body["animate"] as? Bool ?? true)
             reply(true, nil)
             return
         }

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">习概题库</string>
+    <string name="title_activity_main">习概题库</string>
+    <string name="package_name">io.github.xueh0635.xigai</string>
+    <string name="custom_url_scheme">io.github.xueh0635.xigai</string>
+    <string name="updates_channel">版本更新</string>
+    <string name="update_notification_title">习概题库有新版本</string>
+    <string name="update_notification_text">版本 %1$s 已发布，点击前往 GitHub 下载。</string>
+</resources>
