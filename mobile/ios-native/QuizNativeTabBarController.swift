@@ -11,8 +11,8 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
 
     private let studyTabs = [
         StudyTab(name: "practice", title: "练习", symbol: "square.and.pencil", selectedSymbol: "square.and.pencil"),
-        StudyTab(name: "desk", title: "同桌", symbol: "person.2", selectedSymbol: "person.2.fill"),
         StudyTab(name: "wrong", title: "错题", symbol: "xmark.circle", selectedSymbol: "xmark.circle.fill"),
+        StudyTab(name: "desk", title: "一起学", symbol: "", selectedSymbol: ""),
         StudyTab(name: "starred", title: "收藏", symbol: "star", selectedSymbol: "star.fill"),
         StudyTab(name: "profile", title: "我的", symbol: "person.crop.circle", selectedSymbol: "person.crop.circle.fill")
     ]
@@ -36,8 +36,10 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
         delegate = self
         let hosts = studyTabs.enumerated().map { index, tab in
             let host = UIViewController()
-            let item = UITabBarItem(title: tab.title, image: UIImage(systemName: tab.symbol), tag: index)
-            item.selectedImage = UIImage(systemName: tab.selectedSymbol)
+            let sharedStudy = tab.name == "desk"
+            let image = sharedStudy ? makeSharedStudyIcon(false) : UIImage(systemName: tab.symbol)
+            let item = UITabBarItem(title: tab.title, image: image, tag: index)
+            item.selectedImage = sharedStudy ? makeSharedStudyIcon(true) : UIImage(systemName: tab.selectedSymbol)
             host.tabBarItem = item
             return host
         }
@@ -45,6 +47,37 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
         if let selectedViewController {
             attachContent(to: selectedViewController)
         }
+    }
+
+    private func makeSharedStudyIcon(_ selected: Bool) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 26, height: 26)).image { _ in
+            let book = UIBezierPath()
+            book.move(to: CGPoint(x: 4, y: 7))
+            book.addQuadCurve(to: CGPoint(x: 11.5, y: 8), controlPoint: CGPoint(x: 7.5, y: 5.8))
+            book.addLine(to: CGPoint(x: 11.5, y: 20))
+            book.addQuadCurve(to: CGPoint(x: 4, y: 19), controlPoint: CGPoint(x: 7.5, y: 17.8))
+            book.close()
+            let rightPage = UIBezierPath(cgPath: book.cgPath)
+            rightPage.apply(CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: 26, ty: 0))
+            book.append(rightPage)
+            book.lineWidth = selected ? 2.1 : 1.65
+            book.lineJoinStyle = .round
+            UIColor.black.setStroke()
+            UIColor.black.setFill()
+            book.stroke()
+
+            let glint = UIBezierPath()
+            glint.move(to: CGPoint(x: 13, y: 1))
+            glint.addLine(to: CGPoint(x: 14.1, y: 3.4))
+            glint.addLine(to: CGPoint(x: 16.5, y: 4.5))
+            glint.addLine(to: CGPoint(x: 14.1, y: 5.6))
+            glint.addLine(to: CGPoint(x: 13, y: 8))
+            glint.addLine(to: CGPoint(x: 11.9, y: 5.6))
+            glint.addLine(to: CGPoint(x: 9.5, y: 4.5))
+            glint.addLine(to: CGPoint(x: 11.9, y: 3.4))
+            glint.close()
+            glint.fill()
+        }.withRenderingMode(.alwaysTemplate)
     }
 
     func selectTab(_ name: String, animated: Bool) {

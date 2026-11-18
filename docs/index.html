@@ -968,22 +968,6 @@ a { color: var(--accent); }
 #result :is(#review-round, #retry) { border-radius: 999px; }
 </style>
   <style>
-.tab-icon-desk::before, .tab-icon-desk::after {
-  width: 6px;
-  height: 6px;
-  top: 3px;
-  left: 3px;
-  border: 1.6px solid;
-  border-radius: 50%;
-}
-
-.tab-icon-desk::after { left: auto; right: 3px; }
-
-.tab-icon-desk {
-  background: radial-gradient(ellipse 5.5px 4.5px at 6px 16px, transparent 67%, currentColor 71% 93%, transparent 97%) 0 0 / 22px 16px no-repeat,
-    radial-gradient(ellipse 5.5px 4.5px at 16px 16px, transparent 67%, currentColor 71% 93%, transparent 97%) 0 0 / 22px 16px no-repeat;
-}
-
 .desk-page { --desk-gap: clamp(12px, 2.6vw, 20px); }
 
 .desk-heading, .desk-section-heading, .desk-duel-heading {
@@ -1659,6 +1643,429 @@ a { color: var(--accent); }
   .desk-section-heading p, .desk-onboard-copy p { font-size: .82rem; }
 }
 </style>
+  <style>
+.desk-page {
+  --live-ink: #102f2a;
+  --live-muted: #49645b;
+  --live-surface: #f9fcf6;
+  --live-jade: #13664c;
+  --live-light: #e5f3be;
+  --live-radius: clamp(24px, 5vw, 34px);
+}
+
+.desk-page .desk-heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 0 4px 14px;
+}
+.desk-page .desk-heading h2 { font-weight: 790; letter-spacing: .035em; }
+.desk-page .desk-heading-button { min-height: 43px; }
+.desk-page .desk-heading-actions { margin-inline-start: auto; }
+.desk-page .desk-onboard { padding-block: clamp(17px, 4vw, 30px); }
+.desk-page .desk-companion-mark { border-radius: 25%; }
+
+.live-lobby {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(20px, 5vw, 35px);
+  border: 1px solid #4b7b64;
+  border-radius: var(--live-radius);
+  background:
+    radial-gradient(ellipse at 76% 9%, #52906b54, transparent 55%),
+    radial-gradient(ellipse at 102% 90%, #2d937959, transparent 58%),
+    linear-gradient(141deg, #102f28, #133b31 53%, #174d3f);
+  color: #f5faf0;
+  box-shadow: 0 18px 38px #234b3732, inset 0 1px 0 #bddba74d;
+}
+.live-lobby::before {
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: repeating-linear-gradient(90deg, #a5d5a516 0 1px, transparent 1px clamp(22px, 5vw, 32px)),
+              repeating-linear-gradient(0deg, #a5d5a510 0 1px, transparent 1px clamp(22px, 5vw, 32px));
+  mask-image: radial-gradient(ellipse at 79% 30%, #000, transparent 75%);
+  content: "";
+  pointer-events: none;
+}
+.live-lobby::after {
+  position: absolute;
+  z-index: -1;
+  inset: -55% -20% 15% 30%;
+  border: 1px solid #bce8aa36;
+  border-radius: 50%;
+  box-shadow: 0 0 54px #b6ecd123, inset 0 0 60px #89c7a419;
+  content: "";
+  transform: rotate(-17deg);
+  pointer-events: none;
+}
+.live-lobby-content { display: grid; gap: clamp(14px, 3vw, 22px); }
+.live-lobby-intro { align-self: end; }
+.live-lobby-intro h3 {
+  margin: 0;
+  font-size: clamp(1.85rem, 7vw, 3.25rem);
+  font-weight: 780;
+  line-height: 1.12;
+  letter-spacing: .025em;
+  text-shadow: 0 6px 24px #082119b3;
+}
+.live-lobby-intro p {
+  max-width: 25em;
+  margin: 8px 0 0;
+  color: #dcebdc;
+  font-size: clamp(.87rem, 2.6vw, 1rem);
+  text-wrap: pretty;
+}
+
+.live-table {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  min-width: 0;
+  min-height: 128px;
+  padding: clamp(10px, 3vw, 18px) clamp(11px, 4vw, 22px);
+  border: 1px solid #badab446;
+  border-radius: clamp(19px, 5vw, 26px);
+  background: radial-gradient(ellipse at 50% 42%, #b9edd044, transparent 63%), linear-gradient(139deg, #f5ffeb14, #d3f5d905 75%);
+  box-shadow: inset 0 1px 0 #e2ffe72a, inset 0 0 24px #a1d6b819, 0 11px 25px #0a2d2167;
+}
+.live-table-line {
+  position: absolute;
+  z-index: -1;
+  inset: 14px 14px 16px;
+  border-radius: 100%;
+  border: 1px solid #adf3cb54;
+  box-shadow: 0 0 11px #a5cfa42b, inset 0 0 24px #aef5c827;
+  pointer-events: none;
+}
+.live-table-line::before, .live-table-line::after, .live-table-line span {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  content: "";
+}
+.live-table-line::before {
+  width: 59%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #93e1bc, #dff2b8, #93e1bc, transparent);
+  box-shadow: 0 0 14px #c2f4a6b3;
+}
+.live-table-line::after {
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  border: 1px solid #adf3cb71;
+  background: radial-gradient(ellipse, #b2ecb14a, transparent 65%);
+  box-shadow: 0 0 22px #90d78b59;
+}
+.live-table-line span {
+  width: 17px;
+  height: 17px;
+  background: #eef7bc;
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+.live-seat {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+  gap: 3px;
+  text-align: center;
+}
+.live-seat strong { margin-top: 4px; font-size: .94rem; letter-spacing: .05em; }
+.live-seat-frame.desk-avatar {
+  width: clamp(43px, 12vw, 62px);
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid #e7f8cab3;
+  border-radius: 34%;
+  background: linear-gradient(152deg, #edf5c1, #92bd91 72%);
+  color: #295947;
+  box-shadow: 0 6px 15px #041d1973, 0 0 18px #d0f5a340, inset 0 1px 0 #fff9;
+}
+.live-seat-peer .live-seat-frame { background: linear-gradient(152deg, #e1efe9, #9bbdd0 72%); }
+.live-seat-peer:has(.live-online[data-online="false"]) .live-seat-frame { filter: saturate(.57); }
+.live-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #133d35e0;
+  color: #e0ebde;
+  font-size: .71rem;
+  font-weight: 620;
+  line-height: 1.34;
+  text-wrap: balance;
+}
+.live-online::before {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: #9faea3;
+  content: "";
+}
+.live-seat-mine .live-online::before, .live-online[data-online="true"]::before {
+  background: #ccefa8;
+  box-shadow: 0 0 7px #d3fbbfb8;
+}
+
+.live-lobby-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 10px;
+  align-self: start;
+}
+.live-lobby-chapter { min-width: 0; flex: 1 1 110px; }
+.live-lobby-chapter label { color: #dbead8; font-size: .75rem; }
+.live-lobby-chapter :is(select, .chapter-picker-trigger) {
+  margin: 0;
+  min-height: 46px;
+  border-color: #9dd6b65c;
+  border-radius: 15px;
+  color: #f2faf0;
+  background: #f0fff31a;
+  box-shadow: inset 0 1px 0 #edffff1c;
+}
+.live-lobby-chapter :is(select, .chapter-picker-trigger):not(:disabled):hover { background: #f0fff330; }
+.live-lobby-chapter select option { color: var(--live-ink); background: var(--live-surface); }
+.live-lobby-chapter .chapter-picker-chevron { color: #d6edc9; }
+.live-primary { border-radius: 15px; min-height: 46px; white-space: nowrap; font-weight: 750; }
+.live-lobby .live-primary {
+  flex: 1 0 auto;
+  border-color: #ecffd07a;
+  padding-inline: clamp(10px, 4vw, 22px);
+  background: linear-gradient(164deg, #f0f7cb, #c1e6a2 96%);
+  color: #173925;
+  box-shadow: 0 6px 18px #142e1c60, inset 0 1px 0 #fff;
+}
+.live-lobby .live-primary:not(:disabled):hover { background: #e7f9c8; border-color: #fff9; }
+.live-lobby .live-primary:disabled { opacity: .69; }
+.live-lobby :focus-visible { outline-color: #e0f5b6; }
+.live-lobby-status { margin: -3px 0 0; min-width: 0; color: #e6f1e0; font-size: .81rem; line-height: 1.35; }
+.live-lobby-status:empty { display: none; }
+
+.live-lounge { display: grid; gap: var(--desk-gap); }
+.live-lounge .desk-surface { padding: clamp(14px, 3.3vw, 23px); }
+.live-lounge .desk-comparison { margin-top: 12px; }
+.live-lounge .desk-compare {
+  background: radial-gradient(ellipse at 100% 0%, #dcebd9b0, transparent 60%), #f5faf4;
+}
+.live-lounge .desk-arena {
+  background: radial-gradient(ellipse at 100% 0%, #e6e2f0c9, transparent 57%), #faf9fc;
+}
+.live-lounge .desk-learner {
+  padding: clamp(9px, 2.4vw, 15px);
+  min-width: 0;
+  border-radius: 17px;
+  background: #ffffffe7;
+}
+.live-lounge .desk-learner h4 { margin-bottom: 4px; }
+.live-lounge .desk-learner h4::before {
+  width: 6px; height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--learner-tint);
+  content: "";
+}
+.live-lounge .desk-metrics { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+.live-lounge .desk-metrics > div { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 4px; }
+.live-lounge .desk-metrics dd { font-size: clamp(.75rem, 2.8vw, .94rem); white-space: nowrap; }
+.live-lounge .desk-arena-mark { width: clamp(37px, 7vw, 48px); }
+.live-lounge .desk-duel-empty { margin: 11px 0; }
+.live-lounge .desk-arena-actions button { min-height: 44px; }
+
+.live-room { display: grid; gap: clamp(11px, 2vw, 17px); }
+.desk-page[data-live-active]:not([data-live-active="false"]) > :is(.desk-heading,.desk-status),
+.desk-page[data-live-active]:not([data-live-active="false"]) #desk-paired > :not(#live-room) { display: none; }
+.live-room-top {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.live-room-top button { min-height: 44px; padding: 6px 12px; font-size: .84rem; font-weight: 680; border-radius: 13px; }
+.live-back { display: inline-flex; align-items: center; gap: 7px; color: var(--live-jade); }
+.live-back::before {
+  width: 7px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 0 0 1.5px 1.5px;
+  transform: rotate(45deg);
+  content: "";
+}
+.live-leave { color: #6c5050; }
+.live-leave-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 17px;
+  border: 1px solid #e9d3cf;
+  background: #faf3ed;
+  color: #654641;
+}
+.live-leave-confirm p { margin: 0; }
+.live-leave-confirm > div { display: flex; gap: 5px; }
+#live-leave-yes { border-color: #ca9e95; color: #7c3f39; }
+.live-room-overview {
+  display: grid;
+  gap: 10px;
+  padding: clamp(15px, 3.7vw, 25px);
+  border: 1px solid #4e7e64;
+  border-radius: var(--live-radius);
+  background: radial-gradient(ellipse at 84% -10%, #78a46255, transparent 58%), linear-gradient(139deg, #14372e, #185948);
+  box-shadow: 0 13px 27px #204c3333, inset 0 1px 0 #cdf4c24f;
+  color: #f2f9ef;
+}
+.live-session-title { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 5px 10px; }
+.live-session-title h3 { margin: 0; font-size: clamp(1.26rem, 4.3vw, 1.72rem); line-height: 1.24; }
+#live-round-counter { color: #dbedca; font-size: .83rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#live-progress {
+  width: 100%;
+  height: 5px;
+  border: 0;
+  overflow: hidden;
+  border-radius: 7px;
+  appearance: none;
+  background: #2b624b;
+}
+#live-progress::-webkit-progress-bar { background: #36735b; }
+#live-progress::-webkit-progress-value { border-radius: 7px; background: linear-gradient(90deg, #86daad, #e1f3a6); }
+#live-progress::-moz-progress-bar { border-radius: 7px; background: linear-gradient(90deg, #86daad, #e1f3a6); }
+.live-room-people {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: clamp(5px, 2vw, 12px);
+}
+.live-room-people > div {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 9px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #bfe9bc43;
+  border-radius: 11px;
+  background: #efffe91b;
+}
+.live-room-people span { font-size: .78rem; font-weight: 750; }
+.live-room-people strong { color: #e3f4cb; font-size: .75rem; font-weight: 630; overflow-wrap: anywhere; }
+.live-room-status { margin: 0; color: #e5f0df; font-size: .86rem; }
+.live-room-status:empty { display: none; }
+.live-question, .live-reveal, .live-summary { background: var(--live-surface); }
+.live-question h3 { margin: 2px 0 8px; font-size: clamp(1.06rem, 3.8vw, 1.35rem); overflow-wrap: anywhere; }
+.live-kind { color: var(--live-jade); font-size: .75rem; font-weight: 750; }
+.live-options { display: grid; gap: 7px; margin-block: 12px; }
+.live-options button {
+  width: 100%;
+  min-height: 47px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 1px solid #d6e4d8;
+  background: #fff;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.live-options button:not(:disabled):hover { border-color: #79aa8e; background: #f4f9f1; }
+.live-options button[aria-pressed="true"], .live-options button[aria-selected="true"] {
+  border-color: #609675;
+  background: #e6f4e2;
+  box-shadow: inset 0 0 0 1px #b9d9b3;
+}
+.live-options button.correct { border-color: #51906a; background: #e7f6e7; color: #174d32; }
+.live-options button.incorrect {
+  border-color: #bd766d;
+  background: #fae9e6;
+  box-shadow: inset 0 0 0 1px #f1bfba;
+  color: #743a36;
+}
+.live-question-actions { display: flex; justify-content: end; margin-top: 12px; }
+.live-question-actions > button { min-width: min(100%, 120px); }
+.live-reveal h3, .live-summary h3 { margin: 0 0 6px; font-size: clamp(1.15rem, 4vw, 1.5rem); }
+.live-choice-comparison {
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  border: 1px solid #d9e4da;
+  border-radius: 12px;
+  background: #edf5ea;
+  color: var(--live-muted);
+  overflow-wrap: anywhere;
+  font-size: .85rem;
+}
+.live-choice-comparison:empty { display: none; }
+.live-reading { display: grid; gap: 13px; margin: 0; }
+.live-reading > div { min-width: 0; }
+.live-reading > div:has(dd:empty) { display: none; }
+.live-reading dt { color: var(--live-jade); font-size: .8rem; font-weight: 750; }
+.live-reading dd { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
+#live-summary-detail { margin: 0 0 13px; color: var(--live-muted); }
+.live-summary-review { display: grid; gap: 8px; }
+.live-summary-review:empty { display: none; }
+.live-summary-review > * { padding: 9px 12px; border-radius: 11px; background: #edf5ea; overflow-wrap: anywhere; }
+.live-summary-review :is(h4,p) { margin: 2px 0; }
+
+.study-tabs button[data-study-tab="desk"] { font-weight: 750; color: #195440; }
+.tab-icon-together {
+  position: relative;
+  width: 31px;
+  height: 27px;
+  border-radius: 9px;
+  border: 1px solid #8bc39d82;
+  background: linear-gradient(150deg, #33795a, #175040 73%);
+  box-shadow: 0 2px 7px #24634854, inset 0 1px 0 #f4ffc74b;
+  color: #edf8dc;
+}
+.tab-icon-together::before, .tab-icon-together::after {
+  top: 10px;
+  left: 6px;
+  width: 8px;
+  height: 10px;
+  border: 1.35px solid currentColor;
+  border-radius: 3px 3px 2px 2px;
+  transform: skewY(9deg);
+}
+.tab-icon-together::after { left: auto; right: 6px; transform: skewY(-9deg); }
+.tab-icon-together i {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%);
+  background: #e8f6ad;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 61%, 50% 100%, 38% 61%, 0 50%, 38% 38%);
+}
+.study-tabs button[data-study-tab="desk"][aria-current="page"] .tab-icon-together {
+  background: linear-gradient(151deg, #408c61, #1f674d 75%);
+  box-shadow: 0 2px 10px #2d765e78, inset 0 1px 0 #fff6;
+}
+
+@media (min-width: 670px) {
+  .live-lobby-content { grid-template-columns: minmax(0, 1fr) minmax(225px, .96fr); align-items: center; gap: 14px 28px; }
+  .live-lobby-intro, .live-lobby-controls, .live-lobby-status { grid-column: 1; }
+  .live-table { grid-column: 2; grid-row: 1 / span 3; min-height: 165px; align-content: center; }
+  .live-lounge { grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); align-items: start; }
+}
+
+@media (max-width: 340px) {
+  .desk-page .desk-heading { column-gap: 4px; }
+  .desk-page .desk-heading h2 { font-size: 1.39rem; }
+  .desk-page .desk-heading-button { padding-inline: 8px; min-width: 0; font-size: .76rem; }
+  .live-lobby { padding: 15px; }
+  .live-lobby-controls { column-gap: 7px; }
+  .live-lobby-controls .live-primary { padding-inline: 9px; font-size: .86rem; }
+}
+</style>
 </head>
 <body>
   <header class="top">
@@ -1883,7 +2290,7 @@ a { color: var(--accent); }
     </section>
     <section id="desk" class="desk-page" hidden aria-labelledby="desk-heading">
       <header class="desk-heading">
-        <h2 id="desk-heading" tabindex="-1">同桌</h2>
+        <h2 id="desk-heading" tabindex="-1">一起学</h2>
         <div class="desk-heading-actions">
           <button id="desk-avatar-edit" class="desk-heading-button" type="button" aria-haspopup="dialog" aria-controls="desk-avatar-dialog" hidden>更换头像</button>
           <button id="desk-refresh" class="desk-heading-button" type="button" hidden>
@@ -1896,8 +2303,8 @@ a { color: var(--accent); }
         <div class="desk-onboard-copy">
           <span class="desk-companion-mark" aria-hidden="true"></span>
           <div>
-            <h3 id="desk-guest-heading">和同桌一起学</h3>
-            <p>用自己的账号登录，和同桌互看进度，还能一起刷一组题比成绩。</p>
+            <h3 id="desk-guest-heading">开一间双人自习室</h3>
+            <p>登录自己的账号，邀请同桌加入。你们可以一起答题、看解析，也可以各自练习、互看进度。</p>
           </div>
         </div>
         <button id="desk-login" class="primary" type="button">登录账号</button>
@@ -1915,7 +2322,7 @@ a { color: var(--accent); }
           </div>
           <div>
             <h3 id="desk-invite-heading">添加同桌</h3>
-            <p>成为同桌后，你们可以互看已答题数、完成度和正确率。</p>
+            <p>配对后可以走进同一间自习室，一起答题、看解析和学习进度。</p>
           </div>
         </div>
         <div class="desk-invite-actions">
@@ -1937,10 +2344,95 @@ a { color: var(--accent); }
         </form>
       </section>
       <div id="desk-paired" class="desk-paired" hidden>
+        <section id="live-lobby" class="live-lobby" aria-labelledby="live-lobby-heading">
+          <div class="live-lobby-content">
+            <div class="live-lobby-intro">
+              <h3 id="live-lobby-heading">共用课桌</h3>
+              <p>每轮五道题，各自作答，双方交卷后一起看解析。</p>
+            </div>
+            <div class="live-table" aria-label="课桌上的两个座位">
+              <div class="live-table-line" aria-hidden="true"><span></span></div>
+              <div class="live-seat live-seat-mine">
+                <span class="live-seat-frame desk-avatar" aria-hidden="true">
+                  <img id="desk-mine-avatar" class="desk-avatar-picture" alt="" hidden>
+                  <span class="desk-avatar-fallback"></span>
+                </span>
+                <strong>我</strong>
+                <span id="live-local-presence" class="live-online">在线</span>
+              </div>
+              <div class="live-seat live-seat-peer">
+                <span class="live-seat-frame desk-avatar" aria-hidden="true">
+                  <img id="desk-peer-avatar" class="desk-avatar-picture" alt="" hidden>
+                  <span class="desk-avatar-fallback"></span>
+                </span>
+                <strong>同桌</strong>
+                <span id="live-presence" class="live-online">检查中…</span>
+              </div>
+            </div>
+            <div class="live-lobby-controls">
+              <div id="live-settings" class="picker-field live-lobby-chapter">
+                <label id="live-chapter-label" for="live-chapter">练习范围</label>
+                <select id="live-chapter"><option value="">综合题库</option></select>
+                <button id="live-chapter-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="live-chapter-label live-chapter-value" hidden>
+                  <span id="live-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+                </button>
+              </div>
+              <button id="live-start" type="button" class="primary live-primary" disabled>开启共学</button>
+              <button id="live-join" type="button" class="primary live-primary" hidden>加入同桌</button>
+              <button id="live-resume" type="button" class="primary live-primary" hidden>回到课桌</button>
+            </div>
+            <p id="live-lobby-status" class="live-lobby-status" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+        <section id="live-room" class="live-room" aria-labelledby="live-room-title" hidden>
+          <header class="live-room-top">
+            <button id="live-back" type="button" class="live-back">返回课桌</button>
+            <button id="live-leave" type="button" class="live-leave">结束本轮</button>
+          </header>
+          <div id="live-leave-confirm" class="live-leave-confirm" role="group" aria-label="确认结束共学" hidden>
+            <p>结束后，你和同桌都会离开这一轮。</p>
+            <div><button id="live-leave-cancel" type="button">取消</button><button id="live-leave-yes" type="button">确认结束</button></div>
+          </div>
+          <header class="live-room-overview">
+            <div class="live-session-title">
+              <h3 id="live-room-title" tabindex="-1">共用课桌</h3>
+              <span id="live-round-counter"></span>
+            </div>
+            <progress id="live-progress" value="0" max="5" aria-label="这轮共学进度"></progress>
+            <div class="live-room-people">
+              <div><span>我</span><strong id="live-me-status"></strong></div>
+              <div><span>同桌</span><strong id="live-peer-status"></strong></div>
+            </div>
+            <p id="live-room-status" class="live-room-status" role="status" aria-live="polite"></p>
+          </header>
+          <section id="live-question" class="desk-surface live-question" aria-labelledby="live-stem" hidden>
+            <span id="live-kind" class="live-kind"></span>
+            <h3 id="live-stem" tabindex="-1"></h3>
+            <div id="live-options" class="options live-options" role="group" aria-labelledby="live-stem"></div>
+            <div class="live-question-actions"><button id="live-submit" class="primary live-primary" type="button" disabled>提交答案</button></div>
+          </section>
+          <section id="live-reveal" class="desk-surface live-reveal" aria-labelledby="live-reveal-heading" hidden>
+            <h3 id="live-reveal-heading">一起看解析</h3>
+            <p id="live-choice-comparison" class="live-choice-comparison"></p>
+            <dl class="live-reading">
+              <div><dt>正确答案</dt><dd id="live-correct-answer"></dd></div>
+              <div><dt>解析</dt><dd id="live-review"></dd></div>
+              <div><dt>记忆提示</dt><dd id="live-memory"></dd></div>
+            </dl>
+            <div class="live-question-actions"><button id="live-next" class="primary live-primary" type="button">一起继续</button></div>
+          </section>
+          <section id="live-summary" class="desk-surface live-summary" aria-labelledby="live-summary-heading" hidden>
+            <h3 id="live-summary-heading" tabindex="-1"></h3>
+            <p id="live-summary-detail"></p>
+            <div id="live-summary-review" class="live-summary-review"></div>
+            <div class="live-question-actions"><button id="live-finish" class="primary live-primary" type="button">返回课桌</button></div>
+          </section>
+        </section>
+        <div class="live-lounge">
         <section class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
           <div class="desk-section-heading">
             <div>
-              <h3 id="desk-compare-heading">并肩学习</h3>
+              <h3 id="desk-compare-heading">学习进度</h3>
               <p>正确率按每题最近一次作答计算。</p>
             </div>
             <span class="desk-paired-mark desk-companion-mark" aria-hidden="true"></span>
@@ -1948,10 +2440,6 @@ a { color: var(--accent); }
           <div class="desk-comparison">
             <article class="desk-learner desk-learner-mine" aria-labelledby="desk-mine-name">
               <h4>
-                <span class="desk-avatar" aria-hidden="true">
-                  <img id="desk-mine-avatar" class="desk-avatar-picture" alt="" hidden>
-                  <span class="desk-avatar-fallback"></span>
-                </span>
                 <span id="desk-mine-name">我</span>
               </h4>
               <div class="desk-completion">
@@ -1967,10 +2455,6 @@ a { color: var(--accent); }
             </article>
             <article class="desk-learner desk-learner-peer" aria-labelledby="desk-peer-name">
               <h4>
-                <span class="desk-avatar" aria-hidden="true">
-                  <img id="desk-peer-avatar" class="desk-avatar-picture" alt="" hidden>
-                  <span class="desk-avatar-fallback"></span>
-                </span>
                 <span id="desk-peer-name">同桌</span>
               </h4>
               <div class="desk-completion">
@@ -2025,6 +2509,7 @@ a { color: var(--accent); }
             <div id="desk-duel-history" class="desk-duel-history"></div>
           </details>
         </section>
+        </div>
         <div class="desk-settings">
           <button id="desk-unpair" type="button">解除同桌</button>
           <div id="desk-unpair-confirm" class="desk-unpair-confirm" hidden>
@@ -2112,11 +2597,11 @@ a { color: var(--accent); }
     <button type="button" data-study-tab="practice" aria-current="page">
       <span class="study-tab-icon tab-icon-practice" aria-hidden="true"></span><span>练习</span>
     </button>
-    <button type="button" data-study-tab="desk">
-      <span class="study-tab-icon tab-icon-desk" aria-hidden="true"></span><span>同桌</span>
-    </button>
     <button type="button" data-study-tab="wrong">
       <span class="study-tab-icon tab-icon-wrong" aria-hidden="true"></span><span>错题</span>
+    </button>
+    <button type="button" data-study-tab="desk">
+      <span class="study-tab-icon tab-icon-together" aria-hidden="true"><i></i></span><span>一起学</span>
     </button>
     <button type="button" data-study-tab="starred">
       <span class="study-tab-icon tab-icon-starred" aria-hidden="true"></span><span>收藏</span>
@@ -2833,6 +3318,358 @@ void main() {
 (() => {
   "use strict";
 
+  const get = (key) => document.getElementById("live-" + key);
+  const terminal = (phase) => ["complete", "ended", "expired"].includes(phase);
+  const errors = {
+    live_room_unavailable: "这间学习室已结束，请回到一起学页刷新。",
+    live_pair_required: "先和同桌建立配对，就能一起学习。",
+    live_not_ready: "这一题的状态刚刚变了，正在同步。",
+    live_invalid_picks: "请核对所选答案后重新提交。",
+    live_chapter_unavailable: "这个范围暂时无法组题，请换一章。",
+    pk_auth_required: "请重新登录后再进入学习室。",
+    pk_membership_required: "这个账号尚未启用同步。",
+  };
+
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function connect({ questions, chapters, rpc }) {
+    const lobby = get("lobby");
+    if (!lobby) return null;
+    const desk = document.getElementById("desk");
+    const chapter = get("chapter");
+    for (const name of chapters) {
+      const option = element("option", name);
+      option.value = name;
+      chapter.append(option);
+    }
+    let account = null;
+    let paired = false;
+    let visible = false;
+    let inRoom = false;
+    let snapshot = null;
+    let pending = null;
+    let writing = false;
+    let blocked = false;
+    let message = "";
+    let pollAt = 0;
+    let questionKey = "";
+    let summaryKey = "";
+    let revealedKey = "";
+    let options = [];
+    let selected = [];
+    let confirmLeave = false;
+
+    function put(key, value) {
+      const target = get(key);
+      if (target.textContent !== value) target.textContent = value;
+    }
+
+    function online(key, value, copy) {
+      const status = get(key);
+      status.dataset.online = String(Boolean(value));
+      put(key, copy);
+    }
+
+    function lobbyCopy(room) {
+      if (!snapshot) return blocked ? "学习室暂时连不上，正在尝试重连。" : "正在连接一起学…";
+      if (!snapshot.paired) return "同桌关系已更新，返回本页后可重新配对。";
+      if (!room) return "任选一章开桌，或和同桌一起做全书综合题。";
+      if (room.phase === "waiting") return room.isHost ? "学习室已准备好，等同桌加入。" : "同桌正在等你，加入就能开始。";
+      if (room.phase === "complete") return "上一轮已完成，可以再开一轮。";
+      if (terminal(room.phase)) return "上一轮已结束，可以重新开桌。";
+      return "这一轮还在，随时回到刚才的题。";
+    }
+
+    function renderLobby() {
+      const room = snapshot?.room;
+      const canOpen = Boolean(snapshot?.paired && (!room || terminal(room.phase)));
+      const canJoin = Boolean(room?.phase === "waiting" && !room.joined && !room.isHost);
+      const canResume = Boolean(room && !terminal(room.phase) && (room.joined || room.isHost));
+      get("start").hidden = Boolean(room && !terminal(room.phase));
+      get("start").disabled = writing || !canOpen;
+      chapter.closest(".picker-field").hidden = Boolean(room && !terminal(room.phase));
+      get("join").hidden = !canJoin;
+      get("resume").hidden = !canResume;
+      get("join").disabled = writing;
+      get("resume").disabled = writing;
+      put("lobby-status", message || lobbyCopy(room));
+      online("local-presence", snapshot && !blocked, snapshot && !blocked ? "我已入座" : "连接中");
+      const connected = snapshot?.partnerOnline && !blocked;
+      online("presence", connected, connected ? "同桌在场" : snapshot && !blocked ? "同桌暂未入座" : "等待连接");
+    }
+
+    function showAnswers(item, room) {
+      const correct = room.correctPicks || item.answer;
+      const answer = correct.map((letter) => item.options[letter] || letter);
+      put("correct-answer", answer.join("、"));
+      const mine = room.myPicks?.slice().sort().join("、") || "—";
+      const other = room.partnerPicks?.slice().sort().join("、") || "—";
+      const same = mine === other;
+      put("choice-comparison", `我选 ${mine} · 同桌选 ${other}。${same ? "想法一致。" : "可以一起找出两种选法的区别。"}`);
+      put("review", item.study?.explanation || "");
+      get("review").hidden = !item.study?.explanation;
+      put("memory", item.study?.memory || "");
+      get("memory").hidden = !item.study?.memory;
+    }
+
+    function renderQuestion(item, room) {
+      const key = room.id + ":" + item.id;
+      if (key !== questionKey) {
+        questionKey = key;
+        selected = [];
+        put("kind", item.type + "题");
+        put("stem", item.stem);
+        options = Object.entries(item.options).map(([letter, value]) => {
+          const button = element("button", "", "option");
+          button.type = "button";
+          button.dataset.answer = letter;
+          button.append(element("span", letter, "letter"), element("span", value));
+          button.onclick = () => {
+            const current = snapshot?.room;
+            if (writing || current?.questionId !== item.id || current.phase !== "answering" || current.myPicks) return;
+            if (item.type === "多选") {
+              selected = selected.includes(letter) ? selected.filter((choice) => choice !== letter) : [...selected, letter];
+            } else {
+              selected = [letter];
+            }
+            render();
+          };
+          return button;
+        });
+        get("options").replaceChildren(...options);
+      }
+      const submitted = Boolean(room.myPicks);
+      const reveal = room.phase === "reveal";
+      const picks = room.myPicks || selected;
+      for (const button of options) {
+        const letter = button.dataset.answer;
+        const picked = picks.includes(letter);
+        const correct = reveal && (room.correctPicks || item.answer).includes(letter);
+        button.disabled = writing || submitted || reveal;
+        button.setAttribute("aria-pressed", String(picked));
+        button.classList.toggle("correct", correct);
+        button.classList.toggle("incorrect", reveal && picked && !correct);
+      }
+      get("submit").hidden = reveal || submitted;
+      get("submit").disabled = writing || !selected.length;
+      get("reveal").hidden = !reveal;
+      get("next").hidden = !reveal;
+      get("next").disabled = writing || Boolean(room.myReady);
+      if (reveal) {
+        showAnswers(item, room);
+        put("next", room.myReady ? "等同桌准备" : room.index === room.total ? "准备好看总结" : "我准备好了");
+        if (visible && revealedKey !== key) {
+          revealedKey = key;
+          requestAnimationFrame(() => {
+            if (visible && inRoom && questionKey === key && snapshot?.room?.phase === "reveal") {
+              get("reveal").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+            }
+          });
+        }
+      }
+    }
+
+    function renderSummary(room) {
+      const key = room.id + ":" + room.phase;
+      if (key === summaryKey) return;
+      summaryKey = key;
+      const summary = room.summary;
+      put("summary-heading", room.phase === "complete" ? "一起学完了" : "这轮一起学已结束");
+      put("summary-detail", summary
+        ? `共同答对 ${summary.bothCorrect} / ${room.total} 道。你答对 ${summary.myCorrect} 道，同桌答对 ${summary.partnerCorrect} 道。`
+        : "回到一起学页，可以重新开一轮。");
+      const missed = (summary?.review || []).filter((row) => !row.myCorrect || !row.partnerCorrect).map((row) => {
+        const item = questions.get(row.questionId);
+        if (!item) return null;
+        const card = document.createElement("article");
+        card.append(element("h4", item.stem));
+        if (item.study?.explanation) card.append(element("p", item.study.explanation));
+        return card;
+      }).filter(Boolean);
+      get("summary-review").replaceChildren(...missed);
+    }
+
+    function roomCopy(room, item) {
+      if (room.phase === "waiting") return "等同桌加入，你们就会一起看到第一题。";
+      if (terminal(room.phase)) return "";
+      if (!item) return "这道题在当前版本不可用，请更新题库后再来。";
+      if (room.phase === "reveal") {
+        if (room.myReady) return "你的确认已同步。";
+        return "看完解析后点准备好，两人都确认就能继续。";
+      }
+      if (room.myPicks) return "你的答案已锁定。等同桌提交后一起揭晓。";
+      return room.partnerSubmitted ? "同桌已提交，轮到你锁定答案。" : "先各自作答，交卷后再看彼此的选项。";
+    }
+
+    function renderRoom() {
+      const room = snapshot?.room;
+      if (!inRoom || !room) return;
+      const item = questions.get(room.questionId);
+      const done = terminal(room.phase);
+      const canAnswer = Boolean(item && (room.phase === "answering" || room.phase === "reveal"));
+      put("room-title", room.chapter || "综合一起学");
+      put("round-counter", room.phase === "complete" ? "本轮完成" : done ? "本轮结束" : `${room.index} / ${room.total}`);
+      const progress = get("progress");
+      progress.max = room.total;
+      progress.value = room.phase === "complete" ? room.total : Math.max(0, room.index - 1 + (room.phase === "reveal" ? 1 : 0));
+      get("leave").hidden = done || confirmLeave;
+      get("leave-confirm").hidden = done || !confirmLeave;
+      get("leave-yes").disabled = writing;
+      get("leave-cancel").disabled = writing;
+      get("back").disabled = writing;
+      get("question").hidden = !canAnswer;
+      get("submit").hidden = !canAnswer;
+      get("next").hidden = !canAnswer;
+      get("reveal").hidden = !canAnswer;
+      get("summary").hidden = !done;
+      online("me-status", true, room.myReady ? "我已准备" : room.myPicks ? "我已提交" : "我在场");
+      const partnerStatus = room.partnerReady ? "同桌已准备" : room.partnerSubmitted ? "同桌已提交" : snapshot.partnerOnline ? "同桌在场" : "等同桌入座";
+      online("peer-status", snapshot.partnerOnline, partnerStatus);
+      put("room-status", message || roomCopy(room, item));
+      if (canAnswer) renderQuestion(item, room);
+      if (done) renderSummary(room);
+    }
+
+    function render() {
+      desk.toggleAttribute("data-live-active", Boolean(inRoom && snapshot?.room));
+      get("room").hidden = !inRoom || !snapshot?.room;
+      renderLobby();
+      renderRoom();
+    }
+
+    async function send(action, args, { quiet = false, enter = false } = {}) {
+      if (!visible || !paired || !account || writing || (quiet && pending)) return;
+      const token = {};
+      pending = token;
+      writing = !quiet;
+      if (!quiet) message = "正在同步…";
+      pollAt = Date.now() + (inRoom ? 2000 : 5000);
+      render();
+      try {
+        const { error, data } = await rpc("quiz_live_" + action, args);
+        if (pending !== token) return;
+        if (error) throw error;
+        if (!data || typeof data.paired !== "boolean") throw new Error("live_bad_response");
+        snapshot = data;
+        blocked = false;
+        message = "";
+        if (!data.room || !data.paired) inRoom = false;
+        else if (enter) showRoom();
+        else if (action === "leave") {
+          confirmLeave = false;
+          backToLobby();
+        }
+      } catch (error) {
+        if (pending !== token) return;
+        if (quiet) {
+          blocked = true;
+          pollAt = Date.now() + 5000;
+          if (inRoom) message = "连接短暂中断，正在重连。";
+        } else {
+          message = errors[error.message] || "同步失败，请稍后再试。";
+        }
+      } finally {
+        if (pending === token) {
+          pending = null;
+          writing = false;
+          render();
+        }
+      }
+    }
+
+    function sync(force = false) {
+      if (!document.hidden && (force || Date.now() >= pollAt)) return send("state", undefined, { quiet: true });
+    }
+
+    function showRoom() {
+      if (!snapshot?.room) return;
+      inRoom = true;
+      confirmLeave = false;
+      message = "";
+      pollAt = Date.now() + 2000;
+      render();
+      if (visible) {
+        window.scrollTo(0, 0);
+        get("room-title").focus({ preventScroll: true });
+      }
+    }
+
+    function backToLobby() {
+      inRoom = false;
+      confirmLeave = false;
+      message = "";
+      render();
+      if (visible) window.scrollTo(0, 0);
+    }
+
+    get("start").onclick = () => send("start", { chapter: chapter.value || null }, { enter: true });
+    get("resume").onclick = () => { showRoom(); sync(true); };
+    get("join").onclick = () => send("join", { room_id: snapshot.room.id }, { enter: true });
+    get("back").onclick = backToLobby;
+    get("finish").onclick = backToLobby;
+    get("submit").onclick = () => {
+      const room = snapshot?.room;
+      if (room && selected.length) send("answer", { room_id: room.id, question_id: room.questionId, picks: selected });
+    };
+    get("next").onclick = () => {
+      const room = snapshot?.room;
+      if (room) send("next", { room_id: room.id, question_id: room.questionId });
+    };
+    get("leave").onclick = () => {
+      confirmLeave = true;
+      render();
+      get("leave-cancel").focus();
+    };
+    get("leave-cancel").onclick = () => {
+      confirmLeave = false;
+      render();
+      get("leave").focus();
+    };
+    get("leave-yes").onclick = () => send("leave", { room_id: snapshot.room.id });
+
+    setInterval(sync, 1000);
+    document.addEventListener("visibilitychange", () => sync(true));
+    window.addEventListener("online", () => sync(true));
+
+    return {
+      setContext(nextAccount, nextPaired, nextVisible) {
+        const identityChanged = account !== nextAccount || paired !== nextPaired;
+        const entering = !visible && nextVisible;
+        account = nextAccount;
+        paired = nextPaired;
+        visible = nextVisible;
+        if (identityChanged) {
+          snapshot = null;
+          pending = null;
+          writing = false;
+          blocked = false;
+          message = "";
+          questionKey = "";
+          summaryKey = "";
+          revealedKey = "";
+          inRoom = false;
+          confirmLeave = false;
+          chapter.value = "";
+          chapter.dispatchEvent(new Event("change", { bubbles: true }));
+          render();
+        }
+        if (visible && (entering || identityChanged)) sync(true);
+      },
+    };
+  }
+
+  window.QuizLive = { connect };
+})();
+</script>
+<script>
+(() => {
+  "use strict";
+
   const byId = (id) => document.getElementById("desk-" + id);
   const errors = {
     pk_auth_required: "请重新登录后再试。",
@@ -2883,6 +3720,7 @@ void main() {
       run: avatar,
       saved: () => request("dashboard", undefined, { silent: true }),
     });
+    const live = window.QuizLive?.connect({ questions, chapters, rpc });
     const draftKey = (id) => `xigai-desk-draft-v1:${account}:${id}`;
 
     function setStatus(value) {
@@ -2975,6 +3813,7 @@ void main() {
       byId("unpair").hidden = confirmUnpair;
       renderDashboard();
       setBusy();
+      live?.setContext(account, Boolean(dashboard?.partner), active && !round);
     }
 
     async function request(name, params, { silent = false, after } = {}) {
@@ -3195,6 +4034,8 @@ void main() {
           if (account && !dashboard && !byId("status").textContent) setStatus("正在同步同桌进度…");
           render();
           refresh();
+        } else {
+          live?.setContext(account, Boolean(dashboard?.partner), false);
         }
       },
       setLoginAvailable(available) {
