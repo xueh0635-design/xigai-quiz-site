@@ -8,7 +8,7 @@
 
 首页和同桌营地可拖动 3D 视角，外观支持晨雾、日间、暮色、夜间和随时间切换。
 
-在「一起学」可以邀请同桌开一场实时双塔擂台。答对会削弱对方护盾，速度和连击可增加伤害。场内可以发快捷消息，也可以由双方分别加入语音并自行开关麦克风。语音采用点对点连接，部分网络可能无法连通。交卷后可以逐题回看自己的对错，结算后显示答案和解析。
+在「一起学」邀请同桌开一场实时双塔擂台。发起方选择题目数量，同桌应战前能看到题量和限时。答对积攒能量，可打出护阵、破阵、回炉和蓄势，连击触发暴击。首次达成卡牌收藏条件后，可以在集卡册打开原创插画。场内支持快捷消息和双方自愿加入的点对点语音。新对局统一实时开始，已提交的旧试卷在「旧场次记录」回看。
 
 ## 模拟器构建
 
@@ -22,4 +22,4 @@ iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用
 
 在应用里打开「我的 → 应用更新」可以检查新版、打开 GitHub 发布页并开启更新通知。开启后，系统约每两小时安排一次后台检查，实际时间依设备的联网和省电设置而定。通知会打开对应的 GitHub Release 页面。
 
-发布后续版本时，先把源码和网页推送到 `main`。构建 APK 时提高 `quizVersionCode` 并设置 `quizVersionName`，例如在 `mobile/android` 执行 `./gradlew :app:assembleRelease -PquizVersionCode=17 -PquizVersionName=1.1.15`。用同一个 Android 签名密钥签署 release APK，从仓库根目录运行 `python3 mobile/android-native/publish.py 已签名.apk 发布说明.md`。脚本先校验签名和版本，再发布 APK 并更新客户端读取的版本清单。APK 与发布清单会通过同一 GitHub 仓库提供。
+发布后续版本时，先把源码和网页推送到 `main`。构建 APK 时提高 `quizVersionCode` 并设置 `quizVersionName`，例如在 `mobile/android` 执行 `./gradlew :app:assembleRelease -PquizVersionCode=18 -PquizVersionName=1.1.16`。用同一个 Android 签名密钥签署 release APK，从仓库根目录运行 `python3 mobile/android-native/publish.py 已签名.apk 发布说明.md`。脚本先校验签名和版本，再发布 APK 并更新客户端读取的版本清单。APK 与发布清单会通过同一 GitHub 仓库提供。
