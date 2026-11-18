@@ -11,6 +11,7 @@ assert.notEqual(source, sourceWithMockClient);
 const user = { id: "local-account-fixture", email: "learner@example.test" };
 const password = "Local-test-password-42";
 const duplicate = "无法用这个邮箱创建账号。如果注册过，请直接登录。";
+const rateLimited = "注册请求过多，请稍后再试。";
 
 function registrationError(status, message) {
   return {
@@ -96,52 +97,59 @@ test("new account creation signs in with the submitted credentials and closes th
   assert.equal(field("active").hidden, false);
 });
 
-test("a registration conflict with matching credentials opens the existing account without resetting progress", async () => {
-  const { calls, dialog, events, field, sync, submit } = await setup({ registration: registrationError(409, duplicate) });
-  await submit();
-  assert.deepEqual(calls, [
-    ["quiz-register", { email: user.email, password }],
-    ["signIn", { email: user.email, password }],
-  ]);
-  assert.equal(dialog.open, false);
-  assert.equal(sync.enabled(), true);
-  assert.equal(field("email").textContent, user.email);
-  assert.equal(events.length, 1);
-  assert.equal(events[0].state.history.q1.wrong, 2);
-});
-
-test("a registration conflict with incorrect credentials sends one login attempt and leaves a focused login form", async () => {
-  const originalPassword = "Another-fixture-password-23";
-  const signIn = ({ password: received }) => received === originalPassword
-    ? { data: { user }, error: null }
-    : { data: { user: null }, error: { status: 400, code: "invalid_credentials" } };
-  const { calls, dialog, document, field, sync, submit } = await setup({
-    registration: registrationError(409, duplicate), signIn,
+for (const [status, errorCopy] of [[409, duplicate], [429, rateLimited]]) {
+  test(`registration HTTP ${status} with matching credentials opens the same account and preserves progress`, async () => {
+    const { calls, dialog, events, field, sync, submit } = await setup({ registration: registrationError(status, errorCopy) });
+    await submit();
+    assert.deepEqual(calls, [
+      ["quiz-register", { email: user.email, password }],
+      ["signIn", { email: user.email, password }],
+    ]);
+    assert.equal(dialog.open, false);
+    assert.equal(sync.enabled(), true);
+    assert.equal(field("email").textContent, user.email);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].state.history.q1.wrong, 2);
   });
-  await submit();
-  assert.deepEqual(calls, [
-    ["quiz-register", { email: user.email, password }],
-    ["signIn", { email: user.email, password }],
-  ]);
-  assert.equal(sync.enabled(), false);
-  assert.equal(dialog.open, true);
-  assert.equal(field("submit").textContent, "登录");
-  assert.equal(field("submit").disabled, false);
-  assert.equal(field("toggle").disabled, false);
-  assert.equal(field("email-input").value, user.email);
-  assert.equal(field("password").value, "");
-  assert.equal(field("password").autocomplete, "current-password");
-  assert.equal(document.activeElement, field("password"));
-  assert.match(field("message").textContent, /登录/);
-  field("password").value = originalPassword;
-  await submit();
-  assert.equal(dialog.open, false);
-  assert.equal(sync.enabled(), true);
-  assert.deepEqual(calls.slice(2), [["signIn", { email: user.email, password: originalPassword }]]);
-});
 
-test("registration errors other than a conflict keep the registration form and never attempt login", async () => {
-  for (const [status, copy] of [[400, "请换一个更难猜的密码。"], [429, "注册请求过多，请稍后再试。"], [503, "注册服务暂不可用。"]]) {
+  test(`registration HTTP ${status} with incorrect credentials tries login once and switches to login`, async () => {
+    const originalPassword = "Another-fixture-password-23";
+    const signIn = ({ password: received }) => received === originalPassword
+      ? { data: { user }, error: null }
+      : { data: { user: null }, error: { status: 400, code: "invalid_credentials" } };
+    const { calls, dialog, document, field, sync, submit } = await setup({
+      registration: registrationError(status, errorCopy), signIn,
+    });
+    await submit();
+    assert.deepEqual(calls, [
+      ["quiz-register", { email: user.email, password }],
+      ["signIn", { email: user.email, password }],
+    ]);
+    assert.equal(sync.enabled(), false);
+    assert.equal(dialog.open, true);
+    assert.equal(field("submit").textContent, "登录");
+    assert.equal(field("submit").disabled, false);
+    assert.equal(field("toggle").disabled, false);
+    assert.equal(field("email-input").value, user.email);
+    assert.equal(field("password").value, "");
+    assert.equal(field("password").autocomplete, "current-password");
+    assert.equal(document.activeElement, field("password"));
+    const copy = field("message").textContent;
+    assert.match(copy, /登录/);
+    if (status === 429) {
+      assert.match(copy, /过多|太多|频繁|限流|受限|达到上限/);
+      assert.doesNotMatch(copy, /(?:这个邮箱|该邮箱|账号)(?:已注册|已经注册|已被注册|已存在)/);
+    }
+    field("password").value = originalPassword;
+    await submit();
+    assert.equal(dialog.open, false);
+    assert.equal(sync.enabled(), true);
+    assert.deepEqual(calls.slice(2), [["signIn", { email: user.email, password: originalPassword }]]);
+  });
+}
+
+test("other registration errors keep the registration form and never attempt login", async () => {
+  for (const [status, copy] of [[400, "请换一个更难猜的密码。"], [503, "注册服务暂不可用。"]]) {
     const { calls, dialog, field, sync, submit } = await setup({ registration: registrationError(status, copy) });
     await submit();
     assert.deepEqual(calls, [["quiz-register", { email: user.email, password }]]);

@@ -19,6 +19,140 @@ function isNewer(row, other) {
     (row.revision === other.revision && row.change_id > other.change_id);
 }
 
+function attachRecovery(dialog, loginForm, canStart, restoreLogin) {
+  const form = byId("account-recovery-form");
+  const email = byId("account-recovery-email");
+  const code = byId("account-recovery-code");
+  const password = byId("account-recovery-password");
+  const submit = byId("account-recovery-submit");
+  const back = byId("account-recovery-back");
+  const restart = byId("account-recovery-restart");
+  const message = byId("account-recovery-message");
+  let active = null;
+  const stillOpen = (attempt) => active === attempt && dialog.open && !dialog.hasAttribute("data-sheet-closing");
+
+  function showVerification(value) {
+    byId("account-recovery-verification").hidden = !value;
+    email.readOnly = value;
+    code.disabled = !value;
+    code.readOnly = false;
+    password.disabled = !value;
+    restart.hidden = !value;
+    submit.textContent = value ? "重置密码" : "发送验证码";
+  }
+
+  function setBusy(value) {
+    submit.disabled = value;
+    back.disabled = value;
+    restart.disabled = value;
+  }
+
+  function endSession(attempt) {
+    if (!attempt?.verified) return;
+    attempt.verified = false;
+    return attempt.auth.signOut({ scope: "local" }).catch(() => {});
+  }
+
+  function reset() {
+    const previous = active;
+    active = null;
+    endSession(previous);
+    form.reset();
+    form.hidden = true;
+    showVerification(false);
+    setBusy(false);
+    message.textContent = "";
+    byId("account-heading").textContent = "同步学习进度";
+  }
+
+  function start(address) {
+    reset();
+    active = {
+      auth: createClient(config.url, config.key, { auth: {
+        storageKey: "xigai-password-recovery-v1", autoRefreshToken: false,
+        persistSession: false, detectSessionInUrl: false,
+      } }).auth,
+      sentTo: "",
+      verified: false,
+    };
+    email.value = address;
+    loginForm.hidden = true;
+    byId("account-heading").textContent = "重置密码";
+    form.hidden = false;
+    email.focus();
+  }
+
+  function leave(notice) {
+    const address = email.value.trim();
+    reset();
+    restoreLogin(address, notice);
+  }
+
+  byId("account-forgot").onclick = () => {
+    if (canStart()) start(byId("account-email-input").value.trim());
+  };
+  back.onclick = () => leave("");
+  restart.onclick = () => start(email.value.trim());
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const attempt = active;
+    if (!attempt || !stillOpen(attempt) || submit.disabled) return;
+    const address = email.value.trim().toLowerCase();
+    const newPassword = password.value;
+    if (attempt.sentTo && (newPassword.length < 10 || new TextEncoder().encode(newPassword).length > 72)) {
+      message.textContent = "请使用至少 10 个字符且不超过 72 字节的新密码。";
+      return;
+    }
+    setBusy(true);
+    message.textContent = attempt.sentTo ? "正在验证并重置…" : "正在发送验证码…";
+    try {
+      if (!attempt.sentTo) {
+        const { error } = await attempt.auth.resetPasswordForEmail(address);
+        if (!stillOpen(attempt)) return;
+        if (error) {
+          message.textContent = error.status === 429 ? "验证码发送过于频繁，请稍后再试。" : "暂时无法发送验证码，请稍后再试。";
+          return;
+        }
+        attempt.sentTo = address;
+        email.value = address;
+        showVerification(true);
+        code.focus();
+        message.textContent = "如果此邮箱有账号，请查收验证码，也可检查垃圾邮件。";
+        return;
+      }
+      if (!attempt.verified) {
+        const { data, error } = await attempt.auth.verifyOtp({
+          email: attempt.sentTo, token: code.value.trim(), type: "recovery",
+        });
+        attempt.verified = !error && Boolean(data?.session);
+        if (!stillOpen(attempt)) {
+          await endSession(attempt);
+          return;
+        }
+        if (!attempt.verified) {
+          message.textContent = error?.status === 429 ? "验证码尝试过于频繁，请稍后再试。" : "验证码无效或已过期，请核对或重新发送。";
+          return;
+        }
+        code.readOnly = true;
+      }
+      const { error } = await attempt.auth.updateUser({ password: newPassword });
+      if (!stillOpen(attempt)) return;
+      if (error) {
+        message.textContent = error.code === "same_password" || error.code === "weak_password"
+          ? "请换一个不同且更难猜的新密码。"
+          : "暂时无法更新密码。可以稍后重试，或重新获取验证码。";
+        return;
+      }
+      leave("密码已重置，请用新密码登录。");
+    } catch {
+      if (stillOpen(attempt)) message.textContent = "连接失败，请稍后重试。";
+    } finally {
+      if (active === attempt) setBusy(false);
+    }
+  };
+  return { reset };
+}
+
 function connect(callbacks) {
   if (!config?.url || !config?.key) return null;
   const client = createClient(config.url, config.key, {
@@ -132,6 +266,7 @@ function connect(callbacks) {
     actor = user || null;
     enrolled = false;
     if (actor) {
+      recovery?.reset();
       cache = readCache(actor.id);
       byId("account-button").textContent = "账号";
       byId("account-email").textContent = actor.email || "";
@@ -167,11 +302,25 @@ function connect(callbacks) {
     else passwordInput.removeAttribute("minlength");
     byId("account-password-label").textContent = registering ? "密码（至少 10 个字符）" : "密码";
     byId("account-register-hint").hidden = !registering;
+    byId("account-forgot").hidden = registering || !recovery;
     submitButton.textContent = registering ? "创建并登录" : "登录";
     passwordInput.autocomplete = registering ? "new-password" : "current-password";
     toggleButton.textContent = registering ? "返回登录" : "注册账号";
     message("");
   }
+
+  const recovery = config.passwordRecovery === true && !nativeUI ? attachRecovery(
+    dialog, form, () => !actor && !submitButton.disabled,
+    (address, notice) => {
+      form.hidden = false;
+      setRegistering(false);
+      byId("account-email-input").value = address;
+      passwordInput.value = "";
+      passwordInput.focus();
+      message(notice);
+    },
+  ) : null;
+  byId("account-forgot").hidden = !recovery;
 
   byId("account-button").hidden = false;
   byId("account-button").onclick = async () => {
@@ -194,6 +343,8 @@ function connect(callbacks) {
   toggleButton.onclick = () => setRegistering(!registering);
   dialog.addEventListener("close", () => {
     if (dialog.open) return;
+    recovery?.reset();
+    form.hidden = Boolean(actor);
     form.reset();
     setRegistering(false);
   });
@@ -216,14 +367,14 @@ function connect(callbacks) {
     email = email.trim().toLowerCase();
     if (!email || !password) return { message: "请输入邮箱和密码。" };
     if (creatingAccount && password.length < 10) return { message: "密码至少需要 10 个字符。" };
-    let existingAccount = false;
+    let registrationStatus = 0;
     try {
       if (creatingAccount) {
         const enrolled = await client.functions.invoke("quiz-register", { body: { email, password } });
         if (enrolled.error) {
           const response = enrolled.error.context;
-          existingAccount = response?.status === 409;
-          if (!existingAccount) {
+          registrationStatus = response?.status || 0;
+          if (registrationStatus !== 409 && registrationStatus !== 429) {
             const body = await response?.json?.().catch(() => null);
             return { message: body?.message || "注册未完成，请检查网络后重试。" };
           }
@@ -232,11 +383,15 @@ function connect(callbacks) {
       const response = await client.auth.signInWithPassword({ email, password });
       if (response.error || !response.data.user) {
         if (response.error?.code === "invalid_credentials") {
-          return existingAccount
-            ? { message: "这个邮箱已注册。请用原来设置的密码登录。", switchToLogin: true }
-            : { message: "邮箱或密码不正确，请核对后重试。" };
+          if (registrationStatus === 409) {
+            return { message: "这个邮箱已注册。请用原来设置的密码登录。", switchToLogin: true };
+          }
+          if (registrationStatus === 429) {
+            return { message: "注册请求过多。已有账号可直接登录，新用户请稍后再注册。", switchToLogin: true };
+          }
+          return { message: "邮箱或密码不正确，请核对后重试。" };
         }
-        return { message: existingAccount ? "这个邮箱已注册，暂时无法登录，请稍后重试。" : "暂时无法登录，请稍后重试。" };
+        return { message: registrationStatus === 409 ? "这个邮箱已注册，暂时无法登录，请稍后重试。" : "暂时无法登录，请稍后重试。" };
       }
       switchAccount(response.data.user);
       return null;
