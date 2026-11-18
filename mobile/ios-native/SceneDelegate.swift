@@ -15,7 +15,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             tabs.onTabSelected = { [weak content] tab in content?.selectWebTab(tab) }
             window?.rootViewController = tabs
         } else {
-            window?.rootViewController = CAPBridgeViewController()
+            window?.rootViewController = QuizWebViewController()
         }
         window?.makeKeyAndVisible()
 

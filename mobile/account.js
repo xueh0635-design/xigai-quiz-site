@@ -464,6 +464,16 @@ function connect(callbacks) {
     const result = await client.rpc(name, params);
     return epoch === generation ? result : { error: { message: "pk_auth_required" } };
   }
+  function arenaSubscribe(pairId, listener) {
+    if (!actor) return null;
+    const epoch = generation;
+    const channel = client.channel("quiz-arena-" + randomId());
+    channel.on("postgres_changes", {
+      event: "*", schema: "public", table: "quiz_arena_ticks", filter: `pair_id=eq.${pairId}`,
+    }, () => { if (epoch === generation) listener(); });
+    channel.subscribe();
+    return () => { client.removeChannel(channel).catch(() => {}); };
+  }
   async function deskAvatar(action, input) {
     const user = actor;
     if (!user) return { error: { message: "pk_auth_required" } };
@@ -478,7 +488,7 @@ function connect(callbacks) {
     const result = await operations[action]();
     return epoch === generation ? result : { error: { message: "pk_auth_required" } };
   }
-  return { queue, deskRpc, deskAvatar, enabled: () => Boolean(actor) };
+  return { queue, deskRpc, deskAvatar, arenaSubscribe, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {

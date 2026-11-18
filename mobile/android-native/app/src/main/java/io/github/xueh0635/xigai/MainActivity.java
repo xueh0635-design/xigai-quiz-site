@@ -1,12 +1,76 @@
 package io.github.xueh0635.xigai;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.webkit.PermissionRequest;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 public class MainActivity extends BridgeActivity {
+    private PermissionRequest pendingMicrophone;
+    private boolean requestingMicrophone;
+    private final ActivityResultLauncher<String> requestMicrophone = registerForActivityResult(
+        new ActivityResultContracts.RequestPermission(), this::completeMicrophoneRequest
+    );
+
     @Override
     protected void onCreate(Bundle state) {
         registerPlugin(QuizUpdatePlugin.class);
         super.onCreate(state);
+        if (getBridge() == null) return;
+        getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                String[] resources = request.getResources();
+                if (!isBundledOrigin(request.getOrigin()) || !isBundledPage() || resources.length != 1
+                    || !PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resources[0]) || requestingMicrophone) {
+                    request.deny();
+                    return;
+                }
+
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                    grantMicrophone(request);
+                    return;
+                }
+
+                pendingMicrophone = request;
+                requestingMicrophone = true;
+                requestMicrophone.launch(Manifest.permission.RECORD_AUDIO);
+            }
+
+            @Override
+            public void onPermissionRequestCanceled(PermissionRequest request) {
+                if (request == pendingMicrophone) pendingMicrophone = null;
+            }
+        });
+    }
+
+    private void completeMicrophoneRequest(boolean granted) {
+        PermissionRequest request = pendingMicrophone;
+        pendingMicrophone = null;
+        requestingMicrophone = false;
+        if (request == null) return;
+        if (granted && isBundledPage()) grantMicrophone(request);
+        else request.deny();
+    }
+
+    private boolean isBundledPage() {
+        String url = getBridge().getWebView().getUrl();
+        return url != null && isBundledOrigin(Uri.parse(url));
+    }
+
+    private static boolean isBundledOrigin(Uri origin) {
+        return origin != null && "https".equals(origin.getScheme()) && "localhost".equals(origin.getHost())
+            && origin.getUserInfo() == null && (origin.getPort() == -1 || origin.getPort() == 443);
+    }
+
+    private static void grantMicrophone(PermissionRequest request) {
+        request.grant(new String[] { PermissionRequest.RESOURCE_AUDIO_CAPTURE });
     }
 }

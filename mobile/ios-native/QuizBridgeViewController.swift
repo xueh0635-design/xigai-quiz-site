@@ -2,8 +2,49 @@ import Capacitor
 import UIKit
 import WebKit
 
+class QuizWebViewController: CAPBridgeViewController {
+    private var mediaDelegate: QuizMediaUIDelegate?
+
+    override func capacitorDidLoad() {
+        super.capacitorDidLoad()
+        guard let webView else { return }
+        let delegate = QuizMediaUIDelegate(forwarding: webView.uiDelegate)
+        mediaDelegate = delegate
+        webView.uiDelegate = delegate
+    }
+}
+
+private final class QuizMediaUIDelegate: NSObject, WKUIDelegate {
+    private weak var original: WKUIDelegate?
+
+    init(forwarding original: WKUIDelegate?) {
+        self.original = original
+    }
+
+    // Keep Capacitor's existing UI delegate for alerts, prompts, and new windows.
+    override func responds(to selector: Selector!) -> Bool {
+        super.responds(to: selector) || original?.responds(to: selector) == true
+    }
+
+    override func forwardingTarget(for selector: Selector!) -> Any? {
+        if original?.responds(to: selector) == true { return original }
+        return super.forwardingTarget(for: selector)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+        initiatedByFrame frame: WKFrameInfo,
+        type: WKMediaCaptureType,
+        decisionHandler: @escaping @MainActor @Sendable (WKPermissionDecision) -> Void
+    ) {
+        let trustedOrigin = origin.protocol == "capacitor" && origin.host == "localhost" && origin.port == 0
+        decisionHandler(trustedOrigin && frame.isMainFrame && type == .microphone ? .grant : .deny)
+    }
+}
+
 @available(iOS 26.0, *)
-final class QuizBridgeViewController: CAPBridgeViewController {
+final class QuizBridgeViewController: QuizWebViewController {
     weak var nativeTabs: QuizNativeTabBarController?
 
     override func capacitorDidLoad() {
@@ -32,6 +73,14 @@ final class QuizBridgeViewController: CAPBridgeViewController {
 
         if kind == "tab", let tab = body["tab"] as? String {
             nativeTabs?.selectTab(tab, animated: body["animate"] as? Bool ?? true)
+            reply(true, nil)
+            return
+        }
+        if kind == "theme", let dark = body["dark"] as? Bool {
+            let style: UIUserInterfaceStyle = dark ? .dark : .light
+            overrideUserInterfaceStyle = style
+            nativeTabs?.overrideUserInterfaceStyle = style
+            view.window?.overrideUserInterfaceStyle = style
             reply(true, nil)
             return
         }
