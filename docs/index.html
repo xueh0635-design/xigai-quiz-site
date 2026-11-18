@@ -2333,11 +2333,23 @@ function connectTabLens() {
       speed = event && event.timeStamp - current.time < 80 ? current.speed : 0;
       if (!reducedMotion.matches) paint(released, 1 + Math.min(.14, Math.abs(speed) * .017), speed);
     }
-    skipClick = current.dragging || !commit;
+    skipClick = true;
     const selected = selection();
-    const index = commit && current.dragging ? limit(Math.round(released), 0, lastTab) : selected;
-    if (index !== selected) showTab(tabButtons[index].dataset.studyTab, true);
-    else move(selected, true);
+    if (commit && current.dragging) {
+      const index = limit(Math.round(released), 0, lastTab);
+      if (index !== selected) {
+        showTab(tabButtons[index].dataset.studyTab, true);
+        return;
+      }
+    } else if (commit) {
+      const button = tabButtons[current.index];
+      const hit = document.elementFromPoint(event.clientX, event.clientY);
+      if (button.contains(hit)) {
+        showTab(button.dataset.studyTab, true);
+        return;
+      }
+    }
+    move(selected, true);
   }
 
   tabDock.addEventListener("pointerdown", (event) => {
@@ -2346,7 +2358,7 @@ function connectTabLens() {
     const first = tabButtons[0].getBoundingClientRect();
     const second = tabButtons[1].getBoundingClientRect();
     gesture = {
-      id: event.pointerId, x: event.clientX, y: event.clientY,
+      id: event.pointerId, index, x: event.clientX, y: event.clientY,
       origin: first.left + first.width / 2, pitch: second.left - first.left,
       position, speed: 0, time: event.timeStamp, dragging: false,
     };
@@ -2381,6 +2393,9 @@ function connectTabLens() {
     if (!reducedMotion.matches) startFrame(tickDrag);
   });
 
+  tabDock.addEventListener("contextmenu", (event) => {
+    if (gesture) event.preventDefault();
+  });
   window.addEventListener("pointerup", (event) => finish(event, true));
   window.addEventListener("pointercancel", (event) => finish(event, false));
   window.addEventListener("blur", () => finish(null, false));
