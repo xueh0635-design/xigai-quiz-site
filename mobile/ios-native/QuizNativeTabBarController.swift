@@ -11,6 +11,7 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
 
     private let studyTabs = [
         StudyTab(name: "practice", title: "练习", symbol: "square.and.pencil", selectedSymbol: "square.and.pencil"),
+        StudyTab(name: "desk", title: "同桌", symbol: "person.2", selectedSymbol: "person.2.fill"),
         StudyTab(name: "wrong", title: "错题", symbol: "xmark.circle", selectedSymbol: "xmark.circle.fill"),
         StudyTab(name: "starred", title: "收藏", symbol: "star", selectedSymbol: "star.fill"),
         StudyTab(name: "profile", title: "我的", symbol: "person.crop.circle", selectedSymbol: "person.crop.circle.fill")

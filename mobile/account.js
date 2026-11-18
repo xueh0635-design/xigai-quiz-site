@@ -265,6 +265,7 @@ function connect(callbacks) {
     generation += 1;
     actor = user || null;
     enrolled = false;
+    callbacks.accountChanged?.(actor?.id ?? null);
     if (actor) {
       recovery?.reset();
       cache = readCache(actor.id);
@@ -457,7 +458,13 @@ function connect(callbacks) {
   setInterval(() => {
     if (document.visibilityState === "visible") refresh();
   }, 45000);
-  return { queue, enabled: () => Boolean(actor) };
+  async function deskRpc(name, params) {
+    if (!actor) return { error: { message: "pk_auth_required" } };
+    const epoch = generation;
+    const result = await client.rpc(name, params);
+    return epoch === generation ? result : { error: { message: "pk_auth_required" } };
+  }
+  return { queue, deskRpc, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {
