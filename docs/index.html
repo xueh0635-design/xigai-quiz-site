@@ -462,10 +462,8 @@ a { color: var(--accent); }
   border-radius: 28px;
   background: #0000000a;
   box-shadow: 0 1px 4px #252f2d22, inset 0 1px 1px #ffffffb0, inset 0 -1px 3px #252f2d15;
-  transform: translate3d(calc(100% * var(--tab-position, var(--tab-index, 0))), 0, 0)
+  transform: translate3d(calc(100% * var(--tab-position, var(--tab-index, 0))), var(--tab-lift, 0px), 0)
     scale(var(--tab-stretch, 1), var(--tab-squash, 1));
-  translate: 0 0;
-  transition: translate .18s ease-out;
   will-change: transform;
   pointer-events: none;
 }
@@ -495,7 +493,6 @@ a { color: var(--accent); }
 }
 .tab-highlight[data-optics="webgl2"] .tab-lens-optics { visibility: visible; }
 .tab-highlight[data-optics="webgl2"]::before, .tab-highlight[data-optics="webgl2"]::after { display: none; }
-.study-tabs[data-glass-pressed] .tab-highlight { translate: 0 -4px; transition-duration: .075s; }
 .study-tabs[data-glass-pressed] .tab-highlight::before { opacity: 1; transition-duration: .09s; }
 .study-tabs[data-glass-pressed] .tab-highlight::after { opacity: .88; transition-duration: .09s; }
 .study-tabs[data-glass-dragging] button { cursor: grabbing; }
@@ -522,7 +519,7 @@ a { color: var(--accent); }
 .study-tabs button:not(:disabled):active { transform: none; }
 .study-tabs:is([data-glass-pressed], [data-glass-pointer]) button:focus-visible { outline-color: transparent; }
 .study-tab-icon { position: relative; width: 22px; height: 22px; transition: transform .18s cubic-bezier(.2, .72, .34, 1); }
-.study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: translateY(-1px) scale(1.1); }
+.study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: translateY(-1.5px) scale(1.22); }
 @media (hover: hover) { .study-tabs button:not(:disabled):hover { color: #084e40; } }
 .study-tab-icon::before, .study-tab-icon::after { position: absolute; box-sizing: border-box; content: ""; }
 .tab-icon-practice::before { inset: 2px 3px; border: 1.6px solid; border-radius: 4px; }
@@ -608,7 +605,7 @@ a { color: var(--accent); }
   button, .study-tabs button, .study-tab-icon, .tab-highlight::before, .tab-highlight::after { transition: none; }
   .quiz-sheet[open], .quiz-sheet::backdrop { animation: none; transition: none; }
   button:not(:disabled):active, .study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: none; }
-  .tab-highlight, .study-tabs[data-glass-pressed] .tab-highlight { translate: none; transition: none; }
+  .tab-highlight { --tab-lift: 0px; }
 }
 </style>
   <style>
@@ -1349,7 +1346,7 @@ void main() {
   vec3 spectrum = mix(vec3(0.65, 0.35, 0.98), vec3(0.34, 0.90, 0.96), hue);
   float edgeFade = 1.0 - smoothstep(1.1, 4.4, depth);
   float chromaAlpha = activity * separation * edgeFade * 0.72;
-  float clearAlpha = 0.018 + rim * (0.27 + facing * 0.34) + reflection * 0.48;
+  float clearAlpha = 0.018 + rim * (0.27 + facing * 0.34 + uEnergy * 0.15) + reflection * 0.48;
   vec3 neutral = vec3(mix(0.55, 1.0, facing));
   vec3 color = mix(neutral, spectrum, chromaAlpha / (clearAlpha + chromaAlpha));
   float alpha = coverage * min(0.94, clearAlpha + chromaAlpha);
@@ -2217,6 +2214,8 @@ function connectTabLens() {
   let position = 0;
   let target = 0;
   let speed = 0;
+  let pressure = 0;
+  let pressureSpeed = 0;
   let flow = 0;
   let frame = 0;
   let previousTime = 0;
@@ -2230,7 +2229,7 @@ function connectTabLens() {
   function dragPosition(x, current) {
     const raw = (x - current.origin) / current.pitch;
     const edge = limit(raw, 0, lastTab);
-    return edge + limit((raw - edge) * .2, -.16, .16);
+    return edge + limit((raw - edge) * .16, -.10, .10);
   }
 
   function setPreview(index) {
@@ -2243,12 +2242,17 @@ function connectTabLens() {
 
   function paint(value, stretch = 1, drift = 0) {
     position = value;
+    const expansion = limit(pressure, 0, 1.12);
+    const edgeTravel = Math.max(0, -value, value - lastTab);
+    // Reserve room for the expanded lens during elastic travel at either end.
+    const width = Math.min(stretch + expansion * .20, 1.36 - edgeTravel * 2);
     tabDock.style.setProperty("--tab-position", value.toFixed(4));
-    tabDock.style.setProperty("--tab-stretch", stretch.toFixed(3));
-    tabDock.style.setProperty("--tab-squash", (1 - (stretch - 1) * .47).toFixed(3));
+    tabDock.style.setProperty("--tab-stretch", width.toFixed(3));
+    tabDock.style.setProperty("--tab-squash", (1 + expansion * .35 - (stretch - 1) * .47).toFixed(3));
+    tabDock.style.setProperty("--tab-lift", `${(-expansion * 2).toFixed(2)}px`);
     flow += (limit(drift / 5.8, -1, 1) - flow) * .34;
     if (Math.abs(flow) < .006) flow = 0;
-    optics?.draw(flow, Math.min(1, Math.abs(flow) + (gesture ? .14 : 0)));
+    optics?.draw(flow, Math.min(1, Math.abs(flow) + expansion * .42));
   }
 
   function stopFrame() {
@@ -2256,28 +2260,52 @@ function connectTabLens() {
     frame = 0;
   }
 
-  function tick(time) {
-    frame = 0;
+  function frameStep(time) {
     const step = limit((time - previousTime) / 1000, 0, 1 / 30);
     previousTime = time;
+    return step;
+  }
+
+  function updatePressure(step) {
+    const goal = gesture ? (gesture.dragging ? .78 : 1) : 0;
+    const damping = gesture ? 29 : 36;
+    pressureSpeed += ((goal - pressure) * 525 - pressureSpeed * damping) * step;
+    pressure += pressureSpeed * step;
+    if (Math.abs(goal - pressure) >= .003 || Math.abs(pressureSpeed) >= .045) return true;
+    pressure = goal;
+    pressureSpeed = 0;
+    return false;
+  }
+
+  function startFrame(callback) {
+    if (frame) return;
+    previousTime = performance.now();
+    frame = requestAnimationFrame(callback);
+  }
+
+  function tick(time) {
+    frame = 0;
+    const step = frameStep(time);
+    const resizing = updatePressure(step);
     speed += ((target - position) * 510 - speed * 35) * step;
     const next = position + speed * step;
     if (Math.abs(target - next) < .001 && Math.abs(speed) < .05) {
       speed = 0;
-      paint(target, gesture ? 1.04 : 1);
-      if (flow) frame = requestAnimationFrame(tick);
+      paint(target);
+      if (flow || resizing) frame = requestAnimationFrame(tick);
       return;
     }
-    paint(next, 1 + Math.min(.17, Math.abs(speed) * .021 + (gesture ? .04 : 0)), speed);
+    paint(next, 1 + Math.min(.17, Math.abs(speed) * .021), speed);
     frame = requestAnimationFrame(tick);
   }
 
   function tickDrag(time) {
     frame = 0;
     if (!gesture?.dragging || reducedMotion.matches) return;
+    const resizing = updatePressure(frameStep(time));
     const drift = gesture.speed * Math.exp(-Math.max(0, time - gesture.time - 24) / 77);
-    paint(gesture.position, 1.04 + Math.min(.14, Math.abs(drift) * .017), drift);
-    if (Math.abs(drift) > .04 || flow) frame = requestAnimationFrame(tickDrag);
+    paint(gesture.position, 1 + Math.min(.14, Math.abs(drift) * .017), drift);
+    if (Math.abs(drift) > .04 || flow || resizing) frame = requestAnimationFrame(tickDrag);
   }
 
   function move(index, animate) {
@@ -2285,12 +2313,11 @@ function connectTabLens() {
     if (!animate || reducedMotion.matches) {
       stopFrame();
       speed = 0;
+      pressure = 0;
+      pressureSpeed = 0;
       flow = 0;
       paint(index);
-    } else if (!frame) {
-      previousTime = performance.now();
-      frame = requestAnimationFrame(tick);
-    }
+    } else startFrame(tick);
   }
 
   function finish(event, commit) {
@@ -2304,7 +2331,7 @@ function connectTabLens() {
     if (current.dragging) {
       stopFrame();
       speed = event && event.timeStamp - current.time < 80 ? current.speed : 0;
-      if (!reducedMotion.matches) paint(released, 1.04 + Math.min(.14, Math.abs(speed) * .017), speed);
+      if (!reducedMotion.matches) paint(released, 1 + Math.min(.14, Math.abs(speed) * .017), speed);
     }
     skipClick = current.dragging || !commit;
     const selected = selection();
@@ -2327,7 +2354,10 @@ function connectTabLens() {
     tabDock.setAttribute("data-glass-pointer", "");
     tabDock.setAttribute("data-glass-pressed", "");
     setPreview(index);
-    if (!reducedMotion.matches) move(index, true);
+    if (!reducedMotion.matches) {
+      pressureSpeed = Math.max(pressureSpeed, 6);
+      move(index, true);
+    }
   });
 
   tabDock.addEventListener("pointermove", (event) => {
@@ -2348,9 +2378,7 @@ function connectTabLens() {
     gesture.position = next;
     gesture.time = event.timeStamp;
     setPreview(limit(Math.round(next), 0, lastTab));
-    if (!frame && !reducedMotion.matches) {
-      frame = requestAnimationFrame(tickDrag);
-    }
+    if (!reducedMotion.matches) startFrame(tickDrag);
   });
 
   window.addEventListener("pointerup", (event) => finish(event, true));
@@ -2600,13 +2628,13 @@ $("profile-account").hidden = $("account-button").hidden;
   const downloadButton = document.getElementById("update-download");
   let lastStatus;
 
-  function render(status, checked = false) {
+  function render(status) {
     lastStatus = status;
     const current = `当前版本 ${status.currentVersionName}`;
     statusText.textContent = status.available
       ? `${current} · 可更新至 ${status.versionName}`
       : status.checkFailed ? `${current} · 暂时无法检查更新`
-      : checked ? `${current} · 已是最新版` : current;
+      : status.checked ? `${current} · 已是最新版` : current;
     notifyButton.textContent = status.notificationsEnabled ? "关闭更新通知"
       : status.notificationsBlocked ? "前往系统开启通知" : "开启更新通知";
     downloadButton.hidden = !status.available;
@@ -2626,7 +2654,7 @@ $("profile-account").hidden = $("account-button").hidden;
 
   checkButton.onclick = () => {
     statusText.textContent = "正在检查更新…";
-    return act(checkButton, () => updates.check(), (status) => render(status, true));
+    return act(checkButton, () => updates.check(), render);
   };
   notifyButton.onclick = () => act(notifyButton, async () => {
     if (lastStatus?.notificationsEnabled) return updates.disableNotifications();

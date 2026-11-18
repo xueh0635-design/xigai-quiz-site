@@ -11,13 +11,13 @@
   const downloadButton = document.getElementById("update-download");
   let lastStatus;
 
-  function render(status, checked = false) {
+  function render(status) {
     lastStatus = status;
     const current = `当前版本 ${status.currentVersionName}`;
     statusText.textContent = status.available
       ? `${current} · 可更新至 ${status.versionName}`
       : status.checkFailed ? `${current} · 暂时无法检查更新`
-      : checked ? `${current} · 已是最新版` : current;
+      : status.checked ? `${current} · 已是最新版` : current;
     notifyButton.textContent = status.notificationsEnabled ? "关闭更新通知"
       : status.notificationsBlocked ? "前往系统开启通知" : "开启更新通知";
     downloadButton.hidden = !status.available;
@@ -37,7 +37,7 @@
 
   checkButton.onclick = () => {
     statusText.textContent = "正在检查更新…";
-    return act(checkButton, () => updates.check(), (status) => render(status, true));
+    return act(checkButton, () => updates.check(), render);
   };
   notifyButton.onclick = () => act(notifyButton, async () => {
     if (lastStatus?.notificationsEnabled) return updates.disableNotifications();
