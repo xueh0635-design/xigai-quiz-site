@@ -340,7 +340,7 @@ a { color: var(--accent); }
   bottom: var(--dock-pad);
   left: var(--dock-pad);
   width: calc((100% - 2 * var(--dock-pad)) / 4);
-  border: 1px solid #fafffcc7;
+  border: 1px solid #6bb396b8;
   border-radius: 28px;
   background: radial-gradient(ellipse at 17% -2%, #ffffffdc, transparent 53%),
     linear-gradient(154deg, #d4f8e784, #96d9b565);
@@ -392,10 +392,12 @@ a { color: var(--accent); }
   transition: color .16s ease-out, border-color .16s ease-out;
 }
 .study-tabs button[aria-current=page], .study-tabs button[data-tab-preview] { color: #084e40; font-weight: 750; }
+.study-tabs button:not(:disabled):hover { border-color: transparent; }
 .study-tabs button:not(:disabled):active { transform: none; }
+.study-tabs:is([data-glass-pressed], [data-glass-pointer]) button:focus-visible { outline-color: transparent; }
 .study-tab-icon { position: relative; width: 21px; height: 21px; transition: transform .18s cubic-bezier(.2, .72, .34, 1); }
 .study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: translateY(-1px) scale(1.1); }
-@media (hover: hover) { .study-tabs button:not(:disabled):hover { border-color: #fff9; } }
+@media (hover: hover) { .study-tabs button:not(:disabled):hover { color: #084e40; } }
 .study-tab-icon::before, .study-tab-icon::after { position: absolute; box-sizing: border-box; content: ""; }
 .tab-icon-practice::before { inset: 2px 3px; border: 1.6px solid; border-radius: 4px; }
 .tab-icon-practice::after { inset: 7px 6px 6px; background: repeating-linear-gradient(to bottom, currentColor 0 1.5px, transparent 1.5px 3.5px); }
@@ -1191,6 +1193,7 @@ function connectTabLens() {
       position, speed: 0, time: event.timeStamp, stretch: 1.04, dragging: false,
     };
     skipClick = false;
+    tabDock.setAttribute("data-glass-pointer", "");
     tabDock.setAttribute("data-glass-pressed", "");
     setPreview(index);
     if (!reducedMotion.matches) move(index, true);
@@ -1226,6 +1229,7 @@ function connectTabLens() {
   window.addEventListener("pointerup", (event) => finish(event, true));
   window.addEventListener("pointercancel", (event) => finish(event, false));
   window.addEventListener("blur", () => finish(null, false));
+  window.addEventListener("keydown", () => tabDock.removeAttribute("data-glass-pointer"));
   tabDock.addEventListener("lostpointercapture", (event) => {
     if (event.target === tabDock) finish(event, false);
   });
