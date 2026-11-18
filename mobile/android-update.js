@@ -49,6 +49,6 @@
   }, render);
   downloadButton.onclick = () => act(downloadButton, () => updates.openRelease());
 
-  updates.addListener("updateStatus", (status) => render(status)).catch(() => {});
   updates.getStatus().then((status) => { if (!lastStatus) render(status); }).catch(() => {});
+  Promise.resolve().then(() => updates.addListener("updateStatus", (status) => render(status))).catch(() => {});
 })();
