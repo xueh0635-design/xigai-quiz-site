@@ -464,7 +464,21 @@ function connect(callbacks) {
     const result = await client.rpc(name, params);
     return epoch === generation ? result : { error: { message: "pk_auth_required" } };
   }
-  return { queue, deskRpc, enabled: () => Boolean(actor) };
+  async function deskAvatar(action, input) {
+    const user = actor;
+    if (!user) return { error: { message: "pk_auth_required" } };
+    const epoch = generation;
+    const images = client.storage.from("quiz-pk-avatars");
+    const path = user.id + ".jpg";
+    const operations = {
+      download: () => images.download(input.path, { cacheNonce: input.revision }, { cache: "no-store" }),
+      save: () => images.upload(path, input, { upsert: true, contentType: "image/jpeg", cacheControl: "0" }),
+      remove: () => images.remove([path]),
+    };
+    const result = await operations[action]();
+    return epoch === generation ? result : { error: { message: "pk_auth_required" } };
+  }
+  return { queue, deskRpc, deskAvatar, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {
