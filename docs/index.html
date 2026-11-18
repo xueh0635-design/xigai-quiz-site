@@ -311,6 +311,9 @@ a { color: var(--accent); }
   border-radius: 34px;
   transform: translateX(-50%);
   box-shadow: 0 14px 37px #112e2967, 0 2px 5px #204c3622, inset 0 1px 1px #fff;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .study-tabs::before {
   position: absolute;
@@ -342,10 +345,34 @@ a { color: var(--accent); }
   background: radial-gradient(ellipse at 17% -2%, #ffffffdc, transparent 53%),
     linear-gradient(154deg, #d4f8e784, #96d9b565);
   box-shadow: 0 3px 9px #175e4a25, inset 0 2px 4px #ffffffc2, inset 0 -2px 5px #5eae882c;
-  transform: translateX(calc(100% * var(--tab-index, 0)));
-  transition: transform .36s cubic-bezier(.25, 1.38, .43, 1);
+  transform: translate3d(calc(100% * var(--tab-position, var(--tab-index, 0))), 0, 0)
+    scale(var(--tab-stretch, 1), var(--tab-squash, 1));
+  translate: 0 0;
+  transition: translate .18s ease-out;
+  will-change: transform;
   pointer-events: none;
 }
+.tab-highlight::before, .tab-highlight::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity .19s ease-out;
+  content: "";
+}
+.tab-highlight::before {
+  background: radial-gradient(ellipse at 23% 0%, #fff 0%, #ffffff8c 20%, transparent 56%),
+    radial-gradient(ellipse at 83% 106%, #dbfffcd9, transparent 56%);
+  box-shadow: inset 0 1px 3px #fff, inset 0 -2px 3px #8af3c44d;
+}
+.tab-highlight::after {
+  inset: 2px;
+  box-shadow: 0 1px 2px #fff9, 0 6px 15px #1d6d5c46;
+}
+.study-tabs[data-glass-pressed] .tab-highlight { translate: 0 -4px; transition-duration: .075s; }
+.study-tabs[data-glass-pressed] .tab-highlight::before { opacity: 1; transition-duration: .09s; }
+.study-tabs[data-glass-pressed] .tab-highlight::after { opacity: .88; transition-duration: .09s; }
+.study-tabs[data-glass-dragging] button { cursor: grabbing; }
 .study-tabs button {
   display: grid;
   place-content: center;
@@ -361,10 +388,14 @@ a { color: var(--accent); }
   font-size: .73rem;
   font-weight: 650;
   line-height: 1.28;
+  touch-action: pan-y;
+  transition: color .16s ease-out, border-color .16s ease-out;
 }
-.study-tabs button[aria-current=page] { color: #084e40; font-weight: 750; }
-.study-tabs button:not(:disabled):hover { border-color: #fff9; }
-.study-tab-icon { position: relative; width: 21px; height: 21px; }
+.study-tabs button[aria-current=page], .study-tabs button[data-tab-preview] { color: #084e40; font-weight: 750; }
+.study-tabs button:not(:disabled):active { transform: none; }
+.study-tab-icon { position: relative; width: 21px; height: 21px; transition: transform .18s cubic-bezier(.2, .72, .34, 1); }
+.study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: translateY(-1px) scale(1.1); }
+@media (hover: hover) { .study-tabs button:not(:disabled):hover { border-color: #fff9; } }
 .study-tab-icon::before, .study-tab-icon::after { position: absolute; box-sizing: border-box; content: ""; }
 .tab-icon-practice::before { inset: 2px 3px; border: 1.6px solid; border-radius: 4px; }
 .tab-icon-practice::after { inset: 7px 6px 6px; background: repeating-linear-gradient(to bottom, currentColor 0 1.5px, transparent 1.5px 3.5px); }
@@ -438,7 +469,11 @@ a { color: var(--accent); }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .glass, .study-tabs.glass { background: #f4f8f4; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
-@media (prefers-reduced-motion: reduce) { button, .tab-highlight { transition: none; } button:not(:disabled):active { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  button, .study-tabs button, .study-tab-icon, .tab-highlight::before, .tab-highlight::after { transition: none; }
+  button:not(:disabled):active, .study-tabs[data-glass-pressed] button[data-tab-preview] .study-tab-icon { transform: none; }
+  .tab-highlight, .study-tabs[data-glass-pressed] .tab-highlight { translate: none; transition: none; }
+}
 </style>
 </head>
 <body>
@@ -660,9 +695,13 @@ const libraryTabs = {
   wrong: { title: "错题", empty: "答错的题目会出现在这里。" },
   starred: { title: "收藏", empty: "收藏的题目会出现在这里。" },
 };
-const tabButtons = [...$("mobile-tabs").querySelectorAll("[data-study-tab]")];
+const tabDock = $("mobile-tabs");
+const tabButtons = [...tabDock.querySelectorAll("[data-study-tab]")];
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const pageContent = document.querySelector("main");
 let selectedTab = "practice";
 let libraryLimit = libraryPageSize;
+let pageMotion;
 let sync = null;
 let state = guestState();
 
@@ -698,7 +737,8 @@ function view(name) {
   $("overview").hidden = name !== "setup";
 }
 
-function showTab(tab) {
+function showTab(tab, animate = false) {
+  const previousIndex = tabButtons.findIndex((button) => button.dataset.studyTab === selectedTab);
   if (selectedTab !== tab) libraryLimit = libraryPageSize;
   selectedTab = tab;
   const index = tabButtons.findIndex((button) => button.dataset.studyTab === tab);
@@ -706,13 +746,22 @@ function showTab(tab) {
     if (position === index) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   }
-  $("mobile-tabs").style.setProperty("--tab-index", String(index));
+  tabDock.style.setProperty("--tab-index", String(index));
+  moveTabLens(index, animate);
   const library = libraryTabs[tab];
   $("back").textContent = library ? `返回${library.title}` : "返回组卷";
   $("again").textContent = library ? `返回${library.title}` : "重新组卷";
   view(library ? "library" : tab === "profile" ? "profile" : "setup");
   updateAvailability();
   window.scrollTo(0, 0);
+  pageMotion?.cancel();
+  if (animate && index !== previousIndex && !reducedMotion.matches && pageContent.animate) {
+    const distance = Math.sign(index - previousIndex) * 12;
+    pageMotion = pageContent.animate([
+      { opacity: .7, transform: `translate3d(${distance}px, 4px, 0)` },
+      { opacity: 1, transform: "translate3d(0, 0, 0)" },
+    ], { duration: 215, easing: "cubic-bezier(.2, .72, .27, 1)" });
+  }
 }
 
 function filterScope(scope) {
@@ -1044,7 +1093,160 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-for (const button of tabButtons) button.onclick = () => showTab(button.dataset.studyTab);
+function connectTabLens() {
+  const lastTab = tabButtons.length - 1;
+  let position = 0;
+  let target = 0;
+  let speed = 0;
+  let frame = 0;
+  let previousTime = 0;
+  let gesture = null;
+  let skipClick = false;
+  let preview = null;
+
+  const limit = (value, min, max) => Math.min(max, Math.max(min, value));
+  const selection = () => tabButtons.findIndex((button) => button.dataset.studyTab === selectedTab);
+
+  function dragPosition(x, current) {
+    const raw = (x - current.origin) / current.pitch;
+    const edge = limit(raw, 0, lastTab);
+    return edge + limit((raw - edge) * .2, -.16, .16);
+  }
+
+  function setPreview(index) {
+    const button = tabButtons[index];
+    if (preview === button) return;
+    preview?.removeAttribute("data-tab-preview");
+    preview = button;
+    preview?.setAttribute("data-tab-preview", "");
+  }
+
+  function paint(value, stretch = 1) {
+    position = value;
+    tabDock.style.setProperty("--tab-position", value.toFixed(4));
+    tabDock.style.setProperty("--tab-stretch", stretch.toFixed(3));
+    tabDock.style.setProperty("--tab-squash", (1 - (stretch - 1) * .47).toFixed(3));
+  }
+
+  function stopFrame() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+  }
+
+  function tick(time) {
+    frame = 0;
+    const step = limit((time - previousTime) / 1000, 0, 1 / 30);
+    previousTime = time;
+    speed += ((target - position) * 510 - speed * 35) * step;
+    const next = position + speed * step;
+    if (Math.abs(target - next) < .001 && Math.abs(speed) < .05) {
+      speed = 0;
+      paint(target, gesture ? 1.04 : 1);
+      return;
+    }
+    paint(next, 1 + Math.min(.17, Math.abs(speed) * .021 + (gesture ? .04 : 0)));
+    frame = requestAnimationFrame(tick);
+  }
+
+  function move(index, animate) {
+    target = index;
+    if (!animate || reducedMotion.matches) {
+      stopFrame();
+      speed = 0;
+      paint(index);
+    } else if (!frame) {
+      previousTime = performance.now();
+      frame = requestAnimationFrame(tick);
+    }
+  }
+
+  function finish(event, commit) {
+    if (!gesture || (event && event.pointerId !== gesture.id)) return;
+    const current = gesture;
+    gesture = null;
+    tabDock.removeAttribute("data-glass-pressed");
+    tabDock.removeAttribute("data-glass-dragging");
+    setPreview(-1);
+    const released = current.dragging && commit ? dragPosition(event.clientX, current) : current.position;
+    if (current.dragging) {
+      stopFrame();
+      if (!reducedMotion.matches) paint(released, current.stretch);
+      speed = event && event.timeStamp - current.time < 80 ? current.speed : 0;
+    }
+    skipClick = current.dragging || !commit;
+    if (commit && current.dragging) {
+      const index = limit(Math.round(released), 0, lastTab);
+      showTab(tabButtons[index].dataset.studyTab, true);
+    } else {
+      move(selection(), true);
+    }
+  }
+
+  tabDock.addEventListener("pointerdown", (event) => {
+    const index = tabButtons.indexOf(event.target.closest("[data-study-tab]"));
+    if (!event.isPrimary || event.button !== 0 || gesture || index < 0) return;
+    const first = tabButtons[0].getBoundingClientRect();
+    const second = tabButtons[1].getBoundingClientRect();
+    gesture = {
+      id: event.pointerId, x: event.clientX, y: event.clientY,
+      origin: first.left + first.width / 2, pitch: second.left - first.left,
+      position, speed: 0, time: event.timeStamp, stretch: 1.04, dragging: false,
+    };
+    skipClick = false;
+    tabDock.setAttribute("data-glass-pressed", "");
+    setPreview(index);
+    if (!reducedMotion.matches) move(index, true);
+  });
+
+  tabDock.addEventListener("pointermove", (event) => {
+    if (!gesture || event.pointerId !== gesture.id) return;
+    if (!gesture.dragging) {
+      const dx = Math.abs(event.clientX - gesture.x);
+      const dy = Math.abs(event.clientY - gesture.y);
+      if (dy > 8 && dy > dx) return finish(event, false);
+      if (dx < 6 || dx <= dy) return;
+      stopFrame();
+      gesture.dragging = true;
+      tabDock.setAttribute("data-glass-dragging", "");
+      tabDock.setPointerCapture(event.pointerId);
+    }
+    const next = dragPosition(event.clientX, gesture);
+    const elapsed = Math.max(event.timeStamp - gesture.time, 8);
+    gesture.speed = limit((next - gesture.position) * 1000 / elapsed, -8, 8);
+    gesture.position = next;
+    gesture.stretch = 1.06 + Math.min(.115, Math.abs(gesture.speed) * .015);
+    gesture.time = event.timeStamp;
+    setPreview(limit(Math.round(next), 0, lastTab));
+    if (!frame && !reducedMotion.matches) {
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (gesture?.dragging) paint(gesture.position, gesture.stretch);
+      });
+    }
+  });
+
+  window.addEventListener("pointerup", (event) => finish(event, true));
+  window.addEventListener("pointercancel", (event) => finish(event, false));
+  window.addEventListener("blur", () => finish(null, false));
+  tabDock.addEventListener("lostpointercapture", (event) => {
+    if (event.target === tabDock) finish(event, false);
+  });
+  reducedMotion.addEventListener("change", () => {
+    if (!reducedMotion.matches) return;
+    pageMotion?.cancel();
+    move(selection(), false);
+  });
+
+  for (const button of tabButtons) {
+    button.onclick = (event) => {
+      if (!skipClick || event.detail === 0) showTab(button.dataset.studyTab, true);
+      skipClick = false;
+    };
+  }
+  return move;
+}
+
+const moveTabLens = connectTabLens();
 $("library-configure").onclick = () => {
   const scope = selectedTab;
   showTab("practice");
