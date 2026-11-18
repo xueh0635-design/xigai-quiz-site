@@ -1174,12 +1174,10 @@ function connectTabLens() {
       speed = event && event.timeStamp - current.time < 80 ? current.speed : 0;
     }
     skipClick = current.dragging || !commit;
-    if (commit && current.dragging) {
-      const index = limit(Math.round(released), 0, lastTab);
-      showTab(tabButtons[index].dataset.studyTab, true);
-    } else {
-      move(selection(), true);
-    }
+    const selected = selection();
+    const index = commit && current.dragging ? limit(Math.round(released), 0, lastTab) : selected;
+    if (index !== selected) showTab(tabButtons[index].dataset.studyTab, true);
+    else move(selected, true);
   }
 
   tabDock.addEventListener("pointerdown", (event) => {
