@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#eaf1ee">
+  <meta name="theme-color" content="#f7f0e5">
   <title>习概题库</title>
   <link rel="icon" href="data:,">
   <style>
@@ -2066,6 +2066,820 @@ a { color: var(--accent); }
   .live-lobby-controls .live-primary { padding-inline: 9px; font-size: .86rem; }
 }
 </style>
+  <style>
+.desk-page {
+  --camp-ink: #352b48;
+  --camp-cream: #fff8e5;
+  --camp-plum: #49385f;
+  --camp-sky: #eaddf6;
+}
+
+.social-lobby {
+  border: 1px solid #b8a6c8;
+  background:
+    radial-gradient(circle at 78% -30%, #ffebae 0 13%, transparent 40%),
+    linear-gradient(156deg, #f9e2c3, #f9eaf7 54%, #ddd4f1);
+  color: var(--camp-ink);
+  box-shadow: 0 5px 0 #d1c1df, 0 15px 28px #52395b1f;
+}
+
+.social-lobby::before {
+  background: radial-gradient(circle at center, #9c80ab 0 1px, transparent 1.3px) 0 0 / 16px 16px;
+  mask-image: radial-gradient(ellipse at 94% 7%, #000b, transparent 58%);
+}
+
+.social-lobby::after {
+  inset: auto -20% -34% 15%;
+  width: 94%;
+  height: 71%;
+  border: 0;
+  transform: rotate(-13deg);
+  background: #c5a7e027;
+  box-shadow: 0 0 0 16px #f8f0fb4d, 0 0 0 36px #e0cced38;
+}
+
+.social-lobby .live-lobby-intro h3 {
+  color: #3d2b55;
+  text-shadow: 0 2px #fff3ed;
+}
+
+.social-lobby :is(.live-lobby-intro p, .live-lobby-status, .live-lobby-chapter label) {
+  color: #574763;
+}
+
+.social-lobby .live-table {
+  min-height: 128px;
+  border-color: #aa8ec9b3;
+  background:
+    radial-gradient(ellipse at 50% 23%, #fae4aa 0 10%, transparent 45%),
+    linear-gradient(175deg, #c2a2e4, #ecd8f2 57%, #d9b5ce 58%, #b09ec6);
+  box-shadow: inset 0 0 0 3px #fff6, 0 5px 0 #87719f29;
+}
+
+.social-lobby .live-table-line {
+  inset: auto 9% 10px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #8d72966b;
+  box-shadow: 0 0 0 7px #fce2db6e;
+}
+
+.social-lobby .live-table-line::before {
+  top: -48px;
+  width: 90%;
+  height: 25px;
+  border: 2px dashed #fff8d5c9;
+  border-width: 2px 0 0;
+  border-radius: 100%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.social-lobby .live-table-line::after {
+  top: -55px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #fff2adbb;
+  background: #ffd97444;
+  box-shadow: 0 0 0 6px #ffe4a038, 0 0 15px #f5c56c;
+}
+
+.social-lobby .live-table-line span {
+  z-index: 1;
+  top: -55px;
+  width: 20px;
+  height: 20px;
+  background: #fff8bd;
+}
+
+.social-lobby .live-seat-frame.desk-avatar {
+  border: 2px solid #fff8df;
+  background: #e7ecd0;
+  box-shadow: 0 4px 0 #74628b55, 0 0 0 5px #fff4df52;
+}
+
+.social-lobby .live-seat-peer .live-seat-frame { background: #f7dfdd; color: #664768; }
+.social-lobby .live-seat strong { color: #352641; }
+.social-lobby .live-online { background: #3d324b; color: #fff9eb; }
+
+.social-lobby .live-lobby-chapter :is(select,.chapter-picker-trigger) {
+  border-color: #a592bc;
+  background: #fff7f7b8;
+  box-shadow: 0 3px 0 #a592bc3d;
+  color: var(--camp-ink);
+}
+
+.social-lobby .live-lobby-chapter :is(select,.chapter-picker-trigger):not(:disabled):hover {
+  background: #fff8f6;
+}
+
+.social-lobby .live-lobby-chapter .chapter-picker-chevron { color: #725285; }
+.social-lobby .live-primary {
+  border-color: #704b8e;
+  background: #785498;
+  color: #fff9f0;
+  box-shadow: 0 4px 0 #513766, inset 0 1px 0 #c39ae081;
+}
+.social-lobby .live-primary:not(:disabled):hover { border-color: #5b3879; background: #674583; }
+.social-lobby :focus-visible, .social-camp :focus-visible { outline-color: #634787; }
+
+.social-camp {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-width: 0;
+  padding: clamp(17px, 4.5vw, 28px);
+  border: 1px solid #e2be93;
+  border-radius: clamp(24px, 5vw, 32px);
+  background:
+    radial-gradient(ellipse at 101% -10%, #ffdf9f 0 7%, transparent 42%),
+    #fff9e9;
+  color: #493024;
+  box-shadow: 0 4px 0 #ddc8b0, 0 12px 23px #5f422921;
+}
+
+.social-camp h3, .social-camp h4, .social-camp p, .social-camp dl, .social-camp dd { margin: 0; }
+.social-camp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.social-camp-copy { min-width: 0; }
+.social-camp-kicker {
+  color: #84512c;
+  font-size: .75rem;
+  font-weight: 750;
+  letter-spacing: .09em;
+}
+.social-camp-top h3 {
+  margin-top: 3px;
+  font-size: clamp(1.45rem, 6vw, 2.15rem);
+  font-weight: 820;
+  letter-spacing: .04em;
+  line-height: 1.14;
+}
+.social-camp .social-daily-status {
+  margin-top: 6px;
+  color: #704c39;
+  font-size: .83rem;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.social-fire {
+  position: relative;
+  width: clamp(56px, 16vw, 78px);
+  aspect-ratio: 1;
+  flex: none;
+  border: 1px solid #ebbd82;
+  border-radius: 27%;
+  background:
+    radial-gradient(circle at 20% 28%, #fff9da 0 1.5px, transparent 2px),
+    radial-gradient(circle at 77% 20%, #fff9da 0 2px, transparent 2.5px),
+    radial-gradient(circle at 82% 49%, #fff9da 0 1px, transparent 1.5px),
+    linear-gradient(140deg, #ffe4a9, #f9c997);
+  box-shadow: 0 3px 0 #dcb68e, inset 0 1px #fff9;
+  transform: rotate(8deg);
+}
+
+.social-fire img {
+  display: block;
+  width: 82%;
+  height: 82%;
+  margin: 9%;
+  filter: saturate(.72);
+}
+
+.social-camp:has(#social-daily-reward:not([hidden])) .social-fire {
+  background-color: #ffd275;
+  box-shadow: 0 3px #d68d4f, inset 0 1px #fff9, 0 0 26px #f2aa56a8;
+}
+.social-camp:has(#social-daily-reward:not([hidden])) .social-fire img { filter: none; }
+
+@keyframes social-camp-kindled {
+  0% { transform: translateY(0) rotate(8deg) scale(.92); }
+  45% { transform: translateY(-5px) rotate(-8deg) scale(1.13); }
+  100% { transform: translateY(0) rotate(8deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .social-camp[data-complete="true"] .social-fire { animation: social-camp-kindled 570ms ease-out both; }
+}
+
+.social-camp-meter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-block: 14px 9px;
+}
+.social-camp-meter progress {
+  appearance: none;
+  display: block;
+  min-width: 0;
+  flex: 1;
+  height: 9px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 99px;
+  background: #eedccb;
+}
+.social-camp-meter progress::-webkit-progress-bar { background: #eedccb; }
+.social-camp-meter progress::-webkit-progress-value { border-radius: 99px; background: linear-gradient(90deg,#e49859,#e87547); }
+.social-camp-meter progress::-moz-progress-bar { border-radius: 99px; background: linear-gradient(90deg,#e49859,#e87547); }
+.social-camp-meter output { color: #704c39; font-size: .75rem; font-weight: 750; white-space: nowrap; }
+
+.social-camp-checks { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .82fr); gap: 8px; }
+.social-camp-check {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #e9d6bb;
+  border-radius: 14px;
+  background: #fffcf4;
+}
+
+.social-camp-check h4 { font-size: .8rem; line-height: 1.2; }
+.social-camp-check dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+  font-size: .76rem;
+}
+.social-camp-check dt { color: #735043; font-size: .72rem; }
+.social-camp-check dd, .social-camp-check > p { font-weight: 780; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.social-camp-check > p { margin-top: 5px; font-size: .92rem; }
+.social-camp .social-camp-reward {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 3px 9px;
+  border: 1px solid #e6a774;
+  border-radius: 99px;
+  background: #ffe3ab;
+  color: #783a1f;
+  font-size: .8rem;
+  font-weight: 760;
+}
+.social-camp-reward::before { margin-right: .3em; content: "✦"; }
+
+.social-reactions {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items: center;
+  gap: 4px 9px;
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px dashed #dfbea0;
+}
+.social-reactions h4 { min-width: 0; font-size: .82rem; color: #704734; }
+.social-reaction-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.social-reaction-actions button {
+  min-height: 44px;
+  padding: 4px clamp(7px, 2.4vw, 12px);
+  border: 1px solid #dcb69e;
+  border-radius: 12px;
+  background: #fff5e9;
+  box-shadow: 0 2px 0 #dbb79c7d;
+  color: #704734;
+  font-size: .76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.social-reaction-actions button > [aria-hidden="true"] { color: #b6653c; }
+.social-reaction-actions button:disabled { box-shadow: none; opacity: .62; }
+.social-reaction-actions button[data-sent="true"] { background: #f3e3d5; opacity: 1; }
+.social-received, .social-reaction-status {
+  grid-column: 1 / -1;
+  color: #704734;
+  font-size: .78rem;
+}
+.social-camp .social-received {
+  width: fit-content;
+  margin-top: 3px;
+  padding: 3px 7px;
+  border-radius: 9px;
+  background: #fae8cd;
+  font-weight: 660;
+}
+.social-received:empty, .social-reaction-status:empty { display: none; }
+
+.desk-page :is(.live-room-overview,.live-summary) {
+  border-color: #c7acd8;
+  background: linear-gradient(140deg, #f7e8fc, #eadbf5);
+  box-shadow: 0 4px 0 #d1bedf, 0 12px 24px #634c7a20;
+  color: var(--camp-ink);
+}
+.desk-page #live-round-counter, .desk-page .live-room-people strong, .desk-page .live-room-status { color: #584266; }
+.desk-page .live-room-people > div { border-color: #c9afd6; background: #fff9ff96; }
+.desk-page #live-progress, .desk-page #live-progress::-webkit-progress-bar { background: #dcd1e9; }
+.desk-page #live-progress::-webkit-progress-value { background: linear-gradient(90deg, #945ba8, #ca8eae); }
+.desk-page #live-progress::-moz-progress-bar { background: linear-gradient(90deg, #945ba8, #ca8eae); }
+
+@media (min-width: 670px) {
+  .social-lobby .live-table { min-height: 160px; }
+  .social-camp { padding-inline: clamp(23px, 4vw, 35px); }
+}
+
+@media (max-width: 350px) {
+  .social-camp-check { padding-inline: 8px; }
+  .social-reactions { gap: 4px 5px; }
+}
+</style>
+  <style>
+:root {
+  --ink: #332740;
+  --muted: #64566d;
+  --paper: #fffdf5;
+  --background: #faf4e9;
+  --accent: #684580;
+  --line: #e0d3dd;
+  --sheet-surface: #fcf5ef;
+  --sheet-glass: linear-gradient(152deg, #fffcf8e8, #fdf2f0d9 57%, #f3eaf2d5);
+  --sheet-shade: #2e243949;
+  --trail-plum: #493261;
+  --trail-orange: #b75035;
+  --trail-saffron: #f7ca76;
+  --trail-edge: #d9c9e2;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 84% 8%, #f8e8c9, transparent 46%) fixed,
+    radial-gradient(ellipse at 0 36%, #eadcf1, transparent 53%) fixed,
+    radial-gradient(ellipse at 90% 98%, #eedee3, transparent 48%) fixed,
+    var(--background);
+}
+
+.masthead.glass {
+  border-color: #fffbf2;
+  background: linear-gradient(130deg, #fffaf1ed, #f6eef4dd);
+  box-shadow: 0 3px 0 #e2d6dc9c, 0 8px 22px #5b3e6515;
+}
+.brand-mark {
+  background: linear-gradient(145deg, #9670ab, #5e3f76 74%);
+  box-shadow: inset 0 1px 1px #fff6, 0 3px 8px #65467d45;
+}
+.brand-mark::before, .brand-mark::after { border-color: #fff6dd; }
+button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
+.primary {
+  border-color: #634184;
+  background: linear-gradient(165deg, #805aa1, #6b468b 83%);
+  box-shadow: 0 3px 0 #593872, inset 0 1px #d6bbef60;
+  color: #fffdf7;
+}
+:where(button, select, input, a, summary):focus-visible { outline-color: #734a93; }
+
+#overview.adventure-overview {
+  display: grid;
+  gap: clamp(11px, 2vw, 17px);
+  isolation: auto;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+#overview.adventure-overview::before, #overview.adventure-overview::after { display: none; }
+
+.adventure-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(102px, .42fr);
+  align-items: center;
+  gap: clamp(7px, 2vw, 20px);
+  overflow: hidden;
+  min-width: 0;
+  padding: clamp(17px, 5vw, 34px);
+  border: 1px solid #d5b4ae;
+  border-radius: clamp(25px, 5vw, 39px);
+  background:
+    radial-gradient(ellipse at 87% 9%, #fff4ca 0 7%, transparent 37%),
+    linear-gradient(138deg, #fbe1bc, #f9e2e5 49%, #e6d5f0);
+  box-shadow: 0 5px 0 #d9bdbf, 0 16px 30px #68496720;
+}
+.adventure-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(circle, #9a7799 0 1px, transparent 1.4px) 0 0 / 15px 15px;
+  mask-image: linear-gradient(118deg, transparent 18%, #000b 86%);
+  pointer-events: none;
+  content: "";
+}
+.adventure-hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: auto -14% -40% 41%;
+  height: 81%;
+  border-radius: 50%;
+  background: #c8a6d63e;
+  box-shadow: 0 0 0 16px #fff7e446, 0 0 0 38px #c8a6d61a;
+  transform: rotate(-22deg);
+  pointer-events: none;
+  content: "";
+}
+.adventure-hero-copy { min-width: 0; }
+.adventure-hero-copy :is(h2,h3,p) { margin: 0; }
+#overview.adventure-overview .inventory { margin: 0 0 6px; color: #6d4050; font-size: .77rem; font-weight: 720; }
+#overview.adventure-overview #course-title {
+  max-width: 11em;
+  color: #422750;
+  font-size: clamp(1.75rem, 5.5vw, 3.6rem);
+  font-weight: 830;
+  letter-spacing: -.025em;
+  line-height: 1.12;
+  text-shadow: 0 2px 0 #fff5e7;
+  text-wrap: balance;
+}
+.adventure-hero-copy #course-title + p, .adventure-hero-copy .adventure-tagline {
+  max-width: 24em;
+  margin-top: 7px;
+  color: #5e475e;
+  font-size: clamp(.81rem, 2.6vw, 1.01rem);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.adventure-mascot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  margin: 0;
+  align-self: stretch;
+  isolation: isolate;
+}
+.adventure-mascot::before {
+  position: absolute;
+  z-index: -1;
+  top: 16%;
+  left: 50%;
+  width: min(92%, 157px);
+  aspect-ratio: 1;
+  border: 1px solid #fff6d5cc;
+  border-radius: 50%;
+  background: radial-gradient(circle at 39% 31%, #fff7d6, #ffd78a 78%);
+  box-shadow: 0 0 0 8px #ffe7b95c, 0 0 0 17px #fff2d23d;
+  transform: translateX(-50%);
+  content: "";
+}
+.adventure-mascot img, .adventure-mascot > svg, img.adventure-mascot {
+  display: block;
+  position: relative;
+  width: min(137%, 320px);
+  max-width: none;
+  height: auto;
+  align-self: center;
+  justify-self: center;
+  filter: drop-shadow(0 12px 9px #653e633f);
+  transform: rotate(-7deg) translateY(4px);
+}
+.adventure-daily {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  margin-top: clamp(10px, 3vw, 17px);
+  font-size: .79rem;
+  color: #553e58;
+}
+.adventure-daily progress {
+  appearance: none;
+  display: block;
+  width: min(100%, 320px);
+  max-width: 100%;
+  height: 9px;
+  border: 0;
+  border-radius: 99px;
+  accent-color: var(--trail-orange);
+  background: #d6bdd99f;
+}
+.adventure-daily progress::-webkit-progress-bar { border-radius: 99px; background: #d6bdd99f; }
+.adventure-daily progress::-webkit-progress-value { border-radius: 99px; background: linear-gradient(90deg, #b34e38, #e39355); }
+.adventure-daily progress::-moz-progress-bar { border-radius: 99px; background: linear-gradient(90deg, #b34e38, #e39355); }
+.adventure-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: clamp(9px, 3vw, 16px); }
+.adventure-actions .primary {
+  min-height: 46px;
+  border-radius: 14px;
+  border-color: #9f422e;
+  padding-inline: clamp(10px, 3vw, 20px);
+  background: #ba5238;
+  box-shadow: 0 4px 0 #963b2d, inset 0 1px #ffd48c72;
+  color: #fffdf6;
+  font-weight: 780;
+}
+.adventure-actions button { min-width: 0; }
+.adventure-actions .primary:not(:disabled):hover { background: #aa4835; border-color: #8d382a; }
+.adventure-actions .primary:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 #963b2d; }
+.adventure-community {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 3px 13px;
+  padding: 8px clamp(11px, 4vw, 19px);
+  border: 1px solid #d4bedf;
+  border-radius: 16px;
+  background: #f5e8f6;
+  color: #614178;
+  box-shadow: 0 3px 0 #decce5cc;
+  font-weight: 760;
+  text-align: left;
+  text-decoration: none;
+}
+.adventure-community :is(p, small) { margin: 0; color: #6e5578; font-size: .8rem; font-weight: 570; }
+.adventure-community > span:nth-child(2) {
+  min-width: 0;
+  display: grid;
+  line-height: 1.3;
+}
+.adventure-community > span:nth-child(2) > span { color: #785e80; font-size: .77rem; font-weight: 600; }
+.adventure-community-mark {
+  display: grid;
+  width: 34px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid #deb9d7;
+  border-radius: 11px;
+  background: #fbe3d5;
+  color: #a45245;
+}
+.adventure-community-arrow { color: #73578a; font-size: 1.4rem; }
+.adventure-community:not(:disabled):hover { border-color: #b095c3; background: #efdef5; }
+#overview.adventure-overview .overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: clamp(4px, 1.4vw, 10px);
+  margin: 0;
+}
+#overview.adventure-overview .overview-stats button {
+  justify-items: center;
+  padding: 5px 4px;
+  border: 1px solid #e4d8cc;
+  border-radius: 13px;
+  background: #fff9ee;
+  color: #645367;
+  font-size: .77rem;
+  text-align: center;
+}
+#overview.adventure-overview .overview-stats strong { color: #633f79; }
+#overview.adventure-overview .overview-stats button:not(:disabled):hover { background: #f6eaf5; border-color: #c8b6d3; }
+#overview.adventure-overview .overview-stats button:focus-visible { outline-color: #734a93; }
+#overview.adventure-overview #resume {
+  width: 100%;
+  margin: 0;
+  border-color: #d7c7e2;
+  background: #fffbf4;
+  color: #57386a;
+  box-shadow: 0 3px 0 #e6d9ea;
+}
+#overview.adventure-overview #resume-detail { color: #694d70; text-align: right; }
+
+#setup .chapter-heading {
+  min-height: 49px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #c8accf;
+}
+#setup-heading { color: #4d335d; font-weight: 810; letter-spacing: -.015em; }
+#setup .advanced-settings > summary { color: #674587; }
+#setup .advanced-settings form { background: #fffbf3; box-shadow: 0 4px 0 #efe2da; }
+#chapter-list {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: auto;
+  gap: 12px;
+  padding-inline-start: clamp(20px, 5vw, 31px);
+}
+#chapter-list::before {
+  position: absolute;
+  z-index: -1;
+  left: clamp(12px, 3vw, 19px);
+  top: 0;
+  bottom: 15px;
+  border-left: 3px dashed #b69ac8;
+  border-radius: 100%;
+  content: "";
+}
+#chapter-list .chapter-card {
+  --station: #806096;
+  --station-soft: #ebdef0;
+  --station-shadow: #dcc9e5;
+  --station-edge: #d8c4df;
+  position: relative;
+  display: grid;
+  grid-template-columns: clamp(40px, 11vw, 56px) minmax(0, 1fr) 8px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 83px;
+  gap: 3px clamp(7px, 2.8vw, 12px);
+  border: 1px solid var(--station-edge);
+  border-radius: 17px 22px 22px 17px;
+  padding: 8px clamp(9px, 3vw, 13px);
+  background: #fffaf4;
+  box-shadow: 0 3px 0 var(--station-shadow);
+  color: #4c345f;
+  text-align: left;
+}
+#chapter-list .chapter-card::before {
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  width: 14px;
+  border-top: 2px dashed var(--station);
+  content: "";
+}
+#chapter-list .chapter-card:nth-child(3n+2) { width: calc(100% - 10px); margin-inline-start: 10px; }
+#chapter-list .chapter-card:nth-child(3n+2)::before { left: -25px; width: 24px; }
+#chapter-list .chapter-card:not(:disabled):hover { border-color: var(--station); background: #fbf1fb; }
+#chapter-list .chapter-card[data-adventure-state="next"] {
+  --station: #a44934;
+  --station-soft: #f8d6aa;
+  --station-shadow: #e4b58c;
+  --station-edge: #dfa982;
+  background: #fff2dc;
+}
+#chapter-list .chapter-card[data-adventure-state="done"] {
+  --station: #477b62;
+  --station-soft: #d8e7ce;
+  --station-shadow: #cfdfc9;
+  --station-edge: #ccdec8;
+}
+#chapter-list .chapter-card .chapter-medallion {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--station-edge);
+  border-radius: 31%;
+  background: var(--station-soft);
+  box-shadow: 0 2px 0 var(--station-shadow), inset 0 1px #fff9;
+  color: var(--station);
+  font-size: clamp(.88rem, 3.5vw, 1.24rem);
+  font-weight: 820;
+  transform: rotate(-5deg);
+}
+#chapter-list .chapter-medallion img { width: 72%; height: auto; }
+#chapter-list .chapter-description { grid-column: 2; grid-row: 1; min-width: 0; gap: 2px; }
+#chapter-list .chapter-arrow { grid-area: 1 / 3; width: 6px; height: 6px; color: var(--station); }
+#chapter-list .chapter-topic { overflow-wrap: anywhere; }
+#chapter-list .chapter-name { font-weight: 810; }
+#chapter-list .chapter-track { height: 4px; margin-top: 3px; background: var(--station-soft); }
+#chapter-list .chapter-track span { background: var(--station); }
+
+.panel, #library-list .library-item, .profile-account { border-color: #e0d3dd; }
+.panel { box-shadow: 0 4px 0 #e9dfe7, 0 10px 23px #553c6515; }
+.tab-page .tab-page-heading h2 { color: #513461; font-weight: 810; }
+.library-item { background: #faf2f7; }
+.profile-stats div { border: 1px solid #e7d6dd; background: #f9eceb; }
+.profile-stats div:nth-child(2) { background: #f9eddc; }
+.profile-stats div:nth-child(3) { background: #f1e6f7; }
+
+#quiz .lesson-header :is(#back,#star) { background: #fffbf3; }
+#quiz .lesson-header #where { color: #60436d; }
+#quiz .lesson-header #progress, #quiz #progress::-webkit-progress-bar { height: 9px; background: #ecdce9; }
+#quiz #progress::-webkit-progress-value { background: linear-gradient(90deg,#b14b38,#dfa158); }
+#quiz #progress::-moz-progress-bar { background: linear-gradient(90deg,#b14b38,#dfa158); }
+#adventure-streak {
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid #f0c998;
+  border-radius: 999px;
+  background: #ffedc9;
+  color: #83502c;
+  font-size: .78rem;
+  font-weight: 780;
+}
+#adventure-streak > span[aria-hidden="true"] { color: #a44934; }
+#quiz .lesson-card { border-color: #ded1e6; box-shadow: 0 4px 0 #e8d8ea, 0 10px 23px #65447515; }
+#quiz .lesson-card #kind { background: #eddef4; color: #67427e; }
+#quiz .lesson-card .option {
+  border-color: #e0d3e0;
+  background: #fff9f5;
+  box-shadow: 0 2px 0 #eee0ea;
+}
+#quiz .lesson-card .option .letter { background: #f2e5f2; color: #644372; }
+#quiz .lesson-card .option[aria-pressed="true"] { background: #f2e6f5; border-color: #b798c3; }
+#quiz .lesson-card .option[aria-pressed="true"] .letter { background: #73528d; color: #fff; }
+#quiz .lesson-card .option.correct { border-color: #5a9574; background: #e9f6e6; color: #285a44; box-shadow: 0 2px 0 #bfd9c2; }
+#quiz .lesson-card .option.correct .letter { background: #477957; color: #fff; }
+#quiz .lesson-card .option.incorrect { border-color: #c88071; background: #faeae2; color: #763d3c; box-shadow: 0 2px 0 #efd3c4; }
+#quiz .lesson-card .option.incorrect .letter { background: #ad594c; color: #fff; }
+#quiz .lesson-answer {
+  border-color: #d4e4cc;
+  background:
+    radial-gradient(circle at 96% 8%, #d0e6bb 0 3%, transparent 36%),
+    #f6fbef;
+  box-shadow: 0 3px 0 #dee8d7;
+}
+#quiz .lesson-answer:has(#feedback[data-state="incorrect"]) {
+  border-color: #ecd1b9;
+  background: #fff3e5;
+  box-shadow: 0 3px 0 #f2ddd2;
+}
+#quiz #feedback[data-state="correct"]::before { margin-right: .4em; content: "✦"; }
+#quiz .study-note, #quiz .lesson-related { border-color: #e3d7e7; background: #fcf6fa; }
+#quiz .quiz-actions.glass { background: #fff8f3ed; border-color: #eadde2; }
+#result.panel { background: #fffaf2; border-color: #dcc8db; }
+#result .adventure-result-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(72px, .72fr) minmax(0, 1fr);
+  gap: clamp(7px, 3vw, 22px);
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 15px;
+  padding: clamp(13px, 4vw, 24px);
+  border: 1px solid #e4c1b4;
+  border-radius: 18px 26px 21px 24px;
+  background:
+    radial-gradient(circle at 91% 10%, #fff5ca 0 7%, transparent 27%),
+    linear-gradient(136deg, #f9d9ad, #f5dbe9 67%, #e7d6f2);
+  box-shadow: 0 3px 0 #e0bfd3;
+}
+#result .adventure-result-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(circle, #b37caa 0 1px, transparent 1.3px) 0 0 / 14px 14px;
+  mask-image: linear-gradient(105deg, transparent 38%, #0009);
+  pointer-events: none;
+  content: "";
+}
+#result .adventure-result-hero h2 { margin: 0 0 5px; color: #4a2b59; font-weight: 820; }
+#result .adventure-result-hero #score { margin: 0; color: #583e55; }
+#result .adventure-result-hero img { width: min(100%,230px); height: auto; margin: auto; }
+#result .adventure-result-hero div { display: grid; min-width: 0; gap: 2px; color: #50305d; }
+#result .adventure-result-hero strong { font-size: clamp(.94rem, 4vw, 1.28rem); font-weight: 810; }
+#result .adventure-result-hero div > span { color: #6b4c6a; font-size: .8rem; }
+
+.study-tabs.glass {
+  border-color: #fff7eb;
+  background: linear-gradient(150deg, #fff9f0ef, #f8eff4db 53%, #f3e9f4d1);
+  box-shadow: 0 7px 0 #cbb5d13d, 0 12px 23px #5a3a6f30, inset 0 1px #fff;
+}
+.study-tabs button { color: #543a65; }
+.study-tabs button[aria-current="page"], .study-tabs button[data-tab-preview] { color: #6c3d88; }
+.tab-icon-route::before {
+  inset: 2px 1px;
+  background:
+    radial-gradient(circle at 4px 4px, transparent 0 1.35px, currentColor 1.5px 2.8px, transparent 3px),
+    radial-gradient(circle at 16px 14px, transparent 0 1.35px, currentColor 1.5px 2.8px, transparent 3px);
+}
+.tab-icon-route::after {
+  top: 7px;
+  left: 6px;
+  width: 9px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 0 1.6px 1.6px 0;
+  border-radius: 0 0 4px 0;
+  transform: rotate(19deg);
+}
+.study-tabs button[data-study-tab="desk"] .tab-icon-together {
+  background: linear-gradient(151deg, #b06f9d, #77518c 75%);
+  border-color: #e4b9de;
+  box-shadow: 0 3px 0 #6b497d, inset 0 1px 0 #fff8;
+  color: #fff5dc;
+}
+.study-tabs button[data-study-tab="desk"][aria-current="page"] .tab-icon-together {
+  background: linear-gradient(153deg, #be7aa3, #8e609d 75%);
+  box-shadow: 0 3px 0 #6b497d, 0 0 9px #b87ead70;
+}
+.study-tabs .tab-icon-together i { background: #ffe9ac; }
+
+@media (min-width: 680px) {
+  .adventure-hero { grid-template-columns: minmax(0, 1fr) minmax(166px, .58fr); }
+  #chapter-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px clamp(13px, 4vw, 30px); padding-inline-start: 0; }
+  #chapter-list::before { left: 50%; border-radius: 4px; transform: rotate(3deg); }
+  #chapter-list .chapter-card:nth-child(3n+2) { width: 100%; margin-inline-start: 0; }
+  #chapter-list .chapter-card::before, #chapter-list .chapter-card:nth-child(3n+2)::before { left: -12px; width: 11px; }
+  #chapter-list .chapter-card:nth-child(odd)::before { right: -12px; left: auto; }
+}
+@media (max-width: 350px) {
+  .adventure-hero { grid-template-columns: minmax(0,1fr) minmax(78px,.38fr); gap: 6px; padding: 13px; }
+  #overview.adventure-overview #course-title { font-size: clamp(1.55rem, 7vw, 1.9rem); }
+  .adventure-actions .primary { padding-inline: 8px; font-size: .88rem; }
+  .adventure-community { font-size: .85rem; }
+  #chapter-list { gap: 9px; }
+  #chapter-list .chapter-card { padding-inline: 7px; gap: 3px 6px; }
+}
+
+@keyframes trail-answer-reward {
+  0% { transform: scale(.94) rotate(-2deg); }
+  52% { transform: scale(1.06) rotate(1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #quiz #feedback[data-state="correct"] { animation: trail-answer-reward 340ms ease-out both; }
+  #result .adventure-result-hero { animation: trail-answer-reward 440ms cubic-bezier(.22,.78,.34,1.05) both; }
+}
+</style>
 </head>
 <body>
   <header class="top">
@@ -2150,9 +2964,27 @@ a { color: var(--accent); }
   </dialog>
   <div class="wrap page-layout">
   <main>
-    <section id="overview" class="overview" aria-labelledby="course-title">
-      <p id="inventory" class="inventory"></p>
-      <h2 id="course-title">我的学习进度</h2>
+    <section id="overview" class="overview adventure-overview" aria-labelledby="course-title">
+      <div class="adventure-hero">
+        <div class="adventure-hero-copy">
+          <p id="inventory" class="inventory"></p>
+          <h2 id="course-title">今天，走一站</h2>
+          <p id="adventure-target"></p>
+          <div class="adventure-daily" aria-label="今日练习目标">
+            <progress id="adventure-goal" max="5" value="0" aria-label="今天已练过的题数"></progress>
+            <span id="adventure-today"></span>
+          </div>
+          <div class="adventure-actions">
+            <button type="button" id="adventure-start" class="primary">出发 · 5 题</button>
+          </div>
+        </div>
+        <img class="adventure-mascot" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzY3JpcHRpb24iPgogIDx0aXRsZSBpZD0idGl0bGUiPuW8lei3r+e6uOm5pDwvdGl0bGU+CiAgPGRlc2MgaWQ9ImRlc2NyaXB0aW9uIj7kuIDlj6rlsZXlvIDmnY/nuqLoibLkuI7mt6HntKvoibLlj4znv7znmoTnurjpuaQ8L2Rlc2M+CiAgPGcgaWQ9ImZsaWdodC1tYXJrcyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICAgIDxwYXRoIGQ9Ik0yNyA5OGMxMy03IDI1LTExIDM4LTEyTTM5IDExMWM4LTQgMTctNiAyNi03IiBzdHJva2U9IiM5YjY3NGMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iMyA1Ii8+CiAgICA8cGF0aCBkPSJNMzQxIDI2YzAgNy00IDExLTExIDExIDcgMCAxMSA0IDExIDExIDAtNyA0LTExIDExLTExLTcgMC0xMS00LTExLTExWiIgZmlsbD0iI2ZmZjBhYSIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgPHBhdGggZD0iTTM2MiA1MnY4bS00LTRoOG0tMjQgNjV2MTBtLTUtNWgxMCIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogIDwvZz4KICA8ZyBpZD0iY3JhbmUiIHN0cm9rZT0iIzYwM2M0NSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8ZyBpZD0idGFpbCI+CiAgICAgIDxwYXRoIGQ9Im0yMiAxMzEgOTgtMTAgNjMtNiAyNyAzNy01MyAxNVoiIGZpbGw9IiNmNTk0NjkiLz4KICAgICAgPHBhdGggZD0ibTIyIDEzMSAxMTAgOSAyNSAyNyIgZmlsbD0iI2RjNjk1YyIvPgogICAgICA8cGF0aCBkPSJtNjggMTMzIDY1IDUgMjggMjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYzZhMyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJmYXItd2luZyI+CiAgICAgIDxwYXRoIGQ9Im0xNzYgMTExIDQxLTUzIDc5LTQwLTIyIDY5LTQwIDUwWiIgZmlsbD0iI2Q0YmNlYSIvPgogICAgICA8cGF0aCBkPSJtMTc2IDExMSA2Ny0zOSA1My01NC0yMiA2OS00MCA1MFoiIGZpbGw9IiNiOTliZGIiLz4KICAgICAgPHBhdGggZD0ibTE5MiAxMDQgMjktNDIgNTgtMzIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2VhZDhmYiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8L2c+CiAgICA8ZyBpZD0iaGVhZC1hbmQtbmVjayI+CiAgICAgIDxwYXRoIGQ9Im0yMTAgMTM2IDUwLTcgMjAtNTMgMjUtMTQgMjQgNSA0NyAyNC01Mi0yLTIyIDExLTIxIDQ5LTQzIDIwWiIgZmlsbD0iI2ZmZWZjZSIvPgogICAgICA8cGF0aCBkPSJtMjYwIDEyOSAyNi00MiAxOS0yNS0yNSAxNFoiIGZpbGw9IiNmZmJjODEiLz4KICAgICAgPHBhdGggZD0ibTI2MCAxMjkgMjMtMTQgMTktMTUgMjItMTEtMzgtMloiIGZpbGw9IiNmNDk4NzIiLz4KICAgICAgPHBhdGggZD0ibTMyNCA4OSA1LTIyIDQ3IDI0WiIgZmlsbD0iI2Y3YjI2NyIvPgogICAgICA8cGF0aCBkPSJtMjkyIDc2IDEzLTggMTggNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmOWU5IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgICA8Y2lyY2xlIGN4PSIzMTYiIGN5PSI3OCIgcj0iMi40IiBmaWxsPSIjNjAzYzQ1IiBzdHJva2U9Im5vbmUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJib2R5Ij4KICAgICAgPHBhdGggZD0ibTEzMiAxNDAgNDAtMjUgNDQtNiAzNyAyMCAyOCAyMC03MiAzNS01Mi0xN1oiIGZpbGw9IiNmZmUwYTQiLz4KICAgICAgPHBhdGggZD0ibTE1NyAxNjcgNTMtMTMgNzEtNS03MiAzNVoiIGZpbGw9IiNmMGExNmUiLz4KICAgICAgPHBhdGggZD0ibTE3MiAxMTUgMzggMzkgNDMtMjUtMzctMjBaIiBmaWxsPSIjZjViZDg4Ii8+CiAgICAgIDxwYXRoIGQ9Ik0xNzAgMTY5bDM5IDEyIDQ4LTI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNjOWQiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgICA8L2c+CiAgICA8ZyBpZD0ibmVhci13aW5nIj4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEzMiA0MiA0NiA0MiAxMiAyMC00MyAyNS02Mi0yNloiIGZpbGw9IiNmZmM0N2QiLz4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEwNSA3MCA0MiA1OS02Mi0yNloiIGZpbGw9IiNmMThhNjgiLz4KICAgICAgPHBhdGggZD0ibTE2OCA5NSA3MyAxNCAxMiAyMC00MyAyNVoiIGZpbGw9IiNlYjc3NWQiLz4KICAgICAgPHBhdGggZD0ibTc4IDMzIDExNCAzOSA0MCAzNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZlZGI0IiBzdHJva2Utd2lkdGg9IjIiLz4KICAgICAgPHBhdGggZD0ibTE3MCAxMDMgMzQgNDciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYWY4NyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPgo=" width="360" height="180" alt="">
+      </div>
+      <button type="button" id="adventure-together" class="adventure-community">
+        <span class="adventure-community-mark" aria-hidden="true">✦</span>
+        <span><strong>和同桌点亮营火</strong><span>今日合力任务</span></span>
+        <span class="adventure-community-arrow" aria-hidden="true">›</span>
+      </button>
       <div class="overview-stats" aria-label="学习进度">
         <button id="stat-done" type="button"><strong>0</strong><span>已答题</span></button>
         <button id="stat-wrong" type="button"><strong>0</strong><span>错题</span></button>
@@ -2162,7 +2994,7 @@ a { color: var(--accent); }
     </section>
     <section id="setup" aria-labelledby="setup-heading">
       <header class="chapter-heading">
-        <h2 id="setup-heading" tabindex="-1">按章节练习</h2>
+        <h2 id="setup-heading" tabindex="-1">章节路线</h2>
       </header>
       <details id="advanced-settings" class="advanced-settings">
       <summary>自定义测验</summary>
@@ -2213,6 +3045,7 @@ a { color: var(--accent); }
         </fieldset>
         <div class="actions">
           <button id="start" class="primary" type="submit">开始练习</button>
+          <button id="adventure-chapter-long" type="button">按章节设置练习</button>
           <span id="availability" role="status"></span>
         </div>
       </form>
@@ -2227,6 +3060,7 @@ a { color: var(--accent); }
           <button id="star" type="button" aria-pressed="false">收藏</button>
         </div>
         <progress id="progress" aria-label="练习进度"></progress>
+        <p id="adventure-streak" hidden><span aria-hidden="true">✦</span> 连中 <strong id="adventure-streak-value"></strong> 题</p>
       </header>
       <div class="lesson-card">
         <div class="question-header">
@@ -2270,8 +3104,13 @@ a { color: var(--accent); }
     <section id="result" class="panel" hidden aria-labelledby="result-title">
       <h2 id="result-title">本次练习完成</h2>
       <p id="score"></p>
+      <div id="adventure-result" class="adventure-result-hero" hidden>
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzY3JpcHRpb24iPgogIDx0aXRsZSBpZD0idGl0bGUiPuW8lei3r+e6uOm5pDwvdGl0bGU+CiAgPGRlc2MgaWQ9ImRlc2NyaXB0aW9uIj7kuIDlj6rlsZXlvIDmnY/nuqLoibLkuI7mt6HntKvoibLlj4znv7znmoTnurjpuaQ8L2Rlc2M+CiAgPGcgaWQ9ImZsaWdodC1tYXJrcyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICAgIDxwYXRoIGQ9Ik0yNyA5OGMxMy03IDI1LTExIDM4LTEyTTM5IDExMWM4LTQgMTctNiAyNi03IiBzdHJva2U9IiM5YjY3NGMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iMyA1Ii8+CiAgICA8cGF0aCBkPSJNMzQxIDI2YzAgNy00IDExLTExIDExIDcgMCAxMSA0IDExIDExIDAtNyA0LTExIDExLTExLTcgMC0xMS00LTExLTExWiIgZmlsbD0iI2ZmZjBhYSIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgPHBhdGggZD0iTTM2MiA1MnY4bS00LTRoOG0tMjQgNjV2MTBtLTUtNWgxMCIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogIDwvZz4KICA8ZyBpZD0iY3JhbmUiIHN0cm9rZT0iIzYwM2M0NSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8ZyBpZD0idGFpbCI+CiAgICAgIDxwYXRoIGQ9Im0yMiAxMzEgOTgtMTAgNjMtNiAyNyAzNy01MyAxNVoiIGZpbGw9IiNmNTk0NjkiLz4KICAgICAgPHBhdGggZD0ibTIyIDEzMSAxMTAgOSAyNSAyNyIgZmlsbD0iI2RjNjk1YyIvPgogICAgICA8cGF0aCBkPSJtNjggMTMzIDY1IDUgMjggMjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYzZhMyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJmYXItd2luZyI+CiAgICAgIDxwYXRoIGQ9Im0xNzYgMTExIDQxLTUzIDc5LTQwLTIyIDY5LTQwIDUwWiIgZmlsbD0iI2Q0YmNlYSIvPgogICAgICA8cGF0aCBkPSJtMTc2IDExMSA2Ny0zOSA1My01NC0yMiA2OS00MCA1MFoiIGZpbGw9IiNiOTliZGIiLz4KICAgICAgPHBhdGggZD0ibTE5MiAxMDQgMjktNDIgNTgtMzIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2VhZDhmYiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8L2c+CiAgICA8ZyBpZD0iaGVhZC1hbmQtbmVjayI+CiAgICAgIDxwYXRoIGQ9Im0yMTAgMTM2IDUwLTcgMjAtNTMgMjUtMTQgMjQgNSA0NyAyNC01Mi0yLTIyIDExLTIxIDQ5LTQzIDIwWiIgZmlsbD0iI2ZmZWZjZSIvPgogICAgICA8cGF0aCBkPSJtMjYwIDEyOSAyNi00MiAxOS0yNS0yNSAxNFoiIGZpbGw9IiNmZmJjODEiLz4KICAgICAgPHBhdGggZD0ibTI2MCAxMjkgMjMtMTQgMTktMTUgMjItMTEtMzgtMloiIGZpbGw9IiNmNDk4NzIiLz4KICAgICAgPHBhdGggZD0ibTMyNCA4OSA1LTIyIDQ3IDI0WiIgZmlsbD0iI2Y3YjI2NyIvPgogICAgICA8cGF0aCBkPSJtMjkyIDc2IDEzLTggMTggNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmOWU5IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgICA8Y2lyY2xlIGN4PSIzMTYiIGN5PSI3OCIgcj0iMi40IiBmaWxsPSIjNjAzYzQ1IiBzdHJva2U9Im5vbmUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJib2R5Ij4KICAgICAgPHBhdGggZD0ibTEzMiAxNDAgNDAtMjUgNDQtNiAzNyAyMCAyOCAyMC03MiAzNS01Mi0xN1oiIGZpbGw9IiNmZmUwYTQiLz4KICAgICAgPHBhdGggZD0ibTE1NyAxNjcgNTMtMTMgNzEtNS03MiAzNVoiIGZpbGw9IiNmMGExNmUiLz4KICAgICAgPHBhdGggZD0ibTE3MiAxMTUgMzggMzkgNDMtMjUtMzctMjBaIiBmaWxsPSIjZjViZDg4Ii8+CiAgICAgIDxwYXRoIGQ9Ik0xNzAgMTY5bDM5IDEyIDQ4LTI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNjOWQiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgICA8L2c+CiAgICA8ZyBpZD0ibmVhci13aW5nIj4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEzMiA0MiA0NiA0MiAxMiAyMC00MyAyNS02Mi0yNloiIGZpbGw9IiNmZmM0N2QiLz4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEwNSA3MCA0MiA1OS02Mi0yNloiIGZpbGw9IiNmMThhNjgiLz4KICAgICAgPHBhdGggZD0ibTE2OCA5NSA3MyAxNCAxMiAyMC00MyAyNVoiIGZpbGw9IiNlYjc3NWQiLz4KICAgICAgPHBhdGggZD0ibTc4IDMzIDExNCAzOSA0MCAzNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZlZGI0IiBzdHJva2Utd2lkdGg9IjIiLz4KICAgICAgPHBhdGggZD0ibTE3MCAxMDMgMzQgNDciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYWY4NyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPgo=" width="360" height="180" alt="">
+        <div><strong id="adventure-result-stops"></strong><span id="adventure-result-streak"></span></div>
+      </div>
       <div class="actions">
         <button id="again" type="button" class="primary">返回章节</button>
+        <button id="adventure-result-together" type="button" hidden>去营火找同桌</button>
         <button id="review-round" type="button">回看本组</button>
         <button id="retry" type="button">重练本次错题</button>
       </div>
@@ -2344,13 +3183,13 @@ a { color: var(--accent); }
         </form>
       </section>
       <div id="desk-paired" class="desk-paired" hidden>
-        <section id="live-lobby" class="live-lobby" aria-labelledby="live-lobby-heading">
+        <section id="live-lobby" class="live-lobby social-lobby" aria-labelledby="live-lobby-heading">
           <div class="live-lobby-content">
             <div class="live-lobby-intro">
-              <h3 id="live-lobby-heading">共用课桌</h3>
-              <p>每轮五道题，各自作答，双方交卷后一起看解析。</p>
+              <h3 id="live-lobby-heading">同桌营地</h3>
+              <p>在营地碰头，开一轮五题共学。</p>
             </div>
-            <div class="live-table" aria-label="课桌上的两个座位">
+            <div class="live-table" aria-label="营地里的两个座位">
               <div class="live-table-line" aria-hidden="true"><span></span></div>
               <div class="live-seat live-seat-mine">
                 <span class="live-seat-frame desk-avatar" aria-hidden="true">
@@ -2377,12 +3216,49 @@ a { color: var(--accent); }
                   <span id="live-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
                 </button>
               </div>
-              <button id="live-start" type="button" class="primary live-primary" disabled>开启共学</button>
+              <button id="live-start" type="button" class="primary live-primary" disabled>开桌一起练</button>
               <button id="live-join" type="button" class="primary live-primary" hidden>加入同桌</button>
               <button id="live-resume" type="button" class="primary live-primary" hidden>回到课桌</button>
             </div>
             <p id="live-lobby-status" class="live-lobby-status" role="status" aria-live="polite"></p>
           </div>
+        </section>
+        <section id="social-daily" class="social-camp" aria-labelledby="social-daily-title">
+          <div class="social-camp-top">
+            <div class="social-camp-copy">
+              <p class="social-camp-kicker">同桌每日任务</p>
+              <h3 id="social-daily-title">点亮营火</h3>
+              <p id="social-daily-status" class="social-daily-status" role="status" aria-live="polite">正在同步两人的进度…</p>
+            </div>
+            <div class="social-fire" aria-hidden="true"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0iTTkgMTh2Nm0tMy0zaDZNNTQgMTF2OG0tNC00aDgiIHN0cm9rZT0iIzU0NzU2YyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMyA1NGw1LTkgMzQgOS00IDctMzUtN1oiIGZpbGw9IiNiNzgxNjAiIHN0cm9rZT0iIzM2Mjk0NyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNNDcgNDRsNSA5LTM0IDgtNC03IDMzLTEwWiIgZmlsbD0iI2Q3YTQ4NiIgc3Ryb2tlPSIjMzYyOTQ3IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xNCA0MGMwLTggNi0xMiA4LTE3IDAgNCAyIDYgNCA3IDItNSA1LTEwIDQtMTkgOSA2IDE0IDEyIDE0IDE5IDMtMiA0LTQgNS02IDcgMTIgNSAyNy0xNiAyOC0xMSAwLTE5LTQtMTktMTJaIiBmaWxsPSIjZjE4MjU2IiBzdHJva2U9IiMzNjI5NDciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0yMiA0NGw1LTkgNCA0IDQtMTQgOSAxNGM0IDgtMyAxMS0xMCAxMS02IDAtMTEtMi0xMi02WiIgZmlsbD0iI2ZmZGI3YyIgc3Ryb2tlPSIjYWU1MDNjIiBzdHJva2Utd2lkdGg9IjEuMzUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNMzUgMTVsNSA3TTE3IDU1bDQgMW0yMy00IDUtMSIgc3Ryb2tlPSIjZmZmMmNmIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=" alt=""></div>
+          </div>
+          <div class="social-camp-meter">
+            <progress id="social-daily-progress" max="2" value="0" aria-label="每日任务完成进度"></progress>
+            <output id="social-daily-count">—</output>
+          </div>
+          <div class="social-camp-checks">
+            <section class="social-camp-check">
+              <h4>各练五题</h4>
+              <dl>
+                <div><dt>我</dt><dd id="social-mine-count">—</dd></div>
+                <div><dt>同桌</dt><dd id="social-peer-count">—</dd></div>
+              </dl>
+            </section>
+            <section class="social-camp-check social-shared">
+              <h4>共学一轮</h4>
+              <p id="social-shared-count">—</p>
+            </section>
+          </div>
+          <p id="social-daily-reward" class="social-camp-reward" hidden>营火已点亮</p>
+          <section id="social-reactions" class="social-reactions" aria-labelledby="social-reactions-heading" hidden>
+            <h4 id="social-reactions-heading">给同桌捎个鼓励</h4>
+            <div class="social-reaction-actions">
+              <button type="button" data-social-reaction="cheer"><span aria-hidden="true">✦</span> <span data-social-label>打气</span></button>
+              <button type="button" data-social-reaction="high_five"><span aria-hidden="true">✋</span> <span data-social-label>击掌</span></button>
+            </div>
+            <p id="social-received" class="social-received" role="status" hidden></p>
+            <p id="social-reaction-status" class="social-reaction-status" role="status"></p>
+          </section>
         </section>
         <section id="live-room" class="live-room" aria-labelledby="live-room-title" hidden>
           <header class="live-room-top">
@@ -2541,7 +3417,7 @@ a { color: var(--accent); }
     </section>
     <section id="profile" class="panel tab-page" hidden aria-labelledby="profile-heading">
       <div class="tab-page-heading">
-        <h2 id="profile-heading" tabindex="-1">我的进度</h2>
+        <h2 id="profile-heading" tabindex="-1">我的旅程</h2>
       </div>
       <dl class="profile-stats">
         <div><dt>已答题</dt><dd id="profile-done">0</dd></div>
@@ -2595,7 +3471,7 @@ a { color: var(--accent); }
   <nav id="mobile-tabs" class="study-tabs glass" aria-label="主导航">
     <span class="tab-highlight" aria-hidden="true"><canvas class="tab-lens-optics" aria-hidden="true"></canvas></span>
     <button type="button" data-study-tab="practice" aria-current="page">
-      <span class="study-tab-icon tab-icon-practice" aria-hidden="true"></span><span>练习</span>
+      <span class="study-tab-icon tab-icon-route" aria-hidden="true"></span><span>路线</span>
     </button>
     <button type="button" data-study-tab="wrong">
       <span class="study-tab-icon tab-icon-wrong" aria-hidden="true"></span><span>错题</span>
@@ -3337,7 +4213,7 @@ void main() {
     return node;
   }
 
-  function connect({ questions, chapters, rpc }) {
+  function connect({ questions, chapters, rpc, onLobby }) {
     const lobby = get("lobby");
     if (!lobby) return null;
     const desk = document.getElementById("desk");
@@ -3605,6 +4481,7 @@ void main() {
       message = "";
       render();
       if (visible) window.scrollTo(0, 0);
+      if (visible) onLobby?.();
     }
 
     get("start").onclick = () => send("start", { chapter: chapter.value || null }, { enter: true });
@@ -3670,6 +4547,126 @@ void main() {
 (() => {
   "use strict";
 
+  const get = (id) => document.getElementById("social-" + id);
+  const actions = { cheer: "打气", high_five: "击掌" };
+
+  function connect({ rpc }) {
+    const section = get("daily");
+    if (!section) return null;
+    const buttons = [...get("reactions").querySelectorAll("[data-social-reaction]")];
+    let snapshot = null;
+    let account = null;
+    let paired = false;
+    let visible = false;
+    let pending = null;
+    let sending = false;
+    let issue = "";
+    let feedback = "";
+
+    function put(id, text) {
+      const node = get(id);
+      if (node.textContent !== text) node.textContent = text;
+    }
+
+    function render() {
+      const mission = snapshot?.mission;
+      section.hidden = !paired || (snapshot && !snapshot.paired);
+      section.dataset.complete = String(Boolean(mission?.complete));
+      const criteria = mission ? Number(mission.practiceComplete) + Number(mission.sharedComplete) : 0;
+      const mine = mission ? `${mission.myPracticed} / ${mission.target}` : "—";
+      const peer = mission ? `${mission.partnerPracticed} / ${mission.target}` : "—";
+      const together = mission ? `${mission.sharedRounds} / ${mission.sharedTarget}` : "—";
+      put("daily-status", issue || (mission?.complete ? "你们完成了今天的约定。"
+        : mission ? "各练五题，再一起完成一轮共学。" : "正在同步两人的任务…"));
+      put("mine-count", mine);
+      put("peer-count", peer);
+      put("shared-count", together);
+      const progress = get("daily-progress");
+      if (mission) progress.value = criteria;
+      else progress.removeAttribute("value");
+      put("daily-count", mission ? `${criteria} / 2 项完成` : "等待同步");
+      get("daily-reward").hidden = !mission?.complete;
+      get("reactions").hidden = !snapshot?.paired;
+      const sent = snapshot?.reactions.sent || [];
+      const received = (snapshot?.reactions.received || []).map((value) => actions[value]).filter(Boolean);
+      for (const button of buttons) {
+        const type = button.dataset.socialReaction;
+        const used = sent.includes(type);
+        button.disabled = sending || used;
+        button.dataset.sent = String(used);
+        const label = button.querySelector("[data-social-label]");
+        if (label) label.textContent = used ? `已${actions[type]}` : actions[type];
+      }
+      get("received").hidden = !received.length;
+      put("received", received.length ? `同桌送来了${received.join("和")}。` : "");
+      put("reaction-status", feedback);
+    }
+
+    async function send(reaction) {
+      if (!visible || !paired || !account || sending || (pending && !reaction)) return;
+      const token = {};
+      pending = token;
+      sending = Boolean(reaction);
+      if (reaction) feedback = "正在送出…";
+      render();
+      try {
+        const { data, error } = await rpc(reaction ? "quiz_social_react" : "quiz_social_state", reaction ? { reaction } : undefined);
+        if (pending !== token) return;
+        if (error || !data || typeof data.paired !== "boolean") throw error || new Error("bad social response");
+        const dayChanged = snapshot && snapshot.day !== data.day;
+        snapshot = data;
+        issue = "";
+        if (reaction) feedback = data.reactions.sent.includes(reaction) ? `已给同桌${actions[reaction]}。` : "";
+        else if (dayChanged) feedback = "";
+      } catch {
+        if (pending !== token) return;
+        if (reaction) feedback = "还没送出，请稍后重试。";
+        else if (!snapshot) issue = "暂时无法同步营火进度。";
+      } finally {
+        if (pending === token) {
+          pending = null;
+          sending = false;
+          render();
+        }
+      }
+    }
+
+    for (const button of buttons) button.onclick = () => send(button.dataset.socialReaction);
+    function refresh() {
+      if (!document.hidden && !document.getElementById("desk").hasAttribute("data-live-active")) send();
+    }
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("online", refresh);
+    setInterval(refresh, 8500);
+
+    return {
+      refresh,
+      setContext(nextAccount, nextPaired, nextVisible) {
+        const changed = account !== nextAccount || paired !== nextPaired;
+        const entered = !visible && nextVisible;
+        account = nextAccount;
+        paired = nextPaired;
+        visible = nextVisible;
+        if (changed) {
+          snapshot = null;
+          pending = null;
+          sending = false;
+          issue = "";
+          feedback = "";
+          render();
+        }
+        if (changed || entered) refresh();
+      },
+    };
+  }
+
+  window.QuizSocial = { connect };
+})();
+</script>
+<script>
+(() => {
+  "use strict";
+
   const byId = (id) => document.getElementById("desk-" + id);
   const errors = {
     pk_auth_required: "请重新登录后再试。",
@@ -3720,7 +4717,8 @@ void main() {
       run: avatar,
       saved: () => request("dashboard", undefined, { silent: true }),
     });
-    const live = window.QuizLive?.connect({ questions, chapters, rpc });
+    const social = window.QuizSocial?.connect({ rpc });
+    const live = window.QuizLive?.connect({ questions, chapters, rpc, onLobby: () => social?.refresh() });
     const draftKey = (id) => `xigai-desk-draft-v1:${account}:${id}`;
 
     function setStatus(value) {
@@ -3814,6 +4812,7 @@ void main() {
       renderDashboard();
       setBusy();
       live?.setContext(account, Boolean(dashboard?.partner), active && !round);
+      social?.setContext(account, Boolean(dashboard?.partner), active && !round);
     }
 
     async function request(name, params, { silent = false, after } = {}) {
@@ -4036,6 +5035,7 @@ void main() {
           refresh();
         } else {
           live?.setContext(account, Boolean(dashboard?.partner), false);
+          social?.setContext(account, Boolean(dashboard?.partner), false);
         }
       },
       setLoginAvailable(available) {
@@ -4118,6 +5118,8 @@ for (const item of questions) {
   chapterPools.get(item.chapter).push(item);
 }
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const adventureSize = 5;
+const studyDay = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric", month: "numeric", day: "numeric" });
 const pageContent = document.querySelector("main");
 let selectedTab = "practice";
 let libraryLimit = libraryPageSize;
@@ -4204,7 +5206,7 @@ function showTab(tab, animate = false, fromNative = false) {
   const library = libraryTabs[tab];
   const destination = library ? "library" : { desk: "desk", profile: "profile" }[tab] || "setup";
   const changed = index !== previousIndex || $(destination).hidden;
-  $("back").textContent = library ? `返回${library.title}` : "返回章节";
+  $("back").textContent = library ? `返回${library.title}` : "返回路线";
   view(destination);
   updateAvailability();
   window.scrollTo(0, 0);
@@ -4298,8 +5300,15 @@ function makeChapterCard(chapter, total) {
   arrow.className = "chapter-arrow";
   arrow.setAttribute("aria-hidden", "true");
   description.append(count, track);
-  card.append(description, arrow);
-  card.onclick = () => openChapter(chapter);
+  const medallion = document.createElement("span");
+  medallion.className = "chapter-medallion";
+  medallion.setAttribute("aria-hidden", "true");
+  const landmark = document.createElement("img");
+  landmark.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MiA1MiIgZmlsbD0ibm9uZSIgYXJpYS1oaWRkZW49InRydWUiPgogIDxnIHN0cm9rZT0iIzI4MjI0NCIgc3Ryb2tlLXdpZHRoPSIyLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8Y2lyY2xlIGN4PSIzOS41IiBjeT0iMTMiIHI9IjUuNSIgZmlsbD0iI2YzYTc1MCIvPgogICAgPHBhdGggZD0iTTguNSAzMCAyMyAxMC41bDkuNSAxMi43IDQtNC43TDQ1IDMwIiBmaWxsPSIjMzQ3NDYxIi8+CiAgICA8cGF0aCBkPSJtMTguNSAxNi42IDQuNCAxLjkgMy44LTIuOSIvPgogICAgPHBhdGggZD0iTTUuNSAyN2M4LTEuNSAxNC4zLjEgMjAuNSA0LjF2MTVjLTYuMy00LTEyLjUtNS41LTIwLjUtNHoiIGZpbGw9IiNmM2E3NTAiLz4KICAgIDxwYXRoIGQ9Ik00Ni41IDI3Yy04LTEuNS0xNC4zLjEtMjAuNSA0LjF2MTVjNi4zLTQgMTIuNS01LjUgMjAuNS00eiIgZmlsbD0iIzgwNjViZiIvPgogICAgPHBhdGggZD0iTTExIDM0YzMuNiAwIDYuMy43IDkuMiAyLjJtMTItMS4xYTIzIDIzIDAgMCAxIDguOS0yLjEiLz4KICA8L2c+Cjwvc3ZnPgo=";
+  landmark.alt = "";
+  medallion.append(landmark);
+  card.append(medallion, description, arrow);
+  card.onclick = () => startAdventure(chapter);
   return card;
 }
 
@@ -4390,6 +5399,51 @@ function renderLibrary() {
   if (focusedId) buttons.find((button) => button.dataset.questionId === focusedId)?.focus({ preventScroll: true });
 }
 
+function nextRouteChapter() {
+  if (state.session?.adventure && current()) return current().chapter;
+  for (const [chapter, pool] of chapterPools) {
+    if (pool.some((item) => !state.history[item.id])) return chapter;
+  }
+  return chapterPools.keys().next().value;
+}
+
+function startAdventure(chapter = nextRouteChapter()) {
+  if (state.session?.adventure && current()?.chapter === chapter) {
+    resumeQuestion();
+    return;
+  }
+  const pool = chapterPools.get(chapter) || [];
+  const pending = pool.filter((item) => !state.history[item.id]);
+  const review = pending.length < adventureSize ? reviewOrder(pool.filter((item) => state.history[item.id])) : [];
+  const ids = [...pending, ...review].slice(0, adventureSize).map((item) => item.id);
+  if (ids.length) start(ids, "practice", { adventure: true });
+}
+
+function renderAdventure(chapter) {
+  const day = studyDay.format();
+  const practiced = Object.entries(state.history).reduce((count, [id, answer]) => {
+    const last = answer?.last;
+    return count + Number(byId.has(id) && Number.isFinite(last) && last > 0 && last <= 9999999999999 && studyDay.format(last) === day);
+  }, 0);
+  const resume = state.session?.adventure && current();
+  $("adventure-target").textContent = chapter ? `${chapter} · 五题一站` : "题库准备中";
+  $("adventure-today").textContent = practiced >= adventureSize ? `今日目标完成 · 已练 ${practiced} 题` : `今日进度 ${practiced} / ${adventureSize}`;
+  $("adventure-goal").max = adventureSize;
+  $("adventure-goal").value = Math.min(practiced, adventureSize);
+  $("adventure-start").textContent = resume ? "继续这站" : practiced >= adventureSize ? "再走一站" : "出发 · 5 题";
+  $("adventure-start").disabled = !chapter;
+}
+
+function streak(ids, results) {
+  let highest = 0;
+  let count = 0;
+  for (const id of ids) {
+    count = results[id]?.correct ? count + 1 : 0;
+    highest = Math.max(highest, count);
+  }
+  return { current: count, highest };
+}
+
 function updateAvailability() {
   const length = matches().length;
   const done = Object.values(state.history);
@@ -4403,14 +5457,21 @@ function updateAvailability() {
     $(`profile-${key}`).textContent = count;
   }
   $("start").disabled = length === 0;
+  $("adventure-chapter-long").disabled = !chapterPools.has($("chapter").value);
   $("count").max = Math.max(length, 1);
   if ($("count").valueAsNumber > length && length > 0) $("count").value = length;
   $("availability").textContent = `符合条件 ${length} 道`;
+  const routeChapter = nextRouteChapter();
+  renderAdventure(routeChapter);
   for (const card of $("chapter-list").children) {
     const pool = chapterPools.get(card.dataset.chapter);
     const answered = pool.reduce((sum, item) => sum + Number(Boolean(state.history[item.id])), 0);
     card.querySelector(".chapter-count").textContent = `${answered} / ${pool.length} 道已练`;
     card.style.setProperty("--chapter-progress", `${100 * answered / pool.length}%`);
+    const step = answered === pool.length ? "done" : card.dataset.chapter === routeChapter ? "next" : "open";
+    card.dataset.adventureState = step;
+    if (step === "next") card.setAttribute("aria-current", "step");
+    else card.removeAttribute("aria-current");
   }
   const resumeItem = current();
   $("resume").hidden = !resumeItem;
@@ -4475,7 +5536,7 @@ function goToQuestion(index) {
 }
 
 function checksOnTap(item) {
-  return Boolean(state.session.quickChapter) && (item.type === "单选" || item.type === "判断");
+  return Boolean(state.session.quickChapter || state.session.adventure) && (item.type === "单选" || item.type === "判断");
 }
 
 function choose(letter) {
@@ -4536,9 +5597,13 @@ function renderQuestion() {
   const answered = session.ids.reduce((count, id) => count + Number(Boolean(session.results[id])), 0);
   const last = session.index === total - 1;
   view("quiz");
+  $("quiz").classList.toggle("adventure-round", Boolean(session.adventure));
   $("where").textContent = `${item.chapter} · ${session.index + 1} / ${total}`;
   $("progress").max = total;
   $("progress").value = answered;
+  const combo = session.adventure && streak(session.ids.slice(0, session.index + 1), session.results).current;
+  $("adventure-streak").hidden = combo < 2;
+  $("adventure-streak-value").textContent = combo || "";
   $("kind").textContent = item.type + "题";
   $("option-hint").hidden = item.type !== "多选" || memoryMode || Boolean(result);
   $("question").textContent = item.stem;
@@ -4570,7 +5635,9 @@ function renderQuestion() {
   $("options").replaceChildren(...buttons);
   if (focusedOption >= 0 && !result) buttons[focusedOption]?.focus();
   $("answer-summary").hidden = !result;
-  $("feedback").textContent = result && !memoryMode ? (result.correct ? "回答正确" : "回答错误") : "";
+  $("feedback").textContent = result && !memoryMode ? (session.adventure
+    ? result.correct ? "答对了！" : "差一点，再记住这个考点"
+    : result.correct ? "回答正确" : "回答错误") : "";
   $("feedback").dataset.state = result?.correct ? "correct" : "incorrect";
   $("answer-text").textContent = result ? item.answer.map((answer) => {
     const option = item.options[answer];
@@ -4596,7 +5663,7 @@ function renderQuestion() {
       ? `教材参考 · ${item.study.reference.chapter} · 第 ${item.study.reference.page} 页`
       : "题库口径 · 暂未定位到直接教材依据";
   }
-  renderRelated(result && session.index >= (session.groupStart || 0) ? item.related || [] : [], session);
+  renderRelated(result && !session.adventure && session.index >= (session.groupStart || 0) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = memoryMode
     ? "先回忆答案，再按 Enter 显示解析"
     : fill ? "按 Enter 提交或下一题" : tapCheck ? "按 A–H 作答，Enter 进入下一题" : "按 A–H 选择，Enter 提交或下一题";
@@ -4643,6 +5710,10 @@ function submit() {
   state.history[item.id] = { wrong: !correct, last: Date.now() };
   saveSession([["history", item.id, state.history[item.id]]]);
   renderQuestion();
+  if (session.adventure && correct && !reducedMotion.matches) {
+    $("feedback").animate?.([{ transform: "scale(.88)" }, { transform: "scale(1.07)" }, { transform: "scale(1)" }],
+      { duration: 320, easing: "ease-out" });
+  }
   focusAnswer();
 }
 
@@ -4668,15 +5739,21 @@ function next() {
   const wrong = round.filter((id) => !session.results[id]?.correct);
   const chapter = session.quickChapter;
   const hasNew = chapter && remainingChapterQuestions(chapter, session).length > 0;
-  $("result-title").textContent = memoryMode ? "本次背诵完成" : hasNew ? "本阶段练习完成" : "本次练习完成";
+  $("result-title").textContent = session.adventure ? "这一站走完了" : memoryMode ? "本次背诵完成" : hasNew ? "本阶段练习完成" : "本次练习完成";
   $("score").textContent = memoryMode ? `已复习 ${round.length} 道。`
     : `答对 ${round.length - wrong.length} 道，共 ${round.length} 道。`;
   $("retry").hidden = memoryMode;
   $("retry").disabled = wrong.length === 0;
   $("retry").onclick = () => start(wrong, "practice");
+  $("adventure-result").hidden = !session.adventure;
+  $("adventure-result-together").hidden = !session.adventure;
+  if (session.adventure) {
+    $("adventure-result-stops").textContent = `本轮练完 ${round.length} 题`;
+    $("adventure-result-streak").textContent = `最高连中 ${streak(round, session.results).highest} 题`;
+  }
   $("review-round").textContent = session.ungrouped ? "回看本次" : "回看本组";
   const continueLabel = practiceSettings.grouped ? "练下一组" : "继续练习";
-  $("again").textContent = hasNew ? continueLabel : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
+  $("again").textContent = session.adventure ? "回路线" : hasNew ? continueLabel : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
   $("again").onclick = hasNew ? () => openChapter(chapter) : () => showTab(selectedTab, true);
   view("result");
   window.scrollTo(0, 0);
@@ -4699,6 +5776,10 @@ $("fill-answer").oninput = (event) => {
   saveSession();
 };
 $("resume").onclick = resumeQuestion;
+$("adventure-start").onclick = () => startAdventure();
+$("adventure-chapter-long").onclick = () => openChapter($("chapter").value);
+$("adventure-together").onclick = () => showTab("desk", true);
+$("adventure-result-together").onclick = () => showTab("desk", true);
 $("submit").onclick = submit;
 $("previous").onclick = () => goToQuestion(state.session.index - 1);
 $("next").onclick = next;
