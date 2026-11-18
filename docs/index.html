@@ -555,6 +555,13 @@ a { color: var(--accent); }
 .profile-stats dd { grid-row: 1; margin: 0; font-size: 1.45rem; font-weight: 730; font-variant-numeric: tabular-nums; }
 .profile-account { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; justify-content: space-between; padding: 13px; border: 1px solid var(--line); border-radius: 15px; }
 .profile-account h3 { margin: 0; font-size: .95rem; }
+#open-practice-settings { margin-top: 14px; }
+#practice-settings-heading { margin: 14px 0; }
+#practice-settings-form { display: grid; gap: 13px; max-width: 420px; }
+#practice-settings-form label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.practice-group-toggle input { inline-size: 19px; block-size: 19px; margin: 0; accent-color: var(--accent); }
+#chapter-round-size { width: 9ch; }
+#chapter-ungrouped-note, #practice-settings-status { margin: 0; color: var(--muted); font-size: .87rem; }
 #android-updates { margin-top: 12px; }
 #update-status { flex: 1 1 12ch; margin: 0; color: var(--muted); font-size: .83rem; }
 #account-register-hint { color: var(--muted); font-size: .87rem; }
@@ -1178,6 +1185,26 @@ a { color: var(--accent); }
           <button id="update-download" class="primary" type="button" hidden>前往 GitHub 下载</button>
         </div>
       </section>
+      <button id="open-practice-settings" type="button">练习设置</button>
+    </section>
+    <section id="practice-settings" class="panel tab-page" hidden aria-labelledby="practice-settings-heading">
+      <button id="close-practice-settings" type="button">返回我的</button>
+      <h2 id="practice-settings-heading" tabindex="-1">练习设置</h2>
+      <form id="practice-settings-form">
+        <label class="practice-group-toggle">
+          <input id="chapter-grouping" type="checkbox" checked>
+          <span>章节练习按组进行</span>
+        </label>
+        <label id="chapter-round-size-field">
+          每组题数
+          <input id="chapter-round-size" type="number" inputmode="numeric" min="1" step="1" required>
+        </label>
+        <p id="chapter-ungrouped-note" hidden>直接连续练完该章剩余题目。已练完的章节可整章复习。</p>
+        <div class="actions">
+          <button class="primary" type="submit">保存设置</button>
+          <span id="practice-settings-status" role="status"></span>
+        </div>
+      </form>
     </section>
     <details id="review-panel" class="review">
       <summary>待核对题目 <span id="review-count"></span></summary>
@@ -1675,7 +1702,9 @@ const libraryTabs = {
 const tabDock = $("mobile-tabs");
 const tabButtons = [...tabDock.querySelectorAll("[data-study-tab]")];
 const nativeNavigation = window.webkit?.messageHandlers?.quizNativeUI;
-const roundSize = 20;
+const practiceSettingsKey = "xigai-practice-settings-v1";
+const maxRoundSize = Math.max(1, questions.length);
+const defaultRoundSize = Math.min(20, maxRoundSize);
 const chapterTopics = {
   "新增（必刷）": "综合考点",
   "导论": "理论的形成、内容与地位",
@@ -1710,6 +1739,22 @@ let libraryLimit = libraryPageSize;
 let pageMotion;
 let sync = null;
 let state = guestState();
+let practiceSettings = readPracticeSettings();
+
+function readPracticeSettings() {
+  const defaults = { grouped: true, roundSize: defaultRoundSize };
+  try {
+    const saved = JSON.parse(localStorage.getItem(practiceSettingsKey)) || {};
+    return {
+      grouped: saved.grouped !== false,
+      roundSize: Number.isInteger(saved.roundSize) && saved.roundSize >= 1 && saved.roundSize <= maxRoundSize
+        ? saved.roundSize : defaults.roundSize,
+    };
+  } catch {
+    return defaults;
+  }
+}
+
 
 function guestState() {
   try {
@@ -1739,7 +1784,7 @@ function saveSession(extra = []) {
 }
 
 function view(name) {
-  for (const id of ["setup", "quiz", "result", "library", "profile"]) $(id).hidden = id !== name;
+  for (const id of ["setup", "quiz", "result", "library", "profile", "practice-settings"]) $(id).hidden = id !== name;
   $("overview").hidden = name !== "setup";
 }
 
@@ -1872,22 +1917,43 @@ function makeChapterCard(chapter, total) {
   return card;
 }
 
+function reviewOrder(pool) {
+  return [...pool].sort((a, b) => {
+    const first = state.history[a.id];
+    const second = state.history[b.id];
+    return Number(Boolean(second?.wrong)) - Number(Boolean(first?.wrong)) || (first?.last || 0) - (second?.last || 0);
+  });
+}
+
+function remainingChapterQuestions(chapter, session) {
+  const seen = new Set(session?.ids);
+  const remaining = (chapterPools.get(chapter) || []).filter((item) => !seen.has(item.id));
+  return session?.chapterReview ? reviewOrder(remaining) : remaining.filter((item) => !state.history[item.id]);
+}
+
 function openChapter(chapter) {
   $("advanced-settings").open = false;
-  if (state.session?.quickChapter === chapter && current()) {
+  const session = state.session?.quickChapter === chapter ? state.session : null;
+  if (session && current()) {
     resumeQuestion();
     return;
   }
   const pool = chapterPools.get(chapter);
   if (!pool?.length) return;
-  const pending = pool.filter((item) => !state.history[item.id]);
-  const ordered = pending.length ? pending : [...pool].sort((a, b) => {
-    const first = state.history[a.id];
-    const second = state.history[b.id];
-    return Number(Boolean(second.wrong)) - Number(Boolean(first.wrong)) || first.last - second.last;
-  });
-  const round = ordered.slice(0, roundSize);
-  start(round.map((item) => item.id), "practice", chapter);
+  const remaining = remainingChapterQuestions(chapter, session);
+  const chapterReview = !remaining.length || Boolean(session?.chapterReview);
+  const ordered = remaining.length ? remaining : reviewOrder(pool);
+  const { grouped, roundSize } = practiceSettings;
+  const round = grouped ? ordered.slice(0, roundSize) : ordered;
+  const ids = round.map((item) => item.id);
+  if (session && remaining.length) {
+    session.groupStart = session.ids.length;
+    session.ids.push(...ids);
+    session.ungrouped = !grouped;
+    showStartedQuestion();
+    return;
+  }
+  start(ids, "practice", { quickChapter: chapter, ungrouped: !grouped, chapterReview });
 }
 
 function inScope(item, scope) {
@@ -1977,8 +2043,12 @@ function randomId() {
   return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join("-");
 }
 
-function start(ids, mode = $("mode").value, quickChapter) {
-  state.session = { sid: randomId(), ids, mode, index: 0, results: {}, selected: [], quickChapter };
+function start(ids, mode = $("mode").value, chapterOptions = {}) {
+  state.session = { sid: randomId(), ids, mode, index: 0, results: {}, selected: [], ...chapterOptions };
+  showStartedQuestion();
+}
+
+function showStartedQuestion() {
   saveSession();
   renderQuestion();
   window.scrollTo(0, 0);
@@ -2140,7 +2210,7 @@ function renderQuestion() {
       ? `教材参考 · ${item.study.reference.chapter} · 第 ${item.study.reference.page} 页`
       : "题库口径 · 暂未定位到直接教材依据";
   }
-  renderRelated(result ? item.related || [] : [], session);
+  renderRelated(result && session.index >= (session.groupStart || 0) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = memoryMode
     ? "先回忆答案，再按 Enter 显示解析"
     : fill ? "按 Enter 提交或下一题" : tapCheck ? "按 A–H 作答，Enter 进入下一题" : "按 A–H 选择，Enter 提交或下一题";
@@ -2208,16 +2278,19 @@ function next() {
   session.selected = [];
   saveSession();
   const memoryMode = session.mode === "memory";
-  const wrong = session.ids.filter((id) => !session.results[id]?.correct);
-  $("result-title").textContent = memoryMode ? "本次背诵完成" : "本次练习完成";
-  $("score").textContent = memoryMode ? `已复习 ${session.ids.length} 道。`
-    : `答对 ${session.ids.length - wrong.length} 道，共 ${session.ids.length} 道。`;
+  const round = session.ids.slice(session.groupStart || 0);
+  const wrong = round.filter((id) => !session.results[id]?.correct);
+  const chapter = session.quickChapter;
+  const hasNew = chapter && remainingChapterQuestions(chapter, session).length > 0;
+  $("result-title").textContent = memoryMode ? "本次背诵完成" : hasNew ? "本阶段练习完成" : "本次练习完成";
+  $("score").textContent = memoryMode ? `已复习 ${round.length} 道。`
+    : `答对 ${round.length - wrong.length} 道，共 ${round.length} 道。`;
   $("retry").hidden = memoryMode;
   $("retry").disabled = wrong.length === 0;
   $("retry").onclick = () => start(wrong, "practice");
-  const chapter = session.quickChapter;
-  const hasNew = chapter && chapterPools.get(chapter)?.some((item) => !state.history[item.id]);
-  $("again").textContent = hasNew ? "练下一组" : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
+  $("review-round").textContent = session.ungrouped ? "回看本次" : "回看本组";
+  const continueLabel = practiceSettings.grouped ? "练下一组" : "继续练习";
+  $("again").textContent = hasNew ? continueLabel : libraryTabs[selectedTab] ? `返回${libraryTabs[selectedTab].title}` : "返回章节";
   $("again").onclick = hasNew ? () => openChapter(chapter) : () => showTab(selectedTab, true);
   view("result");
   window.scrollTo(0, 0);
@@ -2548,6 +2621,43 @@ $("library-more").onclick = () => {
   $("library-list").children[firstNewIndex]?.focus();
 };
 $("profile-account").onclick = () => $("account-button").click();
+
+function updatePracticeSettingsForm() {
+  const grouped = $("chapter-grouping").checked;
+  $("chapter-round-size-field").hidden = !grouped;
+  $("chapter-round-size").disabled = !grouped;
+  $("chapter-ungrouped-note").hidden = grouped;
+  $("practice-settings-status").textContent = "";
+}
+
+$("open-practice-settings").onclick = () => {
+  $("chapter-grouping").checked = practiceSettings.grouped;
+  $("chapter-round-size").max = maxRoundSize;
+  $("chapter-round-size").value = practiceSettings.roundSize;
+  updatePracticeSettingsForm();
+  view("practice-settings");
+  window.scrollTo(0, 0);
+  $("practice-settings-heading").focus({ preventScroll: true });
+  animatePage(0, 9);
+};
+$("close-practice-settings").onclick = () => {
+  showTab("profile", true);
+  $("open-practice-settings").focus();
+};
+$("chapter-grouping").onchange = updatePracticeSettingsForm;
+$("chapter-round-size").oninput = () => { $("practice-settings-status").textContent = ""; };
+$("practice-settings-form").onsubmit = (event) => {
+  event.preventDefault();
+  const grouped = $("chapter-grouping").checked;
+  const roundSize = grouped ? $("chapter-round-size").valueAsNumber : practiceSettings.roundSize;
+  practiceSettings = { grouped, roundSize };
+  try {
+    localStorage.setItem(practiceSettingsKey, JSON.stringify(practiceSettings));
+    $("practice-settings-status").textContent = "设置已保存，下次开始练习时生效。";
+  } catch {
+    $("practice-settings-status").textContent = "当前可使用这些设置，关闭页面后可能需要重新设置。";
+  }
+};
 
 setup();
 showTab("practice");
