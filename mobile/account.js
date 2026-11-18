@@ -150,6 +150,8 @@ function connect(callbacks) {
   }
 
   const dialog = byId("account-dialog");
+  const sheet = window.QuizSheetMotion?.attach(dialog);
+  const closeDialog = sheet ? sheet.close : () => dialog.close();
   const form = byId("account-form");
   const passwordInput = byId("account-password");
   const submitButton = byId("account-submit");
@@ -174,15 +176,10 @@ function connect(callbacks) {
     message("");
     dialog.showModal();
   };
-  byId("account-close").onclick = () => dialog.close();
-  dialog.addEventListener("click", (event) => {
-    if (event.target !== dialog) return;
-    const bounds = dialog.getBoundingClientRect();
-    if (event.clientX < bounds.left || event.clientX > bounds.right ||
-        event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
-  });
+  byId("account-close").onclick = closeDialog;
   toggleButton.onclick = () => setRegistering(!registering);
   dialog.addEventListener("close", () => {
+    if (dialog.open) return;
     form.reset();
     setRegistering(false);
   });
@@ -195,7 +192,7 @@ function connect(callbacks) {
       return;
     }
     switchAccount(null);
-    dialog.close();
+    closeDialog();
   };
   form.onsubmit = async (event) => {
     event.preventDefault();
@@ -220,7 +217,7 @@ function connect(callbacks) {
         return;
       }
       switchAccount(response.data.user);
-      dialog.close();
+      closeDialog();
     } catch {
       message("连接失败，请稍后重试。");
     } finally {
