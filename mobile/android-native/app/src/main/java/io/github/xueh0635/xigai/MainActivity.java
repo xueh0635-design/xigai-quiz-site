@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle state) {
+        registerPlugin(QuizAppearancePlugin.class);
         registerPlugin(QuizUpdatePlugin.class);
         super.onCreate(state);
         if (getBridge() == null) return;

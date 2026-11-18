@@ -102,7 +102,11 @@
       if (native) Promise.resolve(native.postMessage({ kind: "theme", dark })).catch(() => {});
       const capacitor = window.Capacitor;
       if (capacitor?.getPlatform?.() === "android") {
-        Promise.resolve(capacitor.Plugins?.SystemBars?.setStyle({ style: dark ? "DARK" : "LIGHT" })).catch(() => {});
+        const plugins = capacitor.Plugins;
+        const syncBars = plugins?.QuizAppearance
+          ? plugins.QuizAppearance.setTheme({ theme })
+          : plugins?.SystemBars?.setStyle({ style: dark ? "DARK" : "LIGHT" });
+        Promise.resolve(syncBars).catch(() => {});
       }
       if (animate && !motion.matches) {
         for (const canvas of document.querySelectorAll(".world-scene canvas[data-scene-rendered]")) {
@@ -3166,8 +3170,8 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
 }
 
 body {
-  background: radial-gradient(ellipse at 90% 5%, var(--world-wash), transparent 53%) fixed,
-    linear-gradient(130deg, var(--world-card-alt), var(--world-bg) 60%) fixed;
+  background: radial-gradient(ellipse 90vw 52vh at 90% 0, var(--world-wash), transparent 90%),
+    linear-gradient(165deg, var(--world-card-alt), var(--world-bg) 85vh), var(--world-bg);
 }
 .masthead.glass, .study-tabs.glass {
   border-color: var(--world-edge);
