@@ -156,6 +156,8 @@ function connect(callbacks) {
   const passwordInput = byId("account-password");
   const submitButton = byId("account-submit");
   const toggleButton = byId("account-toggle");
+  const nativeUI = window.webkit?.messageHandlers?.quizNativeUI;
+  let nativePending = false;
   let registering = false;
   const message = (value) => { byId("account-message").textContent = value; };
 
@@ -172,8 +174,20 @@ function connect(callbacks) {
   }
 
   byId("account-button").hidden = false;
-  byId("account-button").onclick = () => {
+  byId("account-button").onclick = async () => {
     message("");
+    if (nativePending || dialog.open) return;
+    if (nativeUI) {
+      nativePending = true;
+      try {
+        await nativeUI.postMessage({ kind: "account", email: actor ? actor.email || "" : null });
+        return;
+      } catch {
+        // The bundled form remains available if native presentation fails.
+      } finally {
+        nativePending = false;
+      }
+    }
     dialog.showModal();
   };
   byId("account-close").onclick = closeDialog;
@@ -184,42 +198,74 @@ function connect(callbacks) {
     setRegistering(false);
   });
   byId("account-refresh").onclick = refresh;
-  byId("account-logout").onclick = async () => {
+  async function signOut() {
     // Scope is the current device. Other devices keep their own sessions.
-    const response = await client.auth.signOut({ scope: "local" });
-    if (response.error) {
-      accountLabel().textContent = "退出失败，请联网后重试";
-      return;
+    try {
+      const response = await client.auth.signOut({ scope: "local" });
+      if (!response.error) {
+        switchAccount(null);
+        return null;
+      }
+    } catch {
+      // The user can try again when the network is available.
     }
-    switchAccount(null);
-    closeDialog();
-  };
-  form.onsubmit = async (event) => {
-    event.preventDefault();
-    const creatingAccount = registering;
-    const email = byId("account-email-input").value.trim();
-    const password = passwordInput.value;
-    submitButton.disabled = true;
-    toggleButton.disabled = true;
-    message(creatingAccount ? "正在注册…" : "正在登录…");
+    return "退出失败，请联网后重试";
+  }
+
+  async function authenticate(email, password, creatingAccount) {
+    email = email.trim();
+    if (!email || !password) return "请输入邮箱和密码。";
+    if (creatingAccount && password.length < 10) return "密码至少需要 10 个字符。";
     try {
       if (creatingAccount) {
         const enrolled = await client.functions.invoke("quiz-register", { body: { email, password } });
         if (enrolled.error) {
           const body = await enrolled.error.context?.json?.().catch(() => null);
-          message(body?.message || "注册未完成，请检查网络后重试。");
-          return;
+          return body?.message || "注册未完成，请检查网络后重试。";
         }
       }
       const response = await client.auth.signInWithPassword({ email, password });
       if (response.error || !response.data.user) {
-        message("登录未完成，请检查邮箱、密码和网络。");
-        return;
+        return "登录未完成，请检查邮箱、密码和网络。";
       }
       switchAccount(response.data.user);
-      closeDialog();
+      return null;
     } catch {
-      message("连接失败，请稍后重试。");
+      return "连接失败，请稍后重试。";
+    }
+  }
+
+  if (nativeUI) {
+    window.QuizNativeAccount = {
+      async run(action, email, password) {
+        if (action === "login" || action === "register") return authenticate(email, password, action === "register");
+        if (action === "logout") return signOut();
+        if (action === "refresh") {
+          await refresh();
+          return accountLabel().textContent;
+        }
+        return "账号操作未完成，请重试。";
+      },
+    };
+  }
+
+  byId("account-logout").onclick = async () => {
+    const error = await signOut();
+    if (error) accountLabel().textContent = error;
+    else closeDialog();
+  };
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const creatingAccount = registering;
+    const email = byId("account-email-input").value;
+    const password = passwordInput.value;
+    submitButton.disabled = true;
+    toggleButton.disabled = true;
+    message(creatingAccount ? "正在注册…" : "正在登录…");
+    try {
+      const error = await authenticate(email, password, creatingAccount);
+      if (error) message(error);
+      else closeDialog();
     } finally {
       submitButton.disabled = false;
       toggleButton.disabled = false;
