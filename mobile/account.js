@@ -151,16 +151,21 @@ function connect(callbacks) {
 
   const dialog = byId("account-dialog");
   const form = byId("account-form");
+  const passwordInput = byId("account-password");
+  const submitButton = byId("account-submit");
+  const toggleButton = byId("account-toggle");
   let registering = false;
   const message = (value) => { byId("account-message").textContent = value; };
 
   function setRegistering(value) {
     registering = value;
-    byId("invite-label").hidden = !registering;
-    byId("account-invite").required = registering;
-    byId("account-submit").textContent = registering ? "创建并登录" : "登录";
-    byId("account-password").autocomplete = registering ? "new-password" : "current-password";
-    byId("account-toggle").textContent = registering ? "返回登录" : "使用邀请码注册";
+    if (registering) passwordInput.minLength = 10;
+    else passwordInput.removeAttribute("minlength");
+    byId("account-password-label").textContent = registering ? "密码（至少 10 个字符）" : "密码";
+    byId("account-register-hint").hidden = !registering;
+    submitButton.textContent = registering ? "创建并登录" : "登录";
+    passwordInput.autocomplete = registering ? "new-password" : "current-password";
+    toggleButton.textContent = registering ? "返回登录" : "注册账号";
     message("");
   }
 
@@ -170,7 +175,11 @@ function connect(callbacks) {
     dialog.showModal();
   };
   byId("account-close").onclick = () => dialog.close();
-  byId("account-toggle").onclick = () => setRegistering(!registering);
+  toggleButton.onclick = () => setRegistering(!registering);
+  dialog.addEventListener("close", () => {
+    form.reset();
+    setRegistering(false);
+  });
   byId("account-refresh").onclick = refresh;
   byId("account-logout").onclick = async () => {
     // Scope is the current device. Other devices keep their own sessions.
@@ -184,14 +193,15 @@ function connect(callbacks) {
   };
   form.onsubmit = async (event) => {
     event.preventDefault();
+    const creatingAccount = registering;
     const email = byId("account-email-input").value.trim();
-    const password = byId("account-password").value;
-    const code = byId("account-invite").value.trim();
-    byId("account-submit").disabled = true;
-    message(registering ? "正在注册…" : "正在登录…");
+    const password = passwordInput.value;
+    submitButton.disabled = true;
+    toggleButton.disabled = true;
+    message(creatingAccount ? "正在注册…" : "正在登录…");
     try {
-      if (registering) {
-        const enrolled = await client.functions.invoke("quiz-enroll", { body: { email, password, code } });
+      if (creatingAccount) {
+        const enrolled = await client.functions.invoke("quiz-register", { body: { email, password } });
         if (enrolled.error) {
           const body = await enrolled.error.context?.json?.().catch(() => null);
           message(body?.message || "注册未完成，请检查网络后重试。");
@@ -203,14 +213,13 @@ function connect(callbacks) {
         message("登录未完成，请检查邮箱、密码和网络。");
         return;
       }
-      form.reset();
-      setRegistering(false);
       switchAccount(response.data.user);
       dialog.close();
     } catch {
       message("连接失败，请稍后重试。");
     } finally {
-      byId("account-submit").disabled = false;
+      submitButton.disabled = false;
+      toggleButton.disabled = false;
     }
   };
 
