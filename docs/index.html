@@ -1726,7 +1726,7 @@ function showTab(tab, animate = false, fromNative = false) {
   tabDock.style.setProperty("--tab-index", String(index));
   moveTabLens(index, animate);
   const library = libraryTabs[tab];
-  $("back").setAttribute("aria-label", library ? `返回${library.title}` : "返回章节");
+  $("back").textContent = library ? `返回${library.title}` : "返回章节";
   view(library ? "library" : tab === "profile" ? "profile" : "setup");
   updateAvailability();
   window.scrollTo(0, 0);
