@@ -213,8 +213,9 @@ final class QuizUpdateChecker {
     }
 
     static Intent releaseIntent(Version latest) {
-        String release = RELEASE_TAG.matcher(latest.tag).matches() ? "tag/" + latest.tag : "latest";
-        return new Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL + release));
+        String release = latest != null && RELEASE_TAG.matcher(latest.tag).matches() ? "tag/" + latest.tag : "latest";
+        return new Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL + release))
+            .addCategory(Intent.CATEGORY_BROWSABLE);
     }
 
     static final class Version {

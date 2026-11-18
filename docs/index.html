@@ -2637,14 +2637,17 @@ $("profile-account").hidden = $("account-button").hidden;
       : status.checked ? `${current} · 已是最新版` : current;
     notifyButton.textContent = status.notificationsEnabled ? "关闭更新通知"
       : status.notificationsBlocked ? "前往系统开启通知" : "开启更新通知";
-    downloadButton.hidden = !status.available;
+    downloadButton.textContent = status.available ? "前往 GitHub 下载" : "查看 GitHub 发布页";
+    downloadButton.classList.toggle("primary", status.available);
+    downloadButton.hidden = false;
     panel.hidden = false;
   }
 
   async function act(button, action, done) {
     button.disabled = true;
     try {
-      done?.(await action());
+      const result = await action();
+      done?.(result);
     } catch {
       statusText.textContent = "操作未完成，请稍后重试。";
     } finally {

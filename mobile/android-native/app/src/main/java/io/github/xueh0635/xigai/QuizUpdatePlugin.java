@@ -69,7 +69,9 @@ public class QuizUpdatePlugin extends Plugin {
     @PluginMethod
     public void openRelease(PluginCall call) {
         Context context = getContext();
-        startActivity(QuizUpdateChecker.releaseIntent(QuizUpdateChecker.latestVersion(context)), call);
+        QuizUpdateChecker.Version latest = QuizUpdateChecker.latestVersion(context);
+        QuizUpdateChecker.Version installed = QuizUpdateChecker.installedVersion(context);
+        startActivity(QuizUpdateChecker.releaseIntent(latest.code >= installed.code ? latest : null), call);
     }
 
     @PluginMethod
