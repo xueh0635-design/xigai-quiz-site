@@ -704,6 +704,22 @@ a { color: var(--accent); }
 .tab-page-heading h2, #library-count { margin: 0; }
 #library-count, .library-meta { color: var(--muted); font-size: .88rem; }
 .library-actions { margin-bottom: 15px; }
+#library-swipe-hint { margin: 0 0 10px; color: var(--muted); font-size: .86rem; }
+#library-removal {
+  position: sticky;
+  z-index: 2;
+  top: calc(86px + var(--top-inset));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 5px 6px 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper);
+  font-size: .9rem;
+}
 #library-list { display: grid; gap: 9px; }
 .library-item {
   display: grid;
@@ -713,6 +729,49 @@ a { color: var(--accent); }
   border-radius: 14px;
   background: #f3f8f3;
   text-align: left;
+}
+.library-row {
+  --library-reveal: 84px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+}
+.library-row-surface {
+  position: relative;
+  z-index: 1;
+  transform: translateX(var(--library-offset, 0px));
+  transition: transform 190ms cubic-bezier(.2, .8, .25, 1);
+  touch-action: pan-y pinch-zoom;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.library-row.is-open .library-row-surface { --library-offset: calc(-1 * var(--library-reveal)); }
+.library-row.is-dragging .library-row-surface { transition: none; }
+.library-row .library-item { padding-inline-end: 64px; }
+.library-row .library-menu {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translateY(-50%);
+  border-radius: 10px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 1.15rem;
+}
+.library-row .library-remove {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: var(--library-reveal);
+  padding-inline: 5px;
+  border-radius: 0 14px 14px 0;
+  font-weight: 680;
+}
+.library-row button:focus-visible { outline-offset: -3px; }
+@media (prefers-reduced-motion: reduce) {
+  .library-row-surface { transition: none; }
 }
 .library-stem { overflow-wrap: anywhere; font-weight: 620; }
 #library-more { margin-top: 14px; }
@@ -1011,6 +1070,13 @@ a { color: var(--accent); }
   line-height: 1.4;
 }
 #option-hint { color: var(--muted); font-size: .82rem; }
+#wrong-review {
+  margin-inline-start: auto;
+  min-height: 44px;
+  padding: 5px 11px;
+  border-radius: 12px;
+  font-size: .83rem;
+}
 .lesson-card #question {
   margin: 12px 0 17px;
   font-size: clamp(1.12rem, 3vw, 1.5rem);
@@ -2705,9 +2771,7 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
 .panel { box-shadow: 0 4px 0 #e9dfe7, 0 10px 23px #553c6515; }
 .tab-page .tab-page-heading h2 { color: #513461; font-weight: 810; }
 .library-item { background: #faf2f7; }
-.profile-stats div { border: 1px solid #e7d6dd; background: #f9eceb; }
-.profile-stats div:nth-child(2) { background: #f9eddc; }
-.profile-stats div:nth-child(3) { background: #f1e6f7; }
+.profile-stats div { border: 1px solid #e7d6dd; }
 
 #quiz .lesson-header :is(#back,#star) { background: #fffbf3; }
 #quiz .lesson-header #where { color: #60436d; }
@@ -2873,6 +2937,8 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
   --world-good-ink: #21573c;
   --world-bad: #f7ded9;
   --world-bad-ink: #783d39;
+  --world-stat-wrong: #f9eddc;
+  --world-stat-starred: #f1e6f7;
   --world-sky-top: #8fbebc;
   --world-sky-bottom: #ebdab0;
   --world-ridge: #79998a;
@@ -2934,6 +3000,8 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
   --world-good-ink: #bde9c9;
   --world-bad: #592f3b;
   --world-bad-ink: #ffd2ce;
+  --world-stat-wrong: #473641;
+  --world-stat-starred: #39344d;
   --world-sky-top: #3c3d61;
   --world-sky-bottom: #c97467;
   --world-ridge: #575168;
@@ -2964,6 +3032,8 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
   --world-good-ink: #b7e9cc;
   --world-bad: #543541;
   --world-bad-ink: #ffd9d4;
+  --world-stat-wrong: #353442;
+  --world-stat-starred: #292f49;
   --world-sky-top: #121f39;
   --world-sky-bottom: #456284;
   --world-ridge: #374e65;
@@ -3376,6 +3446,18 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   background: var(--world-card-alt);
   color: var(--world-ink);
   box-shadow: none;
+}
+.profile-stats div:has(#profile-wrong) { background: var(--world-stat-wrong); }
+.profile-stats div:has(#profile-starred) { background: var(--world-stat-starred); }
+#wrong-review[aria-pressed="true"] {
+  background: var(--world-bad);
+  border-color: var(--world-bad-ink);
+  color: var(--world-bad-ink);
+}
+#library-list .library-remove {
+  background: var(--world-bad);
+  color: var(--world-bad-ink);
+  border-color: var(--world-edge);
 }
 .library-item .library-meta, #quiz .lesson-header #where, .lesson-answer h3, #quiz .study-note h3, .lesson-related h3 {
   color: var(--world-muted);
@@ -5032,6 +5114,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         <div class="question-header">
           <span id="kind"></span>
           <span id="option-hint" hidden>选齐后提交</span>
+          <button id="wrong-review" type="button" aria-label="留在错题本" aria-pressed="false">加入错题本</button>
         </div>
         <h2 id="question" tabindex="-1"></h2>
         <div id="options" class="options"></div>
@@ -5089,6 +5172,11 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
       <div class="actions library-actions">
         <button id="library-start" class="primary" type="button">开始练习</button>
         <button id="library-configure" type="button">自定义组卷</button>
+      </div>
+      <p id="library-swipe-hint" hidden>左滑题目或点「···」可移除。</p>
+      <div id="library-removal" hidden>
+        <span role="status">已移出错题本</span>
+        <button id="library-undo" type="button">撤销</button>
       </div>
       <div id="library-list"></div>
       <button id="library-more" type="button" hidden>显示更多</button>
@@ -9391,7 +9479,7 @@ const $ = (id) => document.getElementById(id);
 const storageKey = "xigai-local-quiz-v1";
 const libraryPageSize = 12;
 const libraryTabs = {
-  wrong: { title: "错题", empty: "答错的题目会出现在这里。" },
+  wrong: { title: "错题", empty: "答错的题目会自动收录，也可以在做题时手动加入。" },
   starred: { title: "收藏", empty: "收藏的题目会出现在这里。" },
 };
 const tabDock = $("mobile-tabs");
@@ -9429,6 +9517,8 @@ const studyDay = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", y
 const pageContent = document.querySelector("main");
 let selectedTab = "practice";
 let libraryLimit = libraryPageSize;
+let openLibraryRow = null;
+let wrongUndo = null;
 let pageMotion;
 let sync = null;
 let desk = null;
@@ -9490,7 +9580,7 @@ function showTab(tab, animate = false, fromNative = false) {
   if (nativeNavigation && !fromNative && selectedTab !== tab) {
     nativeNavigation.postMessage({ kind: "tab", tab, animate: animate && !reducedMotion.matches }).catch(() => {});
   }
-  if (selectedTab !== tab) libraryLimit = libraryPageSize;
+  if (selectedTab !== tab) resetLibrary();
   selectedTab = tab;
   const index = tabButtons.findIndex((button) => button.dataset.studyTab === tab);
   for (const [position, button] of tabButtons.entries()) {
@@ -9631,10 +9721,34 @@ function openChapter(chapter = nextRouteChapter()) {
   start(pool.map((item) => item.id), "practice", { quickChapter: chapter, adventure: true });
 }
 
+function hasAnswered(id) {
+  return typeof state.history[id]?.wrong === "boolean";
+}
+
+function inWrongLibrary(id) {
+  const entry = state.history[id];
+  return entry?.review ?? (entry?.wrong === true);
+}
+
+function setWrongReview(id, review) {
+  const entry = { ...state.history[id] };
+  if (review === undefined) delete entry.review;
+  else entry.review = review;
+  state.history[id] = entry;
+  save([["history", id, entry]]);
+}
+
+function renderWrongReview(id) {
+  const inLibrary = inWrongLibrary(id);
+  const button = $("wrong-review");
+  button.setAttribute("aria-pressed", String(inLibrary));
+  button.textContent = inLibrary ? "移出错题本" : "加入错题本";
+}
+
 function inScope(item, scope) {
-  if (scope === "new") return !state.history[item.id];
-  if (scope === "done") return Boolean(state.history[item.id]);
-  if (scope === "wrong") return state.history[item.id]?.wrong === true;
+  if (scope === "new") return !hasAnswered(item.id);
+  if (scope === "done") return hasAnswered(item.id);
+  if (scope === "wrong") return inWrongLibrary(item.id);
   if (scope === "starred") return state.stars[item.id] === true;
   return true;
 }
@@ -9647,12 +9761,66 @@ function matches() {
     chosenTypes.has(item.type) && inScope(item, scope));
 }
 
+function setOpenLibraryRow(row) {
+  if (openLibraryRow === row) return;
+  for (const [currentRow, open] of [[openLibraryRow, false], [row, true]]) {
+    if (!currentRow) continue;
+    const menu = currentRow.querySelector(".library-menu");
+    const remove = currentRow.querySelector(".library-remove");
+    if (!open && document.activeElement === remove) menu.focus({ preventScroll: true });
+    currentRow.classList.toggle("is-open", open);
+    menu.setAttribute("aria-expanded", String(open));
+    remove.inert = !open;
+  }
+  openLibraryRow = row;
+}
+
+function resetLibrary() {
+  setOpenLibraryRow(null);
+  wrongUndo = null;
+  libraryLimit = libraryPageSize;
+}
+
+function makeWrongRow(item, questionButton) {
+  const row = document.createElement("div");
+  row.className = "library-row";
+  row.dataset.questionId = item.id;
+
+  const surface = document.createElement("div");
+  surface.className = "library-row-surface";
+  const menu = document.createElement("button");
+  menu.type = "button";
+  menu.className = "library-menu";
+  menu.textContent = "···";
+  menu.setAttribute("aria-label", "错题操作");
+  menu.setAttribute("aria-expanded", "false");
+  menu.onclick = () => setOpenLibraryRow(openLibraryRow === row ? null : row);
+  surface.append(questionButton, menu);
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "library-remove";
+  remove.textContent = "移除";
+  remove.inert = true;
+  remove.onclick = () => {
+    wrongUndo = { id: item.id, previous: state.history[item.id]?.review, last: state.history[item.id]?.last };
+    setWrongReview(item.id, false);
+    updateAvailability();
+    $("library-undo").focus({ preventScroll: true });
+  };
+  row.append(surface, remove);
+  return row;
+}
+
 function renderLibrary() {
   const { title, empty } = libraryTabs[selectedTab];
+  const wrong = selectedTab === "wrong";
   const items = questions.filter((item) => inScope(item, selectedTab));
   const list = $("library-list");
-  const focusedId = list.contains(document.activeElement) ? document.activeElement.dataset.questionId : null;
-  const buttons = items.slice(0, libraryLimit).map((item) => {
+  const focused = list.contains(document.activeElement) ? document.activeElement : null;
+  const focusedId = focused?.closest("[data-question-id]")?.dataset.questionId;
+  const openId = openLibraryRow?.dataset.questionId;
+  const rows = items.slice(0, libraryLimit).map((item) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "library-item";
@@ -9665,7 +9833,7 @@ function renderLibrary() {
     meta.textContent = `${item.chapter} · ${item.type}题`;
     button.append(stem, meta);
     button.onclick = () => start([item.id], "practice");
-    return button;
+    return wrong ? makeWrongRow(item, button) : button;
   });
   $("library-title").textContent = title;
   $("library-count").textContent = items.length ? `共 ${items.length} 道` : `共 0 道。${empty}`;
@@ -9673,17 +9841,32 @@ function renderLibrary() {
   startButton.textContent = `练习${title}`;
   startButton.disabled = items.length === 0;
   startButton.onclick = () => start(items.map((item) => item.id), "practice");
+  $("library-configure").hidden = wrong;
   $("library-configure").disabled = items.length === 0;
-  list.replaceChildren(...buttons);
+  $("library-swipe-hint").hidden = !wrong || items.length === 0;
+  if (wrongUndo) {
+    const entry = state.history[wrongUndo.id];
+    if (entry?.review !== false || entry.last !== wrongUndo.last) wrongUndo = null;
+  }
+  $("library-removal").hidden = !wrong || !wrongUndo;
+  openLibraryRow = null;
+  list.replaceChildren(...rows);
+  if (openId) setOpenLibraryRow(rows.find((row) => row.dataset.questionId === openId) || null);
   $("library-more").hidden = items.length <= libraryLimit;
-  if (focusedId) buttons.find((button) => button.dataset.questionId === focusedId)?.focus({ preventScroll: true });
+  const replacement = focusedId && rows.find((row) => row.dataset.questionId === focusedId);
+  if (replacement) {
+    const button = wrong ? replacement.querySelector(`.${focused.className}`) : replacement;
+    button?.focus({ preventScroll: true });
+  } else if (focused) {
+    $("library-title").focus({ preventScroll: true });
+  }
 }
 
 function nextRouteChapter() {
   const chapter = chapterForSession(state.session);
   if (chapter && canResumeSession()) return chapter;
   for (const [chapter, pool] of chapterPools) {
-    if (pool.some((item) => !state.history[item.id])) return chapter;
+    if (pool.some((item) => !hasAnswered(item.id))) return chapter;
   }
   return chapterPools.keys().next().value;
 }
@@ -9717,7 +9900,7 @@ function renderAdventure(chapter) {
   }, 0);
   const resume = chapterForSession(state.session) === chapter && canResumeSession();
   const pool = chapterPools.get(chapter) || [];
-  const learned = pool.filter((item) => state.history[item.id]).length;
+  const learned = pool.filter((item) => hasAnswered(item.id)).length;
   $("route-world-canvas").dataset.progress = String(pool.length ? learned / pool.length : 0);
   $("adventure-target").textContent = chapter ? `${chapter} · 共 ${pool.length} 题` : "题库准备中";
   $("adventure-today").textContent = `今天已练 ${practiced} 题 · 本章 ${learned} / ${pool.length}`;
@@ -9739,10 +9922,9 @@ function streak(ids, results) {
 
 function updateAvailability() {
   const length = matches().length;
-  const done = Object.values(state.history);
   const stats = {
-    done: done.length,
-    wrong: done.filter((answer) => answer.wrong).length,
+    done: Object.keys(state.history).filter(hasAnswered).length,
+    wrong: questions.filter((item) => inWrongLibrary(item.id)).length,
     starred: Object.values(state.stars).filter(Boolean).length,
   };
   for (const [key, count] of Object.entries(stats)) {
@@ -9758,7 +9940,7 @@ function updateAvailability() {
   renderAdventure(routeChapter);
   for (const card of $("chapter-list").children) {
     const pool = chapterPools.get(card.dataset.chapter);
-    const answered = pool.reduce((sum, item) => sum + Number(Boolean(state.history[item.id])), 0);
+    const answered = pool.reduce((sum, item) => sum + Number(hasAnswered(item.id)), 0);
     card.querySelector(".chapter-count").textContent = `${answered} / ${pool.length} 道已练`;
     card.style.setProperty("--chapter-progress", `${100 * answered / pool.length}%`);
     const step = answered === pool.length ? "done" : card.dataset.chapter === routeChapter ? "next" : "open";
@@ -9776,6 +9958,7 @@ function updateAvailability() {
       : `${current().chapter} · ${session.index + 1} / ${session.ids.length}`;
   }
   if (!$("library").hidden) renderLibrary();
+  if (!$("quiz").hidden && current()) renderWrongReview(current().id);
   window.QuizChapterPicker?.refresh();
 }
 
@@ -9906,6 +10089,7 @@ function renderQuestion() {
   $("question").textContent = item.stem;
   $("star").setAttribute("aria-pressed", String(Boolean(state.stars[item.id])));
   $("star").textContent = state.stars[item.id] ? "已收藏" : "收藏";
+  renderWrongReview(item.id);
   const fill = item.type === "填空";
   $("fill-label").hidden = !fill || memoryMode;
   $("fill-answer").disabled = Boolean(result);
@@ -10005,7 +10189,9 @@ function submit() {
     : item.answer.length === session.selected.length &&
       item.answer.every((letter) => session.selected.includes(letter));
   session.results[item.id] = { selected: session.selected, correct };
-  state.history[item.id] = { wrong: !correct, last: Date.now() };
+  const entry = { wrong: !correct, last: Date.now() };
+  if (state.history[item.id]?.review === true) entry.review = true;
+  state.history[item.id] = entry;
   saveSession([["history", item.id, state.history[item.id]]]);
   renderQuestion();
   focusAnswer();
@@ -10087,6 +10273,12 @@ $("star").onclick = () => {
   state.stars[item.id] = !state.stars[item.id];
   save([["star", item.id, state.stars[item.id]]]);
   renderQuestion();
+};
+$("wrong-review").onclick = () => {
+  const item = current();
+  if (!item) return;
+  setWrongReview(item.id, !inWrongLibrary(item.id));
+  renderWrongReview(item.id);
 };
 document.addEventListener("keydown", (event) => {
   if ($("quiz").hidden || $("account-dialog").open || event.ctrlKey || event.metaKey || event.altKey ||
@@ -10428,10 +10620,90 @@ $("library-more").onclick = () => {
   const firstNewIndex = libraryLimit;
   libraryLimit += libraryPageSize;
   renderLibrary();
-  $("library-list").children[firstNewIndex]?.focus();
+  const firstNew = $("library-list").children[firstNewIndex];
+  (firstNew?.querySelector(".library-item") || firstNew)?.focus();
+};
+$("library-undo").onclick = () => {
+  if (!wrongUndo) return;
+  const { id, previous } = wrongUndo;
+  wrongUndo = null;
+  setWrongReview(id, previous);
+  updateAvailability();
+  const restored = [...$("library-list").children].find((row) => row.dataset.questionId === id);
+  (restored?.querySelector(".library-item") || $("library-start")).focus({ preventScroll: true });
 };
 $("profile-account").onclick = () => $("account-button").click();
 
+function connectLibrarySwipe() {
+  const list = $("library-list");
+  let gesture = null;
+  let suppressClick = false;
+
+  function finish(event, commit = false) {
+    if (!gesture || (event && event.pointerId !== gesture.id)) return;
+    const { row, surface, distance, offset, dragging, wasOpen } = gesture;
+    gesture = null;
+    if (!dragging) return;
+    suppressClick = true;
+    if (row.isConnected) {
+      const open = commit ? offset <= -distance / 2 : wasOpen;
+      setOpenLibraryRow(open ? row : null);
+    }
+    row.classList.remove("is-dragging");
+    surface.style.removeProperty("--library-offset");
+  }
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary) finish();
+    if (openLibraryRow && !list.contains(event.target)) setOpenLibraryRow(null);
+  });
+  list.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    suppressClick = false;
+    const surface = event.target.closest(".library-row-surface");
+    if (!surface || event.target.closest(".library-menu")) return;
+    const row = surface.parentElement;
+    const distance = row.querySelector(".library-remove").offsetWidth;
+    const wasOpen = row === openLibraryRow;
+    gesture = { id: event.pointerId, row, surface, distance, wasOpen,
+      x: event.clientX, y: event.clientY, offset: wasOpen ? -distance : 0, dragging: false };
+  });
+  list.addEventListener("pointermove", (event) => {
+    if (gesture?.id !== event.pointerId) return;
+    const { row, surface, distance, x, y, wasOpen } = gesture;
+    const dx = event.clientX - x;
+    const dy = event.clientY - y;
+    if (!gesture.dragging) {
+      if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx)) return finish(event);
+      if (Math.abs(dx) < 8 || Math.abs(dx) <= Math.abs(dy)) return;
+      if (!wasOpen && dx > 0) return;
+      gesture.dragging = true;
+      if (!wasOpen) setOpenLibraryRow(null);
+      row.classList.add("is-dragging");
+      list.setPointerCapture(event.pointerId);
+    }
+    gesture.offset = Math.max(-distance, Math.min(0, (wasOpen ? -distance : 0) + dx));
+    surface.style.setProperty("--library-offset", `${gesture.offset}px`);
+  });
+  window.addEventListener("pointerup", (event) => finish(event, true));
+  window.addEventListener("pointercancel", (event) => finish(event));
+  window.addEventListener("blur", () => finish());
+  list.addEventListener("lostpointercapture", (event) => {
+    if (event.target === list) finish(event);
+  });
+  list.addEventListener("click", (event) => {
+    if (suppressClick && event.detail > 0) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+    suppressClick = false;
+  }, true);
+  list.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setOpenLibraryRow(null);
+  });
+}
+
+connectLibrarySwipe();
 setup();
 desk = window.QuizDesk?.connect({
   byId,
@@ -10453,7 +10725,7 @@ sync = window.QuizAccount?.connect({
       state.session = null;
     }
     if (reset) {
-      libraryLimit = libraryPageSize;
+      resetLibrary();
       showTab(selectedTab);
     } else {
       updateAvailability();
@@ -10461,7 +10733,7 @@ sync = window.QuizAccount?.connect({
   },
   guest() {
     state = guestState();
-    libraryLimit = libraryPageSize;
+    resetLibrary();
     showTab(selectedTab);
   },
 });
