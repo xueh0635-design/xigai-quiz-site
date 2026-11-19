@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import plistlib
 import re
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -154,6 +154,66 @@ def serialized():
         yield
 
 
+def discard_prepared(cache):
+    if cache.exists():
+        rmtree(cache)
+
+
+def prepared_commit(cache, target):
+    if not cache.exists():
+        return None
+    try:
+        metadata = json.loads((cache / "release.json").read_text())
+        commit = metadata["commit"]
+        if metadata["release"] == target and re.fullmatch(r"[0-9a-f]{40}", commit):
+            return commit
+    except (OSError, KeyError, TypeError, ValueError):
+        pass
+    discard_prepared(cache)
+    return None
+
+
+def save_prepared(cache, working, app, target, commit):
+    prepared = working / "prepared"
+    prepared.mkdir(mode=0o700)
+    (prepared / "release.json").write_text(json.dumps({"release": target, "commit": commit}) + "\n")
+    app.rename(prepared / "App.app")
+    discard_prepared(cache)
+    prepared.rename(cache)
+    return cache / "App.app"
+
+
+def tag_commit(tag):
+    return shell("git", "rev-parse", "--verify", f"refs/tags/{tag}^{{commit}}").decode().strip()
+
+
+def build_app(working, apk, target, device, team, packages):
+    packages.mkdir(parents=True, exist_ok=True)
+    code, name, tag = (target[k] for k in ("versionCode", "versionName", "releaseTag"))
+    source_ref = f"refs/tags/{tag}"
+    shell(*AUTH_GIT, "fetch", "--no-tags", "origin", f"{source_ref}:{source_ref}", timeout=60)
+    # Build from the fetched tag's exact commit even if another process fetches refs.
+    commit = tag_commit(tag)
+    if apk is None:
+        shell("gh", "release", "download", tag, "--repo", REPO,
+              "--pattern", ASSET, "--dir", working, timeout=60)
+        apk = working / ASSET
+    if "apkSha256" in target and apk_digest(apk) != target["apkSha256"]:
+        raise UpdatePending("发布包摘要与待安装版本不一致。")
+    with (LOCAL / "iphone-release.log").open("wb") as log:
+        project, html = prepare_mobile(working, commit, apk, log)
+        derived = working / "DerivedData"
+        shell("xcodebuild", "-project", project, "-scheme", "App", "-configuration", "Debug",
+              "-destination", f"platform=iOS,id={device}", "-derivedDataPath", derived,
+              "-clonedSourcePackagesDirPath", packages, f"DEVELOPMENT_TEAM={team}",
+              f"MARKETING_VERSION={name}", f"CURRENT_PROJECT_VERSION={code}",
+              "CODE_SIGN_STYLE=Automatic", "-allowProvisioningUpdates",
+              "-allowProvisioningDeviceRegistration", "build", log=log, timeout=900)
+    app = derived / "Build/Products/Debug-iphoneos/App.app"
+    verify_app(app, html, device, team, code, name)
+    return app, commit
+
+
 def install(config, apk, target, *, force, current):
     device, team = config["device"], config["team"]
     if not re.fullmatch(r"(?:[a-fA-F0-9]{8}-[a-fA-F0-9]{16}|[a-fA-F0-9]{40})", device):
@@ -162,39 +222,40 @@ def install(config, apk, target, *, force, current):
         raise ValueError("本机 iPhone 更新配置中的签名团队格式有误。")
     code, name, tag = (target[k] for k in ("versionCode", "versionName", "releaseTag"))
     packages = Path(config.get("sourcePackages", str(LOCAL / "SourcePackages"))).expanduser()
+    cache = LOCAL / "prepared-iphone-release"
     with serialized(), TemporaryDirectory(prefix="build-", dir=LOCAL) as directory:
         working = Path(directory)
         if not current():
             return False
+        commit = None if force else prepared_commit(cache, target)
         require_unlocked(working, device, "lock-before.json")
         before = read_installed(working, device, "before.json")
         if check_installed(before, code, name, force=force):
+            discard_prepared(cache)
             print(f"iPhone 已是 {before['version']}（构建 {before['bundleVersion']}）。")
             return True
-        packages.mkdir(parents=True, exist_ok=True)
-        source_ref = f"refs/tags/{tag}"
-        shell(*AUTH_GIT, "fetch", "--no-tags", "origin", f"{source_ref}:{source_ref}", timeout=60)
-        # Build from the fetched tag's exact commit even if another process fetches refs.
-        source_ref = shell("git", "rev-parse", "--verify", f"{source_ref}^{{commit}}").decode().strip()
-        if apk is None:
-            shell("gh", "release", "download", tag, "--repo", REPO,
-                  "--pattern", ASSET, "--dir", working, timeout=60)
-            apk = working / ASSET
-        if "apkSha256" in target and apk_digest(apk) != target["apkSha256"]:
-            raise UpdatePending("发布包摘要与待安装版本不一致。")
-        with (LOCAL / "iphone-release.log").open("wb") as log:
-            project, html = prepare_mobile(working, source_ref, apk, log)
-            derived = working / "DerivedData"
-            shell("xcodebuild", "-project", project, "-scheme", "App", "-configuration", "Debug",
-                  "-destination", f"platform=iOS,id={device}", "-derivedDataPath", derived,
-                  "-clonedSourcePackagesDirPath", packages, f"DEVELOPMENT_TEAM={team}",
-                  f"MARKETING_VERSION={name}", f"CURRENT_PROJECT_VERSION={code}",
-                  "CODE_SIGN_STYLE=Automatic", "-allowProvisioningUpdates",
-                  "-allowProvisioningDeviceRegistration", "build", log=log, timeout=900)
-        app = derived / "Build/Products/Debug-iphoneos/App.app"
-        verify_app(app, html, device, team, code, name)
+        app = None
+        if commit:
+            try:
+                if tag_commit(tag) != commit:
+                    raise UpdatePending("暂存的构建与已发布的代码不一致。")
+                candidate = cache / "App.app"
+                html = shell("git", "show", f"{commit}:{WEB}")
+                verify_app(candidate, html, device, team, code, name)
+                app = candidate
+            except (KeyError, OSError, TypeError, ValueError, plistlib.InvalidFileException,
+                    subprocess.SubprocessError, UpdatePending):
+                discard_prepared(cache)
+        if app is None:
+            app, commit = build_app(working, apk, target, device, team, packages)
+            if not current():
+                return False
+            if not force:
+                # Keep a verified app to install at the next unlock if the build outlasts this one.
+                app = save_prepared(cache, working, app, target, commit)
         require_unlocked(working, device, "lock-pre-install.json")
         if check_installed(read_installed(working, device, "pre-install.json"), code, name, force=force):
+            discard_prepared(cache)
             return True
         if not current():
             return False
@@ -202,6 +263,8 @@ def install(config, apk, target, *, force, current):
         installed = read_installed(working, device, "after.json")
         if (installed["version"], installed["bundleVersion"]) != (name, str(code)):
             raise UpdatePending("安装后读回的 iPhone 版本与发布版不一致。")
+        if not force:
+            discard_prepared(cache)
     print(f"iPhone 已覆盖安装 {name}（构建 {code}）。")
     return True
 

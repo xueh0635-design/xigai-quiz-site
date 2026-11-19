@@ -46,7 +46,7 @@ def register():
         },
         "LimitLoadToSessionType": "Aqua",
         "RunAtLoad": True,
-        "StartInterval": 45,
+        "StartInterval": 20,
         "ProcessType": "Background",
         "StandardOutPath": log,
         "StandardErrorPath": log,

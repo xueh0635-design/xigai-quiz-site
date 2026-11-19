@@ -35,7 +35,7 @@ iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用
 }
 ```
 
-在这台 Mac 上运行安卓发布命令时，GitHub 发布成功后，同版本的 iPhone 更新会记录到本机队列。Mac 已登录且唤醒时，后台队列约每 45 秒检查一次。iPhone 通过同一局域网或数据线连通并解锁后，Mac 会从对应发布标签构建并覆盖安装。若期间发布了更新版本，队列会优先处理最新版。队列日志保存在应用支持目录下的 `iphone-queue-worker.log`。
+在这台 Mac 上运行安卓发布命令时，GitHub 发布成功后，同版本的 iPhone 更新会记录到本机队列。Mac 已登录且唤醒时，后台队列约每 20 秒检查一次。iPhone 通过同一局域网或数据线连通并解锁后，Mac 会从对应发布标签构建并覆盖安装。构建后重新锁屏时，Mac 会保留已签名的安装包，等下次解锁再装。若期间发布了更新版本，队列会优先处理最新版。队列日志保存在应用支持目录下的 `iphone-queue-worker.log`。
 
 新 Mac 的一次性设置是在上述应用支持目录中把发布仓库克隆为 `release-repo`，再运行其中的 `python3 mobile/ios-native/install_queue_agent.py`。需要立即给当前手机重新签名时，仍可在同步了 `main` 的发布仓库运行 `python3 mobile/ios-native/push_release.py`。
 
