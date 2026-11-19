@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install one published Android release on the configured iPhone using Xcode."""
+"""Queue and install matching iPhone builds for published Android releases."""
 
 import argparse
 from contextlib import contextmanager
@@ -15,6 +15,8 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 from zipfile import BadZipFile, ZipFile
+
+from release_queue import ReleaseQueue, apk_digest, descriptor
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,19 +40,17 @@ class UpdatePending(Exception):
     """The Android publication succeeded, but the iPhone install needs a retry."""
 
 
+class PhoneUnavailable(UpdatePending):
+    """Wait for the configured phone or running installer without logging each poll."""
+
+
 def shell(*command, cwd=ROOT, log=None, timeout=300):
     return subprocess.run(command, cwd=cwd, check=True, timeout=timeout,
                           stdout=log or subprocess.PIPE, stderr=log or subprocess.PIPE).stdout
 
 
 def release():
-    manifest = json.loads((ROOT / "docs/android-update.json").read_text())
-    code, name, tag = (manifest[key] for key in ("versionCode", "versionName", "releaseTag"))
-    if type(code) is not int or code < 1 or not re.fullmatch(r"[0-9]{1,8}\.[0-9]{1,8}\.[0-9]{1,8}", name):
-        raise ValueError("已发布的安卓版本清单格式有误。")
-    if tag != f"android-v{name}":
-        raise ValueError("安卓版本号和发布标签不一致。")
-    return code, name, tag
+    return descriptor(json.loads((ROOT / "docs/android-update.json").read_text()))
 
 
 def device_report(working, filename, device, operation, action, *options, timeout=15):
@@ -73,14 +73,26 @@ def version_tuple(value):
     return components + (0,) * (3 - len(components))
 
 
-def check_installed(app, code, name):
+def check_installed(app, code, name, *, force=True):
     installed_code = version_tuple(app["bundleVersion"])
     installed_name = version_tuple(app["version"])
     target_code, target_name = (code, 0, 0), version_tuple(name)
     if installed_code > target_code or installed_name > target_name:
+        if not force:
+            return True
         raise UpdatePending("iPhone 已安装更高版本，保留现有版本。")
     if installed_code == target_code and installed_name != target_name:
         raise UpdatePending("iPhone 已安装版本的构建号冲突，保留现有版本。")
+    return not force and (installed_code, installed_name) == (target_code, target_name)
+
+
+def require_unlocked(working, device, filename):
+    try:
+        state = device_report(working, filename, device, "info", "lockState", timeout=7)
+    except UpdatePending as error:
+        raise PhoneUnavailable("iPhone 暂未连接，Mac 会自动重试待安装版本。") from error
+    if state.get("passcodeRequired") is not False or state.get("unlockedSinceBoot") is False:
+        raise PhoneUnavailable("iPhone 暂未解锁，Mac 会自动重试待安装版本。")
 
 
 def read_installed(working, device, filename):
@@ -138,28 +150,38 @@ def serialized():
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as error:
-            raise UpdatePending("Mac 上已有一个 iPhone 更新在运行。") from error
+            raise PhoneUnavailable("Mac 上已有一个 iPhone 更新在运行。") from error
         yield
 
 
-def install(config, apk):
+def install(config, apk, target, *, force, current):
     device, team = config["device"], config["team"]
     if not re.fullmatch(r"(?:[a-fA-F0-9]{8}-[a-fA-F0-9]{16}|[a-fA-F0-9]{40})", device):
         raise ValueError("本机 iPhone 更新配置中的设备标识格式有误。")
     if not re.fullmatch(r"[A-Z0-9]{10}", team):
         raise ValueError("本机 iPhone 更新配置中的签名团队格式有误。")
-    code, name, tag = release()
+    code, name, tag = (target[k] for k in ("versionCode", "versionName", "releaseTag"))
     packages = Path(config.get("sourcePackages", str(LOCAL / "SourcePackages"))).expanduser()
-    packages.mkdir(parents=True, exist_ok=True)
     with serialized(), TemporaryDirectory(prefix="build-", dir=LOCAL) as directory:
         working = Path(directory)
-        check_installed(read_installed(working, device, "before.json"), code, name)
+        if not current():
+            return False
+        require_unlocked(working, device, "lock-before.json")
+        before = read_installed(working, device, "before.json")
+        if check_installed(before, code, name, force=force):
+            print(f"iPhone 已是 {before['version']}（构建 {before['bundleVersion']}）。")
+            return True
+        packages.mkdir(parents=True, exist_ok=True)
         source_ref = f"refs/tags/{tag}"
         shell(*AUTH_GIT, "fetch", "--no-tags", "origin", f"{source_ref}:{source_ref}", timeout=60)
+        # Build from the fetched tag's exact commit even if another process fetches refs.
+        source_ref = shell("git", "rev-parse", "--verify", f"{source_ref}^{{commit}}").decode().strip()
         if apk is None:
             shell("gh", "release", "download", tag, "--repo", REPO,
                   "--pattern", ASSET, "--dir", working, timeout=60)
             apk = working / ASSET
+        if "apkSha256" in target and apk_digest(apk) != target["apkSha256"]:
+            raise UpdatePending("发布包摘要与待安装版本不一致。")
         with (LOCAL / "iphone-release.log").open("wb") as log:
             project, html = prepare_mobile(working, source_ref, apk, log)
             derived = working / "DerivedData"
@@ -171,31 +193,72 @@ def install(config, apk):
                   "-allowProvisioningDeviceRegistration", "build", log=log, timeout=900)
         app = derived / "Build/Products/Debug-iphoneos/App.app"
         verify_app(app, html, device, team, code, name)
-        check_installed(read_installed(working, device, "pre-install.json"), code, name)
+        require_unlocked(working, device, "lock-pre-install.json")
+        if check_installed(read_installed(working, device, "pre-install.json"), code, name, force=force):
+            return True
+        if not current():
+            return False
         device_report(working, "install.json", device, "install", "app", app, timeout=90)
         installed = read_installed(working, device, "after.json")
         if (installed["version"], installed["bundleVersion"]) != (name, str(code)):
             raise UpdatePending("安装后读回的 iPhone 版本与发布版不一致。")
     print(f"iPhone 已覆盖安装 {name}（构建 {code}）。")
+    return True
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apk", type=Path)
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--enqueue", action="store_true", help="记录刚发布的安卓版供 Mac 自动补装")
+    modes.add_argument("--drain", action="store_true", help="尝试安装 Mac 已记录的最新版")
     args = parser.parse_args()
+    if args.enqueue and args.apk is None:
+        parser.error("--enqueue 需要发布 APK 的 --apk 路径")
+    if args.drain and args.apk is not None:
+        parser.error("--drain 使用已记录的发布版，无需 --apk")
     config_path = LOCAL / "iphone-release.json"
     if sys.platform != "darwin" or not config_path.is_file():
-        if args.apk is None:
+        if args.apk is None and not args.drain:
             print(f"请先配置 Mac 上的 iPhone 更新文件 {config_path}。", file=sys.stderr)
             return 1
         return 0
+    queue = ReleaseQueue(LOCAL)
     try:
-        install(json.loads(config_path.read_text()), args.apk)
+        if args.enqueue:
+            target = {**release(), "apkSha256": apk_digest(args.apk)}
+            if queue.enqueue(target):
+                print(f"Mac 已记录 iPhone 待安装版本 {target['versionName']}（构建 {target['versionCode']}）。")
+            return 0
+        if args.drain:
+            target = queue.pending()
+            if target is None:
+                return 0
+            current = lambda: queue.pending() == target
+        else:
+            target = release()
+
+            def current():
+                pending = queue.pending()
+                return pending is None or pending["versionCode"] <= target["versionCode"]
+
+        config = json.loads(config_path.read_text())
+        finished = install(config, args.apk, target, force=not args.drain, current=current)
+        if args.drain:
+            if finished:
+                queue.complete(target)
+        elif not finished:
+            raise UpdatePending("Mac 已记录更新的发布版，会自动安装该版本。")
+    except PhoneUnavailable as error:
+        if args.drain:
+            return 0
+        print(str(error), file=sys.stderr)
+        return 1
     except (BadZipFile, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError, UpdatePending) as error:
         reason = str(error) if isinstance(error, UpdatePending) else "无法完成 iPhone 发布版构建或签名。"
         print(f"iPhone 更新待完成。{reason}", file=sys.stderr)
-        print("可运行 python3 mobile/ios-native/push_release.py 重试当前已发布版本。", file=sys.stderr)
-        print(f"Mac 构建日志位于 {LOCAL / 'iphone-release.log'}。", file=sys.stderr)
+        if not args.enqueue:
+            print(f"Mac 构建日志位于 {LOCAL / 'iphone-release.log'}。", file=sys.stderr)
         return 1
     return 0
 

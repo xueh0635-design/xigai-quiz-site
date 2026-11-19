@@ -48,14 +48,14 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def update_configured_iphone(apk):
+def enqueue_configured_iphone(apk):
     if sys.platform != "darwin":
         return
     updater = ROOT / "mobile/ios-native/push_release.py"
     try:
-        subprocess.run([sys.executable, updater, "--apk", apk], cwd=ROOT, check=False)
-    except OSError:
-        print("iPhone 更新待完成。可运行 python3 mobile/ios-native/push_release.py 重试。", file=sys.stderr)
+        subprocess.run([sys.executable, updater, "--enqueue", "--apk", apk], cwd=ROOT, check=True)
+    except (OSError, subprocess.SubprocessError):
+        print("安卓已发布，Mac 未能保存 iPhone 待安装记录。", file=sys.stderr)
 
 
 def publish(apk, notes, build_tools):
@@ -105,7 +105,7 @@ def publish(apk, notes, build_tools):
         run("git", "commit", "--only", "-m", f"Announce Android {version}", "--", MANIFEST)
     run(*AUTH_GIT, "push", "origin", "HEAD:main")
     print(f"https://github.com/{REPO}/releases/tag/{tag}", flush=True)
-    update_configured_iphone(apk)
+    enqueue_configured_iphone(apk)
 
 
 def main():
