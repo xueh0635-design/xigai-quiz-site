@@ -1741,6 +1741,303 @@ a { color: var(--accent); }
   .desk-completion { column-gap: 5px; }
   .desk-section-heading p, .desk-onboard-copy p { font-size: .82rem; }
 }
+
+#desk .desk-heading-button { min-height: 44px; }
+#desk .desk-cover {
+  display: grid;
+  grid-template: "copy scene" auto / minmax(0, 1fr) minmax(153px, .73fr);
+  min-height: 126px;
+  margin-bottom: var(--desk-gap);
+  border-radius: 22px;
+  background: var(--world-card);
+  box-shadow: 0 7px 20px var(--world-shadow);
+}
+#desk:is([data-live-active], [data-arena-active]) > .desk-cover { display: none; }
+#desk .desk-cover > .world-scene-camp {
+  grid-area: scene;
+  min-height: 0;
+  border-inline-start: 1px solid var(--world-edge);
+}
+#desk .desk-cover .world-camera { inset: auto 5px 5px auto; padding: 1px; gap: 1px; }
+#desk .desk-cover .world-camera button { width: 44px; min-height: 44px; padding: 0; }
+.desk-cover-copy {
+  grid-area: copy;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(14px, 3.8vw, 23px);
+}
+.desk-cover-copy :is(h3, p) { margin: 0; }
+.desk-cover-copy h3 {
+  font-size: clamp(1.18rem, 3.7vw, 1.65rem);
+  line-height: 1.22;
+  font-weight: 800;
+}
+.desk-cover-copy p { color: var(--world-muted); font-size: .88rem; line-height: 1.5; }
+.desk-guest > button { min-height: 44px; }
+.desk-pairing { gap: 13px; }
+.desk-pairing-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.desk-pairing-head p { margin-top: 4px; }
+#desk .desk-pairing :is(.desk-invite-actions,.desk-join-form) { width: 100%; }
+#desk .desk-pairing .desk-invite-actions { padding: 0; background: transparent; border: 0; }
+.desk-pairing .desk-invite-actions > button { width: 100%; min-height: 44px; }
+#desk .desk-pairing .desk-join-form { padding: 10px; border-radius: 14px; }
+.desk-pairing :is(input, button) { min-height: 44px; }
+.desk-companions { display: flex; flex-wrap: wrap; gap: 9px clamp(10px, 3vw, 20px); }
+.desk-companion { display: flex; align-items: center; gap: 7px; }
+#desk .desk-cover-copy .desk-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--world-good);
+  color: var(--world-good-ink);
+}
+#desk .desk-companion:nth-child(2) .desk-avatar { background: var(--world-stat-starred); color: var(--world-ink); }
+.desk-companion strong { display: block; font-size: .82rem; line-height: 1.25; }
+.desk-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--world-muted);
+  font-size: .73rem;
+}
+.desk-presence[data-online="true"] { color: var(--world-good-ink); }
+.desk-presence::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+
+#desk .desk-mode-coop, #desk:not([data-arena-active]) #battle-arena {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+  padding: clamp(14px, 3.5vw, 20px);
+  border: 1px solid var(--world-edge);
+  border-radius: 22px;
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 6px 18px var(--world-shadow);
+}
+#desk .desk-mode-heading, #desk:not([data-arena-active]) #battle-arena > .battle-header {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 0;
+}
+.desk-mode-heading h3, #desk:not([data-arena-active]) #arena-heading {
+  margin: 0;
+  color: var(--world-ink);
+  font-size: clamp(1.14rem, 3vw, 1.38rem);
+  line-height: 1.28;
+  letter-spacing: normal;
+}
+.desk-mode-heading p, #arena-intro {
+  margin: 3px 0 0;
+  color: var(--world-muted);
+  font-size: .85rem;
+  line-height: 1.45;
+}
+.desk-mode-icon {
+  position: relative;
+  flex: 0 0 41px;
+  width: 41px;
+  height: 41px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 12px;
+}
+.desk-mode-icon-coop { color: var(--world-good-ink); background: var(--world-good); }
+.desk-mode-icon-arena { color: var(--world-ink); background: var(--world-stat-wrong); }
+.desk-mode-icon::before, .desk-mode-icon::after { position: absolute; content: ""; }
+.desk-mode-icon-coop::before, .desk-mode-icon-coop::after {
+  top: 11px;
+  width: 9px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px 3px 2px 2px;
+}
+.desk-mode-icon-coop::before { left: 8px; transform: skewY(11deg); }
+.desk-mode-icon-coop::after { right: 8px; transform: skewY(-11deg); }
+.desk-mode-icon-arena::before, .desk-mode-icon-arena::after {
+  bottom: 9px;
+  width: 8px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-block-start-width: 4px;
+  border-radius: 2px;
+  transform: skewY(-7deg);
+}
+.desk-mode-icon-arena::before { left: 9px; }
+.desk-mode-icon-arena::after { right: 9px; height: 20px; transform: skewY(7deg); }
+.desk-coop-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.desk-coop-controls .picker-field { flex: 2 1 126px; min-width: 0; }
+.desk-coop-controls > button { flex: 1 0 auto; min-height: 44px; }
+#desk .desk-mode .picker-field label { color: var(--world-muted); font-size: .78rem; }
+#desk .desk-mode .picker-field :is(select, .chapter-picker-trigger) {
+  min-height: 44px;
+  border-color: var(--world-edge);
+  border-radius: 11px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  box-shadow: none;
+}
+#desk .desk-mode .picker-field .chapter-picker-chevron { color: var(--world-accent); }
+.desk-mode-status, #desk:not([data-arena-active]) #arena-status {
+  margin: 0;
+  color: var(--world-muted);
+  font-size: .8rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+#desk:not([data-arena-active]) #arena-status { display: block; margin-top: 6px; }
+#desk:not([data-arena-active]) #arena-status::before { content: none; }
+#desk .desk-mode-status:empty, #desk:not([data-arena-active]) #arena-status:empty { display: none; }
+#desk #live-lobby:has(#live-join:not([hidden])),
+#desk:not([data-arena-active]) #battle-arena:has(#arena-join:not([hidden])) {
+  border-color: var(--world-accent);
+  background: color-mix(in srgb, var(--world-accent) 8%, var(--world-card));
+}
+#desk #live-lobby:has(#live-join:not([hidden])) .desk-mode-status,
+#desk #battle-arena:has(#arena-join:not([hidden])) #arena-status { color: var(--world-accent); }
+#desk:not([data-arena-active]) #battle-arena > .battlefield,
+#desk[data-arena-active] #battle-arena :is(.desk-mode-icon, #arena-intro) { display: none; }
+#desk #arena-review-stage { display: contents; }
+#desk:not([data-arena-active]) #arena-lobby { padding: 0; border: 0; background: none; }
+#desk:not([data-arena-active]) #arena-lobby .battle-controls > button {
+  flex: 1 1 8rem;
+  min-height: 44px;
+}
+#desk:not([data-arena-active]) #arena-rounds {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+#desk:not([data-arena-active]) #arena-rounds-label { color: var(--world-muted); font-size: .78rem; }
+#desk:not([data-arena-active]) #arena-rounds > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+  gap: 5px;
+}
+#desk:not([data-arena-active]) #arena-rounds button {
+  min-height: 44px;
+  padding: 3px;
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+}
+#desk:not([data-arena-active]) #arena-rounds button[aria-pressed="true"] {
+  border-color: var(--world-accent);
+  background: color-mix(in srgb, var(--world-accent) 14%, var(--world-card));
+  color: var(--world-ink);
+}
+#desk:not([data-arena-active]) #arena-rounds-hint { color: var(--world-muted); }
+
+#desk .desk-records {
+  --arena-edge: var(--world-edge);
+  --arena-text: var(--world-ink);
+  --arena-muted: var(--world-muted);
+  padding: clamp(14px, 3.5vw, 20px);
+  border-radius: 22px;
+}
+.desk-records h3 { margin: 0 0 8px; font-size: 1.13rem; }
+#desk .desk-records > details {
+  padding: 0 0 0 2px;
+  border: 0;
+  border-top: 1px solid var(--world-edge);
+  border-radius: 0;
+  background: none;
+  color: var(--world-ink);
+}
+#desk .desk-records > details > summary, #desk .desk-settings > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 0;
+  color: var(--world-ink);
+  font-size: .91rem;
+  font-weight: 680;
+  list-style: none;
+  cursor: pointer;
+}
+#desk :is(.desk-records, .desk-settings) summary::-webkit-details-marker { display: none; }
+#desk .desk-records > details > summary::after, #desk .desk-settings > summary::after {
+  width: 6px;
+  height: 6px;
+  margin-inline-start: auto;
+  margin-inline-end: 5px;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  content: "";
+}
+#desk :is(.desk-records, .desk-settings) details[open] > summary::after,
+#desk .desk-settings[open] > summary::after { transform: rotate(45deg); }
+#desk .desk-records > details[open] > :not(summary) { margin-block-end: 10px; }
+#desk .desk-records #arena-collection-count { margin-inline-start: auto; color: var(--world-muted); }
+#desk .desk-records #arena-collection > summary::after { margin-inline-start: 3px; }
+#desk .desk-settings { padding-inline: 2px; text-align: start; }
+#desk .desk-settings > summary { width: fit-content; gap: 12px; color: var(--world-muted); }
+#desk .desk-settings button { min-height: 44px; }
+#desk .desk-unpair-confirm { border-color: var(--world-edge); background: var(--world-card); }
+#desk .desk-unpair-confirm p { color: var(--world-bad-ink); }
+#desk .desk-compare .desk-learner {
+  box-shadow: none;
+  border-radius: 15px;
+}
+#desk .desk-compare .desk-metrics {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+}
+#desk .desk-compare .desk-metrics > div {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+}
+#desk .desk-compare .desk-metrics dd { font-size: .82rem; white-space: nowrap; }
+#desk .social-camp { padding: clamp(14px, 3.5vw, 20px); border-radius: 22px; }
+#desk .social-camp-top h3 { font-size: 1.18rem; }
+#desk .social-fire { width: 54px; height: 54px; }
+
+@media (min-width: 700px) {
+  #desk .desk-paired {
+    grid-template:
+      "coop arena" auto
+      "daily arena" auto
+      "daily progress" auto
+      "records records" auto
+      "settings settings" auto / minmax(0, 1fr) minmax(0, 1fr);
+  }
+  #desk #live-lobby { grid-area: coop; }
+  #desk #battle-arena { grid-area: arena; }
+  #desk #social-daily { grid-area: daily; }
+  #desk .desk-compare { grid-area: progress; }
+  #desk .desk-records { grid-area: records; }
+  #desk .desk-settings { grid-area: settings; }
+  #desk #social-daily[hidden] ~ .desk-compare { grid-column: 1 / -1; }
+  #desk:is([data-live-active], [data-arena-active]) .desk-paired { grid-template: none / minmax(0, 1fr); }
+  #desk[data-arena-active] #battle-arena { grid-area: auto; }
+}
+@media (max-width: 570px) {
+  #desk .desk-cover:has(.desk-pairing:not([hidden])) {
+    grid-template: "scene" 112px "copy" auto / minmax(0, 1fr);
+  }
+}
+@media (max-width: 355px) {
+  #desk .desk-cover { grid-template-columns: minmax(0, 1fr) 146px; }
+  .desk-cover-copy { padding: 12px; }
+  .desk-companions { gap: 8px; }
+  #desk .desk-cover-copy .desk-avatar { width: 30px; height: 30px; }
+  #desk:not([data-arena-active]) #arena-rounds > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 </style>
   <style>
 .desk-page {
@@ -5280,67 +5577,99 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         </div>
       </header>
       <p id="desk-status" class="desk-status" role="status" aria-live="polite"></p>
-      <div class="world-camp">
+      <div id="desk-cover" class="world-camp desk-cover">
         <div class="world-scene world-scene-camp">
           <div class="world-backdrop" aria-hidden="true"><span class="world-orb"></span><i></i><b></b><span class="world-backdrop-fire"></span></div>
           <canvas id="camp-world-canvas" aria-hidden="true"></canvas>
-          <span class="world-scene-label">山谷营地</span>
           <div class="world-camera" role="group" aria-label="调整营地视角">
             <button type="button" data-scene-target="camp" data-scene-action="left" aria-label="视角向左转">‹</button>
             <button type="button" data-scene-target="camp" data-scene-action="reset" aria-label="重置营地视角">⌖</button>
             <button type="button" data-scene-target="camp" data-scene-action="right" aria-label="视角向右转">›</button>
           </div>
         </div>
-      </div>
-      <section id="desk-guest" class="desk-surface desk-onboard" aria-labelledby="desk-guest-heading" hidden>
-        <div class="desk-onboard-copy">
-          <span class="desk-companion-mark" aria-hidden="true"></span>
-          <div>
-            <h3 id="desk-guest-heading">开一间双人自习室</h3>
-            <p>登录自己的账号，邀请同桌加入。你们可以一起答题、看解析，也可以各自练习、互看进度。</p>
-          </div>
-        </div>
-        <button id="desk-login" class="primary" type="button">登录账号</button>
-      </section>
-      <section id="desk-unpaired" class="desk-surface desk-onboard" aria-labelledby="desk-invite-heading" hidden>
-        <div class="desk-onboard-copy">
-          <div class="desk-seats" role="img" aria-label="我的座位旁留了一个空位">
-            <span class="desk-seat desk-seat-me" aria-hidden="true">
-              <span>
-                <img id="desk-seat-avatar" class="desk-avatar-picture" alt="" hidden>
-                <span class="desk-avatar-fallback"></span>
-              </span>我
-            </span>
-            <span class="desk-seat desk-seat-open" aria-hidden="true"><span></span>空位</span>
-          </div>
-          <div>
-            <h3 id="desk-invite-heading">添加同桌</h3>
-            <p>配对后可以走进同一间自习室，一起答题、看解析和学习进度。</p>
-          </div>
-        </div>
-        <div class="desk-invite-actions">
-          <button id="desk-create-invite" class="primary" type="button">生成邀请码</button>
-          <div id="desk-invite" class="desk-invite-code" hidden>
+        <section id="desk-guest" class="desk-cover-copy desk-guest" aria-labelledby="desk-guest-heading" hidden>
+          <h3 id="desk-guest-heading">找个同桌，一起刷题</h3>
+          <p>同步答题、一起看解析，也可以各自练习、互看进度。</p>
+          <button id="desk-login" class="primary" type="button">登录或注册</button>
+        </section>
+        <section id="desk-unpaired" class="desk-cover-copy desk-pairing" aria-labelledby="desk-invite-heading" hidden>
+          <div class="desk-pairing-head">
             <div>
-              <span>发给你的同桌</span>
-              <output id="desk-invite-code" aria-label="我的同桌邀请码"></output>
+              <h3 id="desk-invite-heading">邀请同桌</h3>
+              <p>两人各用自己的账号，配对后就能一起练习。</p>
             </div>
-            <button id="desk-copy-invite" type="button">复制</button>
+            <span class="desk-avatar desk-pairing-avatar" aria-hidden="true">
+              <img id="desk-seat-avatar" class="desk-avatar-picture" alt="" hidden>
+              <span class="desk-avatar-fallback"></span>
+            </span>
           </div>
-        </div>
-        <form id="desk-join-form" class="desk-join-form">
-          <label for="desk-join-code">或使用对方的邀请码</label>
-          <div>
-            <input id="desk-join-code" type="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="输入邀请码" required>
-            <button id="desk-join" type="submit">成为同桌</button>
+          <div class="desk-invite-actions">
+            <button id="desk-create-invite" class="primary" type="button">生成我的邀请码</button>
+            <div id="desk-invite" class="desk-invite-code" hidden>
+              <div>
+                <span>把这串码发给同桌</span>
+                <output id="desk-invite-code" aria-label="我的同桌邀请码"></output>
+              </div>
+              <button id="desk-copy-invite" type="button">复制</button>
+            </div>
           </div>
-        </form>
-      </section>
-      <div id="desk-paired" class="desk-paired" hidden>
-        <section id="battle-arena" class="battle-arena" data-mood="waiting" aria-labelledby="arena-heading">
-          <header class="battle-header">
+          <form id="desk-join-form" class="desk-join-form">
+            <label for="desk-join-code">对方的邀请码</label>
             <div>
+              <input id="desk-join-code" type="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="输入邀请码" required>
+              <button id="desk-join" type="submit">配对</button>
+            </div>
+          </form>
+        </section>
+        <section id="desk-companions" class="desk-cover-copy" aria-labelledby="desk-companions-heading" hidden>
+          <h3 id="desk-companions-heading">同桌营地</h3>
+          <div class="desk-companions">
+            <div class="desk-companion">
+              <span class="desk-avatar" aria-hidden="true">
+                <img id="desk-mine-avatar" class="desk-avatar-picture" alt="" hidden>
+                <span class="desk-avatar-fallback"></span>
+              </span>
+              <div><strong>我</strong><span id="live-local-presence" class="desk-presence">连接中</span></div>
+            </div>
+            <div class="desk-companion">
+              <span class="desk-avatar" aria-hidden="true">
+                <img id="desk-peer-avatar" class="desk-avatar-picture" alt="" hidden>
+                <span class="desk-avatar-fallback"></span>
+              </span>
+              <div><strong>同桌</strong><span id="live-presence" class="desk-presence">连接中</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div id="desk-paired" class="desk-paired" hidden>
+        <section id="live-lobby" class="desk-mode desk-mode-coop" aria-labelledby="live-lobby-heading">
+          <header class="desk-mode-heading">
+            <span class="desk-mode-icon desk-mode-icon-coop" aria-hidden="true"></span>
+            <div>
+              <h3 id="live-lobby-heading">五题共学</h3>
+              <p>各自作答，两人提交后一起看解析。</p>
+            </div>
+          </header>
+          <p id="live-lobby-status" class="desk-mode-status" role="status" aria-live="polite"></p>
+          <div class="desk-coop-controls">
+            <div id="live-settings" class="picker-field">
+              <label id="live-chapter-label" for="live-chapter">练习范围</label>
+              <select id="live-chapter"><option value="">综合题库</option></select>
+              <button id="live-chapter-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="live-chapter-label live-chapter-value" hidden>
+                <span id="live-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button id="live-start" type="button" class="primary live-primary" disabled>发起共学</button>
+            <button id="live-join" type="button" class="primary live-primary" hidden>加入共学</button>
+            <button id="live-resume" type="button" class="primary live-primary" hidden>继续共学</button>
+          </div>
+        </section>
+        <section id="battle-arena" class="battle-arena desk-mode" data-mood="waiting" aria-labelledby="arena-heading">
+          <header class="battle-header">
+            <span class="desk-mode-icon desk-mode-icon-arena" aria-hidden="true"></span>
+            <div class="desk-arena-heading">
               <h3 id="arena-heading" class="battle-title" tabindex="-1">双塔擂台</h3>
+              <p id="arena-intro">限时答题，用战术卡牌攻守。</p>
               <p id="arena-status" class="battle-status" role="status">正在连接擂台…</p>
             </div>
             <button id="arena-back" class="battle-back" type="button" hidden>返回营地</button>
@@ -5375,7 +5704,6 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
             </article>
           </div>
           <div id="arena-lobby" class="battle-arena-lobby">
-            <p id="arena-intro">和同桌同步开战。答对削弱对方护盾，也能积攒能量出牌。</p>
             <div class="battle-controls">
               <div id="arena-scope" class="picker-field battle-scope">
                 <label id="arena-chapter-label" for="arena-chapter">挑战范围</label>
@@ -5386,7 +5714,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               </div>
             </div>
             <div id="arena-rounds" class="arena-rounds">
-              <strong id="arena-rounds-label">本场题数</strong>
+              <strong id="arena-rounds-label">题数</strong>
               <div role="group" aria-labelledby="arena-rounds-label">
                 <button type="button" data-arena-rounds="3" aria-label="3 道题" aria-pressed="false" hidden>3</button>
                 <button type="button" data-arena-rounds="5" aria-label="5 道题" aria-pressed="false">5</button>
@@ -5399,14 +5727,10 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               <p id="arena-rounds-hint" class="arena-rounds-hint" role="status"></p>
             </div>
             <div class="battle-controls">
-              <button id="arena-create" class="primary" type="button" disabled>邀请同桌开战</button>
-              <button id="arena-join" class="primary" type="button" hidden>应战并准备</button>
+              <button id="arena-create" class="primary" type="button" disabled>发起擂台</button>
+              <button id="arena-join" class="primary" type="button" hidden>应战</button>
               <button id="arena-open" type="button" hidden>进入擂台</button>
             </div>
-            <details id="arena-collection" class="arena-collection">
-              <summary>集卡册 <span id="arena-collection-count"></span></summary>
-              <div id="arena-collection-grid" class="arena-collection-grid"></div>
-            </details>
           </div>
           <div id="arena-stage" class="battle-stage" hidden>
             <p id="arena-match-info" class="battle-match-info"></p>
@@ -5479,59 +5803,17 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               <button id="arena-leave-no" type="button">继续对局</button>
             </div>
           </div>
-          <details id="arena-review" class="battle-review" hidden>
-            <summary id="arena-review-heading">回看我的试卷</summary>
-            <div id="arena-paper" class="desk-duel-review"></div>
-          </details>
-          <details id="arena-history" class="battle-history" hidden>
-            <summary>双塔战绩</summary>
-            <div id="arena-history-list" class="desk-duel-history"></div>
-          </details>
-        </section>
-        <section id="live-lobby" class="live-lobby social-lobby" aria-labelledby="live-lobby-heading">
-          <div class="live-lobby-content">
-            <div class="live-lobby-intro">
-              <h3 id="live-lobby-heading">同桌营地</h3>
-              <p>在营地碰头，开一轮五题共学。</p>
-            </div>
-            <div class="live-table world-companions" aria-label="营地里的两个座位">
-              <div class="live-seat live-seat-mine">
-                <span class="live-seat-frame desk-avatar" aria-hidden="true">
-                  <img id="desk-mine-avatar" class="desk-avatar-picture" alt="" hidden>
-                  <span class="desk-avatar-fallback"></span>
-                </span>
-                <strong>我</strong>
-                <span id="live-local-presence" class="live-online">在线</span>
-              </div>
-              <div class="live-seat live-seat-peer">
-                <span class="live-seat-frame desk-avatar" aria-hidden="true">
-                  <img id="desk-peer-avatar" class="desk-avatar-picture" alt="" hidden>
-                  <span class="desk-avatar-fallback"></span>
-                </span>
-                <strong>同桌</strong>
-                <span id="live-presence" class="live-online">检查中…</span>
-              </div>
-            </div>
-            <div class="live-lobby-controls">
-              <div id="live-settings" class="picker-field live-lobby-chapter">
-                <label id="live-chapter-label" for="live-chapter">练习范围</label>
-                <select id="live-chapter"><option value="">综合题库</option></select>
-                <button id="live-chapter-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="live-chapter-label live-chapter-value" hidden>
-                  <span id="live-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
-                </button>
-              </div>
-              <button id="live-start" type="button" class="primary live-primary" disabled>开桌一起练</button>
-              <button id="live-join" type="button" class="primary live-primary" hidden>加入同桌</button>
-              <button id="live-resume" type="button" class="primary live-primary" hidden>回到课桌</button>
-            </div>
-            <p id="live-lobby-status" class="live-lobby-status" role="status" aria-live="polite"></p>
+          <div id="arena-review-stage">
+            <details id="arena-review" class="battle-review" hidden>
+              <summary id="arena-review-heading">回看我的试卷</summary>
+              <div id="arena-paper" class="desk-duel-review"></div>
+            </details>
           </div>
         </section>
         <section id="social-daily" class="social-camp" aria-labelledby="social-daily-title">
           <div class="social-camp-top">
             <div class="social-camp-copy">
-              <p class="social-camp-kicker">同桌每日任务</p>
-              <h3 id="social-daily-title">点亮营火</h3>
+              <h3 id="social-daily-title">今日营火</h3>
               <p id="social-daily-status" class="social-daily-status" role="status" aria-live="polite">正在同步两人的进度…</p>
             </div>
             <div class="social-fire" aria-hidden="true"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0iTTkgMTh2Nm0tMy0zaDZNNTQgMTF2OG0tNC00aDgiIHN0cm9rZT0iIzU0NzU2YyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMyA1NGw1LTkgMzQgOS00IDctMzUtN1oiIGZpbGw9IiNiNzgxNjAiIHN0cm9rZT0iIzM2Mjk0NyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNNDcgNDRsNSA5LTM0IDgtNC03IDMzLTEwWiIgZmlsbD0iI2Q3YTQ4NiIgc3Ryb2tlPSIjMzYyOTQ3IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xNCA0MGMwLTggNi0xMiA4LTE3IDAgNCAyIDYgNCA3IDItNSA1LTEwIDQtMTkgOSA2IDE0IDEyIDE0IDE5IDMtMiA0LTQgNS02IDcgMTIgNSAyNy0xNiAyOC0xMSAwLTE5LTQtMTktMTJaIiBmaWxsPSIjZjE4MjU2IiBzdHJva2U9IiMzNjI5NDciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0yMiA0NGw1LTkgNCA0IDQtMTQgOSAxNGM0IDgtMyAxMS0xMCAxMS02IDAtMTEtMi0xMi02WiIgZmlsbD0iI2ZmZGI3YyIgc3Ryb2tlPSIjYWU1MDNjIiBzdHJva2Utd2lkdGg9IjEuMzUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNMzUgMTVsNSA3TTE3IDU1bDQgMW0yMy00IDUtMSIgc3Ryb2tlPSIjZmZmMmNmIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=" alt=""></div>
@@ -5555,7 +5837,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
           </div>
           <p id="social-daily-reward" class="social-camp-reward" hidden>营火已点亮</p>
           <section id="social-reactions" class="social-reactions" aria-labelledby="social-reactions-heading" hidden>
-            <h4 id="social-reactions-heading">给同桌捎个鼓励</h4>
+            <h4 id="social-reactions-heading">给同桌打气</h4>
             <div class="social-reaction-actions">
               <button type="button" data-social-reaction="cheer"><span aria-hidden="true">✦</span> <span data-social-label>打气</span></button>
               <button type="button" data-social-reaction="high_five"><span aria-hidden="true">✋</span> <span data-social-label>击掌</span></button>
@@ -5608,14 +5890,12 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
             <div class="live-question-actions"><button id="live-finish" class="primary live-primary" type="button">返回课桌</button></div>
           </section>
         </section>
-        <div class="live-lounge">
         <section class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
           <div class="desk-section-heading">
             <div>
               <h3 id="desk-compare-heading">学习进度</h3>
               <p>正确率按每题最近一次作答计算。</p>
             </div>
-            <span class="desk-paired-mark desk-companion-mark" aria-hidden="true"></span>
           </div>
           <div class="desk-comparison">
             <article class="desk-learner desk-learner-mine" aria-labelledby="desk-mine-name">
@@ -5650,16 +5930,27 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
             </article>
           </div>
         </section>
-        <details id="desk-duel-history-panel" class="desk-surface desk-more desk-archive" hidden>
-          <summary>旧场次记录</summary>
-          <div id="desk-duel-history" class="desk-duel-history"></div>
-          <details id="desk-duel-review-panel" class="desk-more" hidden>
-            <summary>回看我的试卷</summary>
-            <div id="desk-duel-review" class="desk-duel-review"></div>
+        <section class="desk-surface desk-records" aria-labelledby="desk-records-heading">
+          <h3 id="desk-records-heading">对局记录与收藏</h3>
+          <details id="arena-history" class="battle-history" hidden>
+            <summary>双塔战绩</summary>
+            <div id="arena-history-list" class="desk-duel-history"></div>
           </details>
-        </details>
-        </div>
-        <div class="desk-settings">
+          <details id="desk-duel-history-panel" class="desk-more desk-archive" hidden>
+            <summary>旧场次记录</summary>
+            <div id="desk-duel-history" class="desk-duel-history"></div>
+            <details id="desk-duel-review-panel" class="desk-more" hidden>
+              <summary>回看我的试卷</summary>
+              <div id="desk-duel-review" class="desk-duel-review"></div>
+            </details>
+          </details>
+          <details id="arena-collection" class="arena-collection">
+            <summary>集卡册 <span id="arena-collection-count"></span></summary>
+            <div id="arena-collection-grid" class="arena-collection-grid"></div>
+          </details>
+        </section>
+        <details class="desk-settings">
+          <summary>同桌设置</summary>
           <button id="desk-unpair" type="button">解除同桌</button>
           <div id="desk-unpair-confirm" class="desk-unpair-confirm" hidden>
             <p>解除后，你们将无法查看彼此的学习进度和擂台记录。</p>
@@ -5668,7 +5959,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               <button id="desk-unpair-cancel" type="button">取消</button>
             </div>
           </div>
-        </div>
+        </details>
       </div>
     </section>
     <section id="profile" class="panel tab-page" hidden aria-labelledby="profile-heading">
@@ -7240,8 +7531,8 @@ void main() {
     function lobbyCopy(room) {
       if (!snapshot) return blocked ? "学习室暂时连不上，正在尝试重连。" : "正在连接一起学…";
       if (!snapshot.paired) return "同桌关系已更新，返回本页后可重新配对。";
-      if (!room) return "任选一章开桌，或和同桌一起做全书综合题。";
-      if (room.phase === "waiting") return room.isHost ? "学习室已准备好，等同桌加入。" : "同桌正在等你，加入就能开始。";
+      if (!room) return "";
+      if (room.phase === "waiting") return room.isHost ? "已邀请同桌，等对方加入。" : `同桌邀请你共学 · ${room.chapter || "综合题库"}`;
       if (room.phase === "complete") return "上一轮已完成，可以再开一轮。";
       if (terminal(room.phase)) return "上一轮已结束，可以重新开桌。";
       return "这一轮还在，随时回到刚才的题。";
@@ -7260,9 +7551,9 @@ void main() {
       get("join").disabled = writing;
       get("resume").disabled = writing;
       put("lobby-status", message || lobbyCopy(room));
-      online("local-presence", snapshot && !blocked, snapshot && !blocked ? "我已入座" : "连接中");
+      online("local-presence", snapshot && !blocked, snapshot && !blocked ? "在线" : "连接中");
       const connected = snapshot?.partnerOnline && !blocked;
-      online("presence", connected, connected ? "同桌在场" : snapshot && !blocked ? "同桌暂未入座" : "等待连接");
+      online("presence", connected, connected ? "在线" : snapshot && !blocked ? "暂不在线" : "等待连接");
     }
 
     function showAnswers(item, room) {
@@ -8790,10 +9081,10 @@ void main() {
       if (actionError || connectionError) return actionError || connectionError;
       if (pending?.write) return "正在同步…";
       if (!snapshot) return "正在连接擂台…";
-      if (!game) return "邀请同桌一起挑战。";
+      if (!game) return "";
       if (game.phase === "waiting") return game.isHost
         ? `已邀请同桌 · ${game.total} 题 · ${duration(game.total)}`
-        : `同桌邀你对垒 · ${chapterTitle(game)} · ${game.total} 题 · ${duration(game.total)}`;
+        : `同桌邀请你挑战 · ${chapterTitle(game)} · ${game.total} 题 · ${duration(game.total)}`;
       if (game.phase === "countdown") return "双方已准备，马上开战。";
       if (game.phase === "active") return game.own?.done ? "你已完成，等待同桌交卷。" : "对局进行中。";
       if (game.phase === "cancelled") return "本场邀约已取消。";
@@ -8951,6 +9242,8 @@ void main() {
       const previous = history.find((game) => game.id === shownPaperId);
       const game = previous || current;
       const details = get("review");
+      const container = entered && current ? get("review-stage") : get("history");
+      if (details.parentElement !== container) container.append(details);
       details.hidden = !(entered || previous) || !game?.paper;
       if (!game?.paper) {
         details.open = false;
@@ -9419,6 +9712,8 @@ void main() {
 
     function render() {
       byId("guest").hidden = Boolean(account);
+      byId("cover").hidden = Boolean(account && !dashboard);
+      byId("companions").hidden = !dashboard?.partner;
       byId("unpaired").hidden = !dashboard || Boolean(dashboard.partner);
       byId("paired").hidden = !dashboard?.partner;
       byId("refresh").hidden = !account;
