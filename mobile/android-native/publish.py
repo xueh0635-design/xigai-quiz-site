@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 from shutil import copyfile
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 
@@ -45,6 +46,16 @@ def version_from_apk(apk, build_tools):
 def digest(path):
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def update_configured_iphone(apk):
+    if sys.platform != "darwin":
+        return
+    updater = ROOT / "mobile/ios-native/push_release.py"
+    try:
+        subprocess.run([sys.executable, updater, "--apk", apk], cwd=ROOT, check=False)
+    except OSError:
+        print("iPhone 更新待完成。可运行 python3 mobile/ios-native/push_release.py 重试。", file=sys.stderr)
 
 
 def publish(apk, notes, build_tools):
@@ -93,7 +104,8 @@ def publish(apk, notes, build_tools):
         run("git", "add", "--", MANIFEST)
         run("git", "commit", "--only", "-m", f"Announce Android {version}", "--", MANIFEST)
     run(*AUTH_GIT, "push", "origin", "HEAD:main")
-    print(f"https://github.com/{REPO}/releases/tag/{tag}")
+    print(f"https://github.com/{REPO}/releases/tag/{tag}", flush=True)
+    update_configured_iphone(apk)
 
 
 def main():

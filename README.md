@@ -23,3 +23,16 @@ iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用
 在应用里打开「我的 → 应用更新」可以检查新版、打开 GitHub 发布页并开启更新通知。开启后，系统约每两小时安排一次后台检查，实际时间依设备的联网和省电设置而定。通知会打开对应的 GitHub Release 页面。
 
 发布后续版本时，先把源码和网页推送到 `main`。构建 APK 时提高 `quizVersionCode` 并设置 `quizVersionName`，例如在 `mobile/android` 执行 `./gradlew :app:assembleRelease -PquizVersionCode=18 -PquizVersionName=1.1.16`。用同一个 Android 签名密钥签署 release APK，从仓库根目录运行 `python3 mobile/android-native/publish.py 已签名.apk 发布说明.md`。脚本先校验签名和版本，再发布 APK 并更新客户端读取的版本清单。APK 与发布清单会通过同一 GitHub 仓库提供。
+
+## 同步更新已配对的 iPhone
+
+在负责发布的 Mac 上，通过 Xcode 配对 iPhone，用本机原有的开发团队签名。创建本机配置 `~/Library/Application Support/Xigai Quiz/iphone-release.json`，填写这台 iPhone 在 Xcode 中的设备标识和签名团队标识。
+
+```json
+{
+  "device": "设备的 Xcode UDID",
+  "team": "Xcode 签名团队标识"
+}
+```
+
+在这台 Mac 上运行安卓发布命令时，GitHub 上传成功后，脚本从对应发布标签构建 iPhone 版本并覆盖安装。同一局域网或数据线均可使用。iPhone 需要解锁且 Xcode 能连接。若安装待完成，等设备可用后，在同步了 `main` 的发布仓库根目录运行 `python3 mobile/ios-native/push_release.py`。安卓发布会先完成。
