@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "sync": "cap sync",
+    "sync": "npm run build:web && cap sync",
+    "build:web": "npm run build:sync && python3 ../build_mobile.py",
     "build:sync": "esbuild account.js --bundle --minify --format=iife --outfile=../.build/quiz-account.js"
   },
   "dependencies": {

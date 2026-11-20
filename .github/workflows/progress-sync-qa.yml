@@ -1,0 +1,115 @@
+name: Progress sync UI QA
+
+on:
+  push:
+    branches: [qa/progress-sync-1.1.27]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  iphone:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      APP_ID: io.github.xueh0635.xigai
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - name: Prepare the simulator app
+        working-directory: mobile
+        run: |
+          npm ci
+          mkdir -p www
+          cp ../docs/index.html www/index.html
+          python3 tests/inject-sync-ui-smoke.py www/index.html
+          npx --no-install cap add ios
+          node ios-native/install.cjs
+          cp art/app-icon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+      - name: Select and build for iPhone
+        run: |
+          xcodebuild -version
+          phone=$(xcrun simctl list devices available -j | python3 -c 'import json, sys; devices=json.load(sys.stdin)["devices"]; print(next(d["udid"] for runtime in sorted(devices, reverse=True) for d in devices[runtime] if d["name"].startswith("iPhone")))')
+          echo "PHONE=$phone" >> "$GITHUB_ENV"
+          xcrun simctl boot "$phone"
+          xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App -configuration Debug \
+            -destination "platform=iOS Simulator,id=$phone" -derivedDataPath "$RUNNER_TEMP/xigai-ios" \
+            MARKETING_VERSION=1.1.27 CURRENT_PROJECT_VERSION=29 CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xigai-ios-build.log" 2>&1 || {
+            tail -120 "$RUNNER_TEMP/xigai-ios-build.log"
+            exit 1
+          }
+      - name: Read back the sync checks from the iPhone app
+        run: |
+          mkdir -p "$RUNNER_TEMP/xigai-check"
+          xcrun simctl bootstatus "$PHONE" -b
+          xcrun simctl install "$PHONE" "$RUNNER_TEMP/xigai-ios/Build/Products/Debug-iphonesimulator/App.app"
+          xcrun simctl launch "$PHONE" "$APP_ID"
+          swiftc mobile/tests/verify-ios-sync-smoke.swift -o "$RUNNER_TEMP/verify-ios-sync"
+          for attempt in {1..12}; do
+            xcrun simctl io "$PHONE" screenshot "$RUNNER_TEMP/xigai-check/ios-sync.png"
+            if "$RUNNER_TEMP/verify-ios-sync" "$RUNNER_TEMP/xigai-check/ios-sync.png"; then exit 0; fi
+            sleep 3
+          done
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iphone-progress-sync-check
+          path: |
+            ${{ runner.temp }}/xigai-check
+            ${{ runner.temp }}/xigai-ios-build.log
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build the debug APK with the disposable sync fixture
+        working-directory: mobile
+        run: |
+          npm ci
+          mkdir -p www
+          cp ../docs/index.html www/index.html
+          python3 tests/inject-sync-ui-smoke.py www/index.html
+          npx --no-install cap add android
+          node android-native/install.cjs
+          cd android
+          ./gradlew :app:assembleDebug -PquizVersionName=1.1.27 -PquizVersionCode=29
+      - name: Read back the sync checks from the Android app
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash mobile/tests/run-progress-sync-android-qa.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-progress-sync-check
+          path: |
+            android-sync-proof.png
+            android-sync-ui.xml
