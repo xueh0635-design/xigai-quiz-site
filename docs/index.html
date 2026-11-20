@@ -1991,39 +1991,6 @@ a { color: var(--accent); }
 }
 #desk .desk-compare .desk-metrics dd { font-size: .82rem; white-space: nowrap; }
 #desk .desk-compare { padding: clamp(14px, 3.5vw, 20px); border-radius: 22px; }
-#desk #desk-progress-open {
-  min-height: 44px;
-  padding-inline: 11px;
-  border-radius: 12px;
-  background: var(--world-card-alt);
-  color: var(--world-ink);
-  font-size: .85rem;
-  white-space: nowrap;
-}
-.desk-progress-dialog.account-dialog.glass {
-  width: min(540px, calc(100% - 16px));
-  max-height: min(84dvh, 760px);
-  color: var(--world-ink);
-}
-.desk-progress-dialog :is(button, summary) { min-height: 44px; }
-.desk-progress-dialog h3 { margin: 0 0 4px; font-size: 1.03rem; }
-.desk-progress-note, #desk-progress-status { margin: 0 0 10px; color: var(--world-muted); font-size: .82rem; }
-#desk-progress-status:empty { display: none; }
-.desk-progress-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .87rem; }
-.desk-progress-table :is(th, td) {
-  padding: 9px 5px;
-  border-bottom: 1px solid var(--world-edge);
-  text-align: start;
-  vertical-align: top;
-  overflow-wrap: anywhere;
-}
-.desk-progress-table th:first-child { width: 36%; }
-.desk-progress-table td { font-variant-numeric: tabular-nums; }
-.desk-progress-table td span { display: block; color: var(--world-muted); font-size: .76rem; }
-.desk-progress-chapters { margin-top: 12px; }
-.desk-progress-chapters summary { padding: 9px 8px; cursor: pointer; font-weight: 670; }
-#desk-progress-history { width: 100%; margin-top: 14px; }
-
 @media (min-width: 700px) {
   #desk .desk-paired {
     grid-template:
@@ -2052,6 +2019,203 @@ a { color: var(--accent); }
   #desk .desk-cover-copy .desk-avatar { width: 30px; height: 30px; }
   #desk:not([data-arena-active]) #arena-rounds > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+</style>
+<style>
+.desk-learner { position: relative; }
+#desk .desk-learner-open {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: start;
+  justify-content: end;
+  padding: clamp(10px, 2.25vw, 18px);
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  color: var(--world-muted);
+  font-size: .74rem;
+  font-weight: 650;
+  line-height: 1.55;
+  touch-action: manipulation;
+}
+#desk .desk-learner-open:hover, #desk .desk-learner-open:focus-visible {
+  border-color: var(--learner-tint);
+  color: var(--world-ink);
+}
+#desk .desk-learner-open:active { transform: none; }
+.desk-learner:has(.desk-learner-open:focus-visible) { outline: 2px solid var(--world-accent); outline-offset: 2px; }
+
+.desk-progress-dialog.account-dialog.glass {
+  --progress-correct: var(--world-good-ink);
+  --progress-wrong: var(--world-bad-ink);
+  --progress-hatch: repeating-linear-gradient(
+    135deg, var(--progress-wrong) 0 3px,
+    color-mix(in srgb, var(--progress-wrong) 62%, var(--world-card)) 3px 6px
+  );
+  width: min(568px, calc(100% - 16px));
+  max-height: min(86dvh, 810px);
+  color: var(--world-ink);
+}
+.desk-progress-dialog :is(button, select) { min-height: 44px; }
+.desk-progress-dialog h3 { margin: 0 0 5px; font-size: 1.04rem; }
+.desk-progress-note, #desk-progress-status {
+  margin: 0 0 9px;
+  color: var(--world-muted);
+  font-size: .82rem;
+}
+#desk-progress-status:empty { display: none; }
+.desk-progress-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.desk-progress-metrics > div {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--world-edge);
+  border-radius: 12px;
+  background: var(--world-card-alt);
+}
+.desk-progress-metrics dt {
+  color: var(--world-muted);
+  font-size: .76rem;
+  line-height: 1.3;
+}
+.desk-progress-metrics dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+.desk-progress-metrics strong { display: block; font-size: 1.26rem; line-height: 1.25; }
+.desk-progress-metrics dd span { display: block; color: var(--world-muted); font-size: .73rem; }
+.desk-progress-metrics [data-metric="review"] strong { color: var(--world-bad-ink); }
+
+.desk-progress-views {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--world-edge);
+  border-radius: 14px;
+  background: var(--world-card-alt);
+}
+#desk-progress-dialog .desk-progress-views button {
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--world-muted);
+  font-size: .87rem;
+  box-shadow: none;
+}
+#desk-progress-dialog .desk-progress-views button[aria-pressed="true"] {
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  font-weight: 720;
+}
+.desk-chart-panel { margin-top: 14px; }
+.desk-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  color: var(--world-muted);
+  font-size: .75rem;
+}
+.desk-chart-legend li { display: flex; align-items: center; gap: 5px; }
+.desk-chart-legend li::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  content: "";
+}
+.desk-chart-legend [data-segment="correct"]::before,
+.desk-chart-correct { background: var(--progress-correct); }
+.desk-chart-legend [data-segment="wrong"]::before,
+.desk-chart-wrong { background: var(--progress-hatch); }
+.desk-chart-legend [data-segment="new"]::before { background: var(--world-edge); }
+
+.desk-day-chart {
+  --plot-height: clamp(84px, 14dvh, 128px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+}
+.desk-day-chart-axis {
+  height: var(--plot-height);
+  display: grid;
+  align-content: space-between;
+  text-align: end;
+  color: var(--world-muted);
+  font-size: .67rem;
+  font-variant-numeric: tabular-nums;
+}
+.desk-day-chart-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background:
+    linear-gradient(var(--world-edge), var(--world-edge)) left top / 100% 1px no-repeat,
+    linear-gradient(var(--world-edge), var(--world-edge)) left var(--plot-height) / 100% 1px no-repeat;
+}
+#desk-progress-dialog .desk-day-chart button {
+  display: grid;
+  place-items: end center;
+  min-width: 0;
+  grid-template-rows: var(--plot-height) 25px;
+  padding: 0 1px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--world-muted);
+  font-size: .66rem;
+  white-space: nowrap;
+}
+#desk-progress-dialog .desk-day-chart button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--world-accent) 11%, transparent);
+  color: var(--world-ink);
+  font-weight: 720;
+}
+.desk-day-chart button:active { transform: none; }
+.desk-day-chart button > :last-child { align-self: center; }
+.desk-day-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  width: min(62%, 22px);
+  height: 100%;
+}
+.desk-day-stack > span { height: var(--segment); }
+.desk-day-detail {
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 9px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  font-size: .79rem;
+  font-variant-numeric: tabular-nums;
+}
+.desk-chart-bars { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.desk-chart-bars li { display: grid; gap: 5px; padding: 0 0 8px; border-bottom: 1px solid var(--world-edge); }
+.desk-chart-row-label { display: flex; justify-content: space-between; gap: 6px; font-size: .86rem; }
+.desk-chart-row-label span { flex: none; font-variant-numeric: tabular-nums; }
+.desk-chart-row-detail { color: var(--world-muted); font-size: .75rem; }
+.desk-chart-track {
+  display: flex;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--world-edge);
+}
+.desk-chart-track > span { width: var(--segment); }
+.desk-chart-filter { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 9px; }
+.desk-chart-filter label { font-size: .86rem; }
+.desk-chart-filter select { width: min(66%, 220px); }
+#desk-progress-history { width: 100%; margin-top: 10px; }
 </style>
   <style>
 .desk-page {
@@ -5828,10 +5992,10 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         <section class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
           <div class="desk-section-heading">
             <h3 id="desk-compare-heading">学习进度</h3>
-            <button id="desk-progress-open" type="button" aria-haspopup="dialog" aria-controls="desk-progress-dialog">查看记录 <span aria-hidden="true">›</span></button>
           </div>
           <div class="desk-comparison">
             <article class="desk-learner desk-learner-mine" aria-labelledby="desk-mine-name">
+              <button class="desk-learner-open" type="button" data-desk-progress-owner="mine" aria-label="查看我的学习进度" aria-haspopup="dialog" aria-controls="desk-progress-dialog"><span aria-hidden="true">详情 ›</span></button>
               <h4>
                 <span id="desk-mine-name">我</span>
               </h4>
@@ -5847,6 +6011,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               </dl>
             </article>
             <article class="desk-learner desk-learner-peer" aria-labelledby="desk-peer-name">
+              <button class="desk-learner-open" type="button" data-desk-progress-owner="peer" aria-label="查看同桌的学习进度" aria-haspopup="dialog" aria-controls="desk-progress-dialog"><span aria-hidden="true">详情 ›</span></button>
               <h4>
                 <span id="desk-peer-name">同桌</span>
               </h4>
@@ -5874,27 +6039,48 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         </section>
         <dialog id="desk-progress-dialog" class="account-dialog glass quiz-sheet desk-progress-dialog" aria-labelledby="desk-progress-title">
           <div class="account-dialog-header" data-sheet-handle>
-            <h2 id="desk-progress-title">学习记录</h2>
+            <h2 id="desk-progress-title">学习进度</h2>
             <button id="desk-progress-close" type="button" autofocus>关闭</button>
           </div>
           <p id="desk-progress-status" role="status" aria-live="polite"></p>
           <button id="desk-progress-retry" type="button" hidden>重新加载</button>
           <div id="desk-progress-data" hidden>
-            <h3 id="desk-progress-week">近 7 天</h3>
-            <p class="desk-progress-note">按每题最近一次作答的日期统计，日期使用北京时间。</p>
-            <table class="desk-progress-table" aria-labelledby="desk-progress-week">
-              <thead><tr><th scope="col">日期</th><th scope="col">我</th><th scope="col">同桌</th></tr></thead>
-              <tbody id="desk-progress-days"></tbody>
-            </table>
-            <details id="desk-progress-by-chapter" class="desk-progress-chapters">
-              <summary id="desk-progress-chapter-title">按章节查看</summary>
-              <table class="desk-progress-table" aria-labelledby="desk-progress-chapter-title">
-                <thead><tr><th scope="col">章节</th><th scope="col">我</th><th scope="col">同桌</th></tr></thead>
-                <tbody id="desk-progress-chapters"></tbody>
-              </table>
-            </details>
+            <dl id="desk-progress-metrics" class="desk-progress-metrics"></dl>
+            <div class="desk-progress-views" role="group" aria-label="学习进度统计维度">
+              <button type="button" data-progress-view="trend" aria-pressed="true" aria-controls="desk-progress-trend">近况</button>
+              <button type="button" data-progress-view="chapters" aria-pressed="false" aria-controls="desk-progress-chapters">章节</button>
+              <button type="button" data-progress-view="types" aria-pressed="false" aria-controls="desk-progress-types">题型</button>
+              <button type="button" data-progress-view="tests" aria-pressed="false" aria-controls="desk-progress-tests">测验</button>
+            </div>
+            <section id="desk-progress-trend" class="desk-chart-panel" aria-labelledby="desk-progress-week">
+              <h3 id="desk-progress-week">近 7 天作答</h3>
+              <p id="desk-progress-week-summary" class="desk-progress-note"></p>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li></ul>
+              <div id="desk-progress-days" class="desk-day-chart" role="group" aria-label="按日查看作答数和正确率"></div>
+              <p id="desk-progress-day-detail" class="desk-day-detail" role="status"></p>
+              <p class="desk-progress-note">按每题最近一次提交统计，日期使用北京时间。</p>
+            </section>
+            <section id="desk-progress-chapters" class="desk-chart-panel" aria-labelledby="desk-progress-chapter-title" hidden>
+              <h3 id="desk-progress-chapter-title">各章完成度</h3>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li><li data-segment="new">未答</li></ul>
+              <ul id="desk-progress-chapter-bars" class="desk-chart-bars"></ul>
+            </section>
+            <section id="desk-progress-types" class="desk-chart-panel" aria-labelledby="desk-progress-type-title" hidden>
+              <h3 id="desk-progress-type-title">各题型作答情况</h3>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li><li data-segment="new">未答</li></ul>
+              <ul id="desk-progress-type-bars" class="desk-chart-bars"></ul>
+            </section>
+            <section id="desk-progress-tests" class="desk-chart-panel" aria-labelledby="desk-progress-test-title" hidden>
+              <h3 id="desk-progress-test-title">各章最近一次测验</h3>
+              <div class="desk-chart-filter" id="desk-progress-test-filter" hidden>
+                <label for="desk-progress-test-bank">题库</label>
+                <select id="desk-progress-test-bank"></select>
+              </div>
+              <p id="desk-progress-tests-empty" class="desk-progress-note">完成整章测验后，这里会显示最近一次成绩。</p>
+              <ul id="desk-progress-test-bars" class="desk-chart-bars"></ul>
+            </section>
+            <button id="desk-progress-history" type="button">回看我的作答</button>
           </div>
-          <button id="desk-progress-history" type="button">回看我的作答</button>
         </dialog>
         <section class="desk-surface desk-records" aria-labelledby="desk-records-heading">
           <h3 id="desk-records-heading">对局记录与收藏</h3>
@@ -9488,6 +9674,240 @@ void main() {
 (() => {
   "use strict";
 
+  const get = (id) => document.getElementById("desk-progress-" + id);
+  const number = new Intl.NumberFormat("zh-CN");
+  const scopeNames = { all: "全部题库", sizheng: "思政云", xuexitong: "学习通", common: "常考题" };
+  const typeNames = ["单选", "多选", "判断", "填空", "未分类"];
+  const titles = { mine: "我的学习进度", peer: "同桌的学习进度" };
+  const percent = (done, total) => total ? `${Math.round(1000 * done / total) / 10}%` : "—";
+
+  function node(element, value, className) {
+    const item = document.createElement(element);
+    if (value) item.textContent = value;
+    if (className) item.className = className;
+    return item;
+  }
+
+  function stats(entry, owner) {
+    return { answered: entry[owner], correct: entry[owner + "Correct"], review: entry[owner + "Review"] || 0 };
+  }
+
+  function segment(kind, count, scale) {
+    const item = node("span", "", "desk-chart-" + kind);
+    item.style.setProperty("--segment", `${scale ? 100 * count / scale : 0}%`);
+    return item;
+  }
+
+  function showMetrics(chapters, owner) {
+    let total = 0, answered = 0, correct = 0, review = 0, finished = 0;
+    for (const chapter of chapters) {
+      const activity = stats(chapter, owner);
+      total += chapter.total;
+      answered += activity.answered;
+      correct += activity.correct;
+      review += activity.review;
+      if (activity.answered === chapter.total) finished += 1;
+    }
+    const metrics = [
+      ["completion", "题库完成度", percent(answered, total), `已答 ${number.format(answered)} / ${number.format(total)} 道`],
+      ["accuracy", "整体正确率", percent(correct, answered), `答对 ${number.format(correct)} · 答错 ${number.format(answered - correct)}`],
+      ["review", "待复练", `${number.format(review)} 道`, ""],
+      ["chapters", "已练完章节", `${finished} / ${chapters.length}`, ""],
+    ];
+    get("metrics").replaceChildren(...metrics.map(([key, label, value, detail]) => {
+      const item = node("div");
+      item.dataset.metric = key;
+      const dd = node("dd");
+      dd.append(node("strong", value));
+      if (detail) dd.append(node("span", detail));
+      item.append(node("dt", label), dd);
+      return item;
+    }));
+  }
+
+  function showTrend(days, owner) {
+    const entries = [...days].reverse().map((entry, index) => {
+      const [, month, day] = entry.date.split("-").map(Number);
+      const today = index === days.length - 1;
+      return { ...stats(entry, owner), label: today ? "今天" : `${month}/${day}`, date: today ? "今天" : `${month}月${day}日` };
+    });
+    const weekCount = entries.reduce((sum, entry) => sum + entry.answered, 0);
+    const weekCorrect = entries.reduce((sum, entry) => sum + entry.correct, 0);
+    const studyDays = entries.filter((entry) => entry.answered > 0).length;
+    get("week-summary").textContent = weekCount
+      ? `${studyDays} 天有作答 · ${weekCount} 道 · 正确率 ${percent(weekCorrect, weekCount)}`
+      : "近 7 天暂无作答记录。";
+
+    const peak = Math.max(1, ...entries.map((entry) => entry.answered));
+    const unit = 10 ** Math.floor(Math.log10(peak));
+    const max = Math.ceil(peak / unit) * unit;
+    const axis = node("div", "", "desk-day-chart-axis");
+    axis.setAttribute("aria-hidden", "true");
+    axis.append(node("span", String(max)), node("span", "0"));
+    const columns = node("div", "", "desk-day-chart-columns");
+    const buttons = entries.map((entry) => {
+      const button = node("button");
+      button.type = "button";
+      const stack = node("span", "", "desk-day-stack");
+      const mistakes = entry.answered - entry.correct;
+      stack.setAttribute("aria-hidden", "true");
+      stack.append(segment("wrong", mistakes, max), segment("correct", entry.correct, max));
+      button.append(stack, node("span", entry.label));
+      const accuracy = entry.answered ? ` · 正确率 ${percent(entry.correct, entry.answered)}` : "";
+      const detail = `${entry.date} · 已答 ${entry.answered} · 答对 ${entry.correct} · 答错 ${mistakes}${accuracy}`;
+      button.setAttribute("aria-label", detail);
+      button.onclick = () => {
+        for (const day of buttons) day.setAttribute("aria-pressed", String(day === button));
+        get("day-detail").textContent = detail;
+      };
+      return button;
+    });
+    columns.append(...buttons);
+    get("days").replaceChildren(axis, columns);
+    buttons.at(-1)?.click();
+  }
+
+  function barRow(label, amount, detail, correct, wrong, total) {
+    const row = node("li");
+    const heading = node("div", "", "desk-chart-row-label");
+    heading.append(node("strong", label), node("span", amount));
+    const track = node("div", "", "desk-chart-track");
+    track.setAttribute("aria-hidden", "true");
+    track.append(segment("correct", correct, total), segment("wrong", wrong, total));
+    row.append(heading, track, node("small", detail, "desk-chart-row-detail"));
+    return row;
+  }
+
+  function activityBar(label, entry, owner) {
+    const { answered, correct, review } = stats(entry, owner);
+    const accuracy = answered ? `正确率 ${percent(correct, answered)}` : "还未作答";
+    return barRow(label, `${answered} / ${entry.total} 道`, `${accuracy} · 待复练 ${review} 道`,
+      correct, answered - correct, entry.total);
+  }
+
+  function connect({ questions, rpc, openOwnHistory }) {
+    const dialog = get("dialog");
+    if (!dialog) return null;
+    const sheet = window.QuizSheetMotion?.attach(dialog);
+    const cards = [...document.querySelectorAll("[data-desk-progress-owner]")];
+    const views = [...dialog.querySelectorAll("[data-progress-view]")];
+    const chapterOrder = [...new Set([...questions.values()].map((item) => item.chapter))];
+    let available = false;
+    let opener = null;
+    let pending = null;
+    let tests = [];
+
+    function showView(view) {
+      for (const button of views) {
+        const selected = view === button.dataset.progressView;
+        button.setAttribute("aria-pressed", String(selected));
+        get(button.dataset.progressView).hidden = !selected;
+      }
+    }
+
+    function showTestBars() {
+      const bank = get("test-bank").value;
+      const byChapter = new Map(tests.filter((entry) => entry.bank === bank).map((entry) => [entry.chapter, entry]));
+      get("test-bars").replaceChildren(...chapterOrder.filter((chapter) => byChapter.has(chapter)).map((chapter) => {
+        const { correct, total } = byChapter.get(chapter);
+        return barRow(chapter, `${correct} / ${total} 道`, correct === total ? "全对" : `正确率 ${percent(correct, total)}`,
+          correct, total - correct, total);
+      }));
+    }
+
+    function render(data, owner) {
+      const chapterData = new Map(data.chapters.map((entry) => [entry.chapter, entry]));
+      const typeData = new Map(data.types.map((entry) => [entry.type, entry]));
+      showMetrics(data.chapters, owner);
+      showTrend(data.days, owner);
+      get("chapter-bars").replaceChildren(...chapterOrder.filter((name) => chapterData.has(name))
+        .map((name) => activityBar(name, chapterData.get(name), owner)));
+      get("type-bars").replaceChildren(...typeNames.filter((name) => typeData.has(name))
+        .map((name) => activityBar(name === "未分类" ? name : name + "题", typeData.get(name), owner)));
+      tests = data.tests[owner];
+      const scopes = Object.keys(scopeNames).filter((scope) => tests.some((entry) => entry.bank === scope));
+      get("test-bank").replaceChildren(...scopes.map((scope) => new Option(scopeNames[scope], scope)));
+      get("test-filter").hidden = !scopes.length;
+      get("tests-empty").hidden = Boolean(scopes.length);
+      showTestBars();
+      get("history").hidden = owner !== "mine";
+      get("data").hidden = false;
+    }
+
+    async function load() {
+      if (!available || !dialog.open || !opener || pending) return;
+      const owner = opener.dataset.deskProgressOwner;
+      const request = {};
+      pending = request;
+      get("data").hidden = true;
+      get("retry").hidden = true;
+      get("status").textContent = "正在加载学习进度…";
+      try {
+        const { data, error } = await rpc("quiz_pk_progress_details");
+        if (pending !== request || !dialog.open) return;
+        if (error || !data?.paired || data.days?.length !== 7 || !Array.isArray(data.chapters) ||
+            !Array.isArray(data.types) || !Array.isArray(data.tests?.[owner])) {
+          throw error || new Error("progress_unavailable");
+        }
+        render(data, owner);
+        get("status").textContent = "";
+      } catch {
+        if (pending !== request || !dialog.open) return;
+        get("status").textContent = "暂时无法加载学习进度。";
+        get("retry").hidden = false;
+      } finally {
+        if (pending === request) pending = null;
+      }
+    }
+
+    for (const card of cards) {
+      card.onclick = () => {
+        if (!available || dialog.open) return;
+        pending = null;
+        opener = card;
+        get("title").textContent = titles[card.dataset.deskProgressOwner];
+        showView("trend");
+        card.focus({ preventScroll: true });
+        dialog.showModal();
+        dialog.scrollTop = 0;
+        load();
+      };
+    }
+    for (const button of views) button.onclick = () => showView(button.dataset.progressView);
+    get("test-bank").onchange = showTestBars;
+    get("retry").onclick = load;
+    get("close").onclick = () => sheet ? sheet.close() : dialog.close();
+    get("history").onclick = () => {
+      if (opener?.dataset.deskProgressOwner !== "mine") return;
+      dialog.close();
+      openOwnHistory();
+    };
+    dialog.addEventListener("close", () => {
+      if (dialog.open) return;
+      opener = null;
+      pending = null;
+      tests = [];
+      get("data").hidden = true;
+      for (const id of ["metrics", "days", "chapter-bars", "type-bars", "test-bars"]) get(id).replaceChildren();
+    });
+
+    return {
+      setAvailable(hasPartner) {
+        available = hasPartner;
+        if (hasPartner) return;
+        pending = null;
+        if (dialog.open) dialog.close();
+      },
+    };
+  }
+
+  window.QuizDeskProgress = { connect };
+})();
+</script>
+<script>
+(() => {
+  "use strict";
+
   const byId = (id) => document.getElementById("desk-" + id);
   const errors = {
     pk_auth_required: "请重新登录后再试。",
@@ -9526,9 +9946,7 @@ void main() {
     let selectedPaper = null;
     let renderedPaper = "";
     let renderedArchive = "";
-    let progressRequest = null;
-    const progressDialog = byId("progress-dialog");
-    const progressSheet = window.QuizSheetMotion?.attach(progressDialog);
+    const progress = window.QuizDeskProgress?.connect({ questions, rpc, openOwnHistory });
     const avatars = window.QuizDeskAvatar?.connect({
       run: avatar,
       saved: () => request("dashboard", undefined, { silent: true }),
@@ -9555,57 +9973,6 @@ void main() {
       text(kind + "-completion", `${completion}%`);
       text(kind + "-today", `${stats.today} 道`);
       byId(kind + "-bar").value = completion;
-    }
-
-    function progressRow(label, entry) {
-      const row = document.createElement("tr");
-      const heading = tag("th", label);
-      heading.scope = "row";
-      row.append(heading);
-      for (const side of ["mine", "peer"]) {
-        const cell = document.createElement("td");
-        const answered = entry[side];
-        const amount = entry.total ? `${answered} / ${entry.total}` : `${answered} 道`;
-        cell.append(tag("strong", amount), tag("span", `答对 ${entry[side + "Correct"]} 道`));
-        row.append(cell);
-      }
-      return row;
-    }
-
-    function renderProgress(data) {
-      byId("progress-days").replaceChildren(...data.days.map((day, index) => {
-        const [, month, date] = day.date.split("-").map(Number);
-        return progressRow(index === 0 ? "今天" : `${month}月${date}日`, day);
-      }));
-      const chapterData = new Map(data.chapters.map((entry) => [entry.chapter, entry]));
-      const chapterOrder = new Set([...questions.values()].map((item) => item.chapter));
-      byId("progress-chapters").replaceChildren(...[...chapterOrder].filter((name) => chapterData.has(name))
-        .map((name) => progressRow(name, chapterData.get(name))));
-      byId("progress-data").hidden = false;
-    }
-
-    async function loadProgress() {
-      if (!progressDialog.open || !dashboard?.partner || progressRequest) return;
-      const token = {};
-      progressRequest = token;
-      byId("progress-data").hidden = true;
-      byId("progress-retry").hidden = true;
-      text("progress-status", "正在加载学习记录…");
-      try {
-        const { data, error } = await rpc("quiz_pk_progress_details");
-        if (progressRequest !== token || !progressDialog.open) return;
-        if (error || !data?.paired || !Array.isArray(data.days) || !Array.isArray(data.chapters)) {
-          throw error || new Error("progress_unavailable");
-        }
-        renderProgress(data);
-        text("progress-status", "");
-      } catch {
-        if (progressRequest !== token || !progressDialog.open) return;
-        text("progress-status", "暂时无法加载学习记录。");
-        byId("progress-retry").hidden = false;
-      } finally {
-        if (progressRequest === token) progressRequest = null;
-      }
     }
 
     function renderReview(game) {
@@ -9714,7 +10081,7 @@ void main() {
       byId("companions").hidden = !dashboard?.partner;
       byId("unpaired").hidden = !dashboard || Boolean(dashboard.partner);
       byId("paired").hidden = !dashboard?.partner;
-      if (!dashboard?.partner && progressDialog.open) progressDialog.close();
+      progress?.setAvailable(active && Boolean(dashboard?.partner));
       byId("refresh").hidden = !account;
       avatars?.show(Boolean(account && dashboard));
       byId("unpair-confirm").hidden = !confirmUnpair;
@@ -9758,26 +10125,6 @@ void main() {
     }
 
     byId("login").onclick = login;
-    byId("progress-open").onclick = () => {
-      if (!dashboard?.partner || progressDialog.open) return;
-      progressRequest = null;
-      byId("progress-by-chapter").open = false;
-      progressDialog.showModal();
-      loadProgress();
-    };
-    byId("progress-close").onclick = () => progressSheet ? progressSheet.close() : progressDialog.close();
-    byId("progress-retry").onclick = loadProgress;
-    byId("progress-history").onclick = () => {
-      progressDialog.close();
-      openOwnHistory();
-    };
-    progressDialog.addEventListener("close", () => {
-      if (progressDialog.open) return;
-      progressRequest = null;
-      byId("progress-days").replaceChildren();
-      byId("progress-chapters").replaceChildren();
-      if (byId("progress-open").getClientRects().length) byId("progress-open").focus({ preventScroll: true });
-    });
     byId("refresh").onclick = () => request("dashboard");
     byId("create-invite").onclick = () => request("create_invite", undefined, {
       after: ({ invite }) => { if (invite) setStatus(`邀请码有效至 ${date.format(new Date(invite.expiresAt))}。`); },
@@ -9838,6 +10185,7 @@ void main() {
           render();
           refresh();
         } else {
+          progress?.setAvailable(false);
           live?.setContext(account, Boolean(dashboard?.partner), false);
           social?.setContext(account, Boolean(dashboard?.partner), false);
           arena?.setContext(account, Boolean(dashboard?.partner), false);
