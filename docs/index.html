@@ -1792,47 +1792,6 @@ a { color: var(--accent); }
   line-height: 1.5;
 }
 
-.desk-invite-actions, .desk-join-form { width: min(100%, 460px); }
-.desk-join-form { display: grid; gap: 6px; }
-.desk-join-form > div { display: flex; gap: 8px; }
-
-.desk-join-form input {
-  flex: 1;
-  width: 0;
-  min-width: 0;
-  padding-inline: 12px;
-  background: #ffffffd4;
-}
-
-.desk-join-form button, .desk-invite-code button {
-  flex: none;
-  border-radius: 999px;
-  font-size: .9rem;
-  font-weight: 650;
-}
-
-.desk-invite-code {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 8px 9px 8px 12px;
-  border: 1px dashed #9ac5ae;
-  border-radius: 16px;
-  background: #eaf6ea;
-}
-
-.desk-invite-code > div { min-width: 0; }
-.desk-invite-code span { display: block; color: #405c4c; font-size: .8rem; }
-
-.desk-invite-code output {
-  font: 680 1.16rem/1.35 ui-monospace, "SF Mono", Consolas, monospace;
-  overflow-wrap: anywhere;
-  user-select: all;
-}
-
 .desk-compare {
   border-color: #ffffffda;
   background: radial-gradient(ellipse at 93% 1%, #e0efd6, transparent 59%), linear-gradient(145deg, #f8fdf7, #edf6f0);
@@ -2076,27 +2035,6 @@ a { color: var(--accent); }
   border-radius: 11px;
 }
 
-.desk-settings { text-align: right; }
-.desk-settings > button, .desk-unpair-confirm button {
-  border-radius: 999px;
-  background: #fff9;
-  color: #6d4c51;
-  font-size: .85rem;
-}
-
-.desk-unpair-confirm {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 12px;
-  border: 1px solid #e9d6da;
-  border-radius: 16px;
-  background: #fbf4f4;
-}
-
-.desk-unpair-confirm p { margin: 0; color: #6d4c51; font-size: .88rem; }
-.desk-unpair-confirm div { display: flex; justify-content: end; gap: 8px; }
-
 @media (max-width: 350px) {
   .desk-learner h4 { margin-bottom: 6px; }
   .desk-completion { column-gap: 5px; }
@@ -2138,14 +2076,7 @@ a { color: var(--accent); }
 }
 .desk-cover-copy p { color: var(--world-muted); font-size: .88rem; line-height: 1.5; }
 .desk-guest > button { min-height: 44px; }
-.desk-pairing { gap: 13px; }
-.desk-pairing-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
-.desk-pairing-head p { margin-top: 4px; }
-#desk .desk-pairing :is(.desk-invite-actions,.desk-join-form) { width: 100%; }
-#desk .desk-pairing .desk-invite-actions { padding: 0; background: transparent; border: 0; }
-.desk-pairing .desk-invite-actions > button { width: 100%; min-height: 44px; }
-#desk .desk-pairing .desk-join-form { padding: 10px; border-radius: 14px; }
-.desk-pairing :is(input, button) { min-height: 44px; }
+.desk-seat { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
 .desk-companions { display: flex; flex-wrap: wrap; gap: 9px clamp(10px, 3vw, 20px); }
 .desk-companion { display: flex; align-items: center; gap: 7px; }
 #desk .desk-cover-copy .desk-avatar {
@@ -2316,7 +2247,7 @@ a { color: var(--accent); }
   background: none;
   color: var(--world-ink);
 }
-#desk .desk-records > details > summary, #desk .desk-settings > summary {
+#desk .desk-records > details > summary {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2328,8 +2259,8 @@ a { color: var(--accent); }
   list-style: none;
   cursor: pointer;
 }
-#desk :is(.desk-records, .desk-settings) summary::-webkit-details-marker { display: none; }
-#desk .desk-records > details > summary::after, #desk .desk-settings > summary::after {
+#desk .desk-records summary::-webkit-details-marker { display: none; }
+#desk .desk-records > details > summary::after::after {
   width: 6px;
   height: 6px;
   margin-inline-start: auto;
@@ -2339,16 +2270,10 @@ a { color: var(--accent); }
   transform: rotate(-45deg);
   content: "";
 }
-#desk :is(.desk-records, .desk-settings) details[open] > summary::after,
-#desk .desk-settings[open] > summary::after { transform: rotate(45deg); }
+#desk .desk-records > details[open] > summary::after { transform: rotate(45deg); }
 #desk .desk-records > details[open] > :not(summary) { margin-block-end: 10px; }
 #desk .desk-records #arena-collection-count { margin-inline-start: auto; color: var(--world-muted); }
 #desk .desk-records #arena-collection > summary::after { margin-inline-start: 3px; }
-#desk .desk-settings { padding-inline: 2px; text-align: start; }
-#desk .desk-settings > summary { width: fit-content; gap: 12px; color: var(--world-muted); }
-#desk .desk-settings button { min-height: 44px; }
-#desk .desk-unpair-confirm { border-color: var(--world-edge); background: var(--world-card); }
-#desk .desk-unpair-confirm p { color: var(--world-bad-ink); }
 #desk .desk-compare .desk-learner {
   box-shadow: none;
   border-radius: 15px;
@@ -2370,21 +2295,14 @@ a { color: var(--accent); }
     grid-template:
       "coop arena" auto
       "progress arena" auto
-      "progress records" auto
-      "settings settings" auto / minmax(0, 1fr) minmax(0, 1fr);
+      "progress records" auto / minmax(0, 1fr) minmax(0, 1fr);
   }
   #desk #live-lobby { grid-area: coop; }
   #desk #battle-arena { grid-area: arena; }
   #desk .desk-compare { grid-area: progress; }
   #desk .desk-records { grid-area: records; }
-  #desk .desk-settings { grid-area: settings; }
   #desk:is([data-live-active], [data-arena-active]) .desk-paired { grid-template: none / minmax(0, 1fr); }
   #desk[data-arena-active] #battle-arena { grid-area: auto; }
-}
-@media (max-width: 570px) {
-  #desk .desk-cover:has(.desk-pairing:not([hidden])) {
-    grid-template: "scene" 112px "copy" auto / minmax(0, 1fr);
-  }
 }
 @media (max-width: 355px) {
   #desk .desk-cover { grid-template-columns: minmax(0, 1fr) 146px; }
@@ -4369,7 +4287,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   box-shadow: 0 8px 24px var(--world-shadow);
 }
 #desk :is(.desk-section-heading p,.live-room-status,.live-room-people strong,.desk-onboard p) { color: var(--world-muted); }
-#desk :is(.desk-invite-actions,.desk-join-form,.desk-round-header,.desk-learner,.desk-duel,.live-room-people > div,.live-choice-comparison) {
+#desk :is(.desk-round-header,.desk-learner,.desk-duel,.live-room-people > div,.live-choice-comparison) {
   border-color: var(--world-edge);
   background-color: var(--world-card-alt);
   color: var(--world-ink);
@@ -4380,7 +4298,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   color: var(--world-ink);
 }
 #desk .desk-learner h4, #desk .desk-learner :is(dt,dd), #desk .desk-learner .desk-completion > span,
-#desk .desk-duel-empty, #desk .desk-join-form label {
+#desk .desk-duel-empty {
   color: var(--world-muted);
 }
 #desk .social-received {
@@ -6520,38 +6438,18 @@ button[data-option-note][data-option-holding]::after {
           </div>
         </div>
         <section id="desk-guest" class="desk-cover-copy desk-guest" aria-labelledby="desk-guest-heading" hidden>
-          <h3 id="desk-guest-heading">找个同桌，一起刷题</h3>
+          <h3 id="desk-guest-heading">和同桌一起刷题</h3>
           <p>同步答题、一起看解析，也可以各自练习、互看进度。</p>
           <button id="desk-login" class="primary" type="button">登录或注册</button>
         </section>
-        <section id="desk-unpaired" class="desk-cover-copy desk-pairing" aria-labelledby="desk-invite-heading" hidden>
-          <div class="desk-pairing-head">
-            <div>
-              <h3 id="desk-invite-heading">邀请同桌</h3>
-              <p>两人各用自己的账号，配对后就能一起练习。</p>
-            </div>
-            <span class="desk-avatar desk-pairing-avatar" aria-hidden="true">
+        <section id="desk-unpaired" class="desk-cover-copy" aria-labelledby="desk-unpaired-heading" hidden>
+          <div class="desk-seat">
+            <h3 id="desk-unpaired-heading">当前账号暂无同桌</h3>
+            <span class="desk-avatar" aria-hidden="true">
               <img id="desk-seat-avatar" class="desk-avatar-picture" alt="" hidden>
               <span class="desk-avatar-fallback"></span>
             </span>
           </div>
-          <div class="desk-invite-actions">
-            <button id="desk-create-invite" class="primary" type="button">生成我的邀请码</button>
-            <div id="desk-invite" class="desk-invite-code" hidden>
-              <div>
-                <span>把这串码发给同桌</span>
-                <output id="desk-invite-code" aria-label="我的同桌邀请码"></output>
-              </div>
-              <button id="desk-copy-invite" type="button">复制</button>
-            </div>
-          </div>
-          <form id="desk-join-form" class="desk-join-form">
-            <label for="desk-join-code">对方的邀请码</label>
-            <div>
-              <input id="desk-join-code" type="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="输入邀请码" required>
-              <button id="desk-join" type="submit">配对</button>
-            </div>
-          </form>
         </section>
         <section id="desk-companions" class="desk-cover-copy" aria-labelledby="desk-companions-heading" hidden>
           <h3 id="desk-companions-heading">同桌营地</h3>
@@ -6898,17 +6796,6 @@ button[data-option-note][data-option-holding]::after {
             <div id="arena-collection-grid" class="arena-collection-grid"></div>
           </details>
         </section>
-        <details class="desk-settings">
-          <summary>同桌设置</summary>
-          <button id="desk-unpair" type="button">解除同桌</button>
-          <div id="desk-unpair-confirm" class="desk-unpair-confirm" hidden>
-            <p id="desk-unpair-note">解除后，你将无法查看同桌的学习进度和擂台记录。</p>
-            <div>
-              <button id="desk-unpair-yes" type="button">确认解除</button>
-              <button id="desk-unpair-cancel" type="button">取消</button>
-            </div>
-          </div>
-        </details>
       </div>
     </section>
     <section id="profile" class="panel tab-page" hidden aria-labelledby="profile-heading">
@@ -8459,7 +8346,7 @@ void main() {
   const terminal = (phase) => ["complete", "ended", "expired"].includes(phase);
   const errors = {
     live_room_unavailable: "这间学习室已结束，请回到一起学页刷新。",
-    live_pair_required: "先和同桌建立配对，就能一起学习。",
+    live_pair_required: "当前账号暂无同桌。",
     live_not_ready: "这一题的状态刚刚变了，正在同步。",
     live_invalid_picks: "请核对所选答案后重新提交。",
     live_chapter_unavailable: "这个范围暂时无法组题，请换一章。",
@@ -8514,7 +8401,7 @@ void main() {
 
     function lobbyCopy(room) {
       if (!snapshot) return blocked ? "学习室暂时连不上，正在尝试重连。" : "正在连接一起学…";
-      if (!snapshot.paired) return "同桌关系已更新，返回本页后可重新配对。";
+      if (!snapshot.paired) return "同桌暂不可用，请刷新后重试。";
       if (!room) return "";
       if (room.phase === "waiting") return room.isHost ? "已邀请同桌，等对方加入。" : `同桌邀请你共学 · ${room.chapter || "综合题库"}`;
       if (room.phase === "complete") return "上一轮已完成，可以再开一轮。";
@@ -9810,8 +9697,8 @@ void main() {
   };
   const errors = {
     arena_auth_required: "请重新登录后再试。",
-    arena_pair_required: "请先和对方成为同桌。",
-    arena_partner_required: "请先和对方成为同桌。",
+    arena_pair_required: "当前账号暂无同桌。",
+    arena_partner_required: "当前账号暂无同桌。",
     arena_chapter_unavailable: "本章暂时无法组题，换一章试试。",
     arena_chapter_empty: "本章暂时无法组题，换一章试试。",
     arena_invalid_total: "请重新选择对垒题数。",
@@ -9826,7 +9713,7 @@ void main() {
     arena_reaction_limited: "刚发过消息，等一下再试。",
     pk_auth_required: "请重新登录后再试。",
     pk_membership_required: "请先开通账号同步。",
-    pk_pair_required: "请先和对方成为同桌。",
+    pk_pair_required: "当前账号暂无同桌。",
   };
 
   function node(tag, text, className) {
@@ -10746,9 +10633,6 @@ void main() {
   const errors = {
     pk_auth_required: "请重新登录后再试。",
     pk_membership_required: "账号尚未开通进度同步。请重新登录后再试。",
-    pk_already_paired: "你或对方已有同桌。",
-    pk_invite_unavailable: "邀请码无效或已过期，请让对方重新生成。",
-    pk_cannot_join_own_invite: "请输入同桌发给你的邀请码。",
   };
   const resultLabels = { win: "我赢了", loss: "同桌赢了", tie: "平局" };
   const statusLabels = { expired: "已结束", open: "待结算" };
@@ -10778,7 +10662,6 @@ void main() {
     let active = false;
     let activeRequest = null;
     let actionInProgress = false;
-    let confirmUnpair = false;
     let renderedDashboard = null;
     let selectedPaper = null;
     let renderedPaper = "";
@@ -10786,7 +10669,7 @@ void main() {
     const progress = window.QuizDeskProgress?.connect({ questions, rpc, openOwnHistory });
     const avatars = window.QuizDeskAvatar?.connect({
       run: avatar,
-      saved: () => request("dashboard", undefined, { silent: true }),
+      saved: () => requestDashboard({ silent: true }),
     });
     const social = window.QuizSocial?.connect({ rpc });
     const live = window.QuizLive?.connect({ questions, chapters, rpc, onLobby: () => social?.refresh() });
@@ -10798,9 +10681,7 @@ void main() {
 
     function setBusy() {
       document.getElementById("desk").setAttribute("aria-busy", String(Boolean(actionInProgress)));
-      for (const id of ["refresh", "create-invite", "join", "unpair-yes"]) {
-        byId(id).disabled = actionInProgress;
-      }
+      byId("refresh").disabled = actionInProgress;
     }
 
     function renderStats(kind, stats, total) {
@@ -10911,8 +10792,6 @@ void main() {
       if (renderedDashboard === dashboard || !dashboard) return;
       renderedDashboard = dashboard;
       avatars?.update(dashboard.me?.avatar, dashboard.partner?.avatar);
-      byId("invite").hidden = !dashboard.invite;
-      text("invite-code", dashboard.invite?.code || "");
       renderArchive();
       const peer = dashboard.progressPeer || dashboard.partner;
       if (!peer) return clearStats();
@@ -10942,11 +10821,6 @@ void main() {
       progress?.setAccess(active ? progressAccess : null);
       byId("refresh").hidden = !account;
       avatars?.show(Boolean(account && dashboard));
-      byId("unpair-confirm").hidden = !confirmUnpair;
-      byId("unpair").hidden = confirmUnpair;
-      text("unpair-note", adminProgress
-        ? "解除后，共学和擂台需重新配对。"
-        : "解除后，你将无法查看同桌的学习进度和擂台记录。");
       renderDashboard();
       setBusy();
       live?.setContext(account, hasPartner, active);
@@ -10954,7 +10828,7 @@ void main() {
       arena?.setContext(account, hasPartner, active);
     }
 
-    async function request(name, params, { silent = false, after } = {}) {
+    async function requestDashboard({ silent = false } = {}) {
       if (!account || actionInProgress || (silent && activeRequest)) return;
       const token = {};
       activeRequest = token;
@@ -10962,13 +10836,12 @@ void main() {
       if (!silent) setStatus("正在连接…");
       render();
       try {
-        const { data, error } = await rpc("quiz_pk_" + name, params);
+        const { data, error } = await rpc("quiz_pk_dashboard");
         if (activeRequest !== token) return;
         if (error) throw error;
         if (!data) throw new Error("pk_empty");
         dashboard = data;
         if (!silent || byId("status").textContent === "正在同步学习进度…") setStatus("");
-        after?.(data);
       } catch (error) {
         if (activeRequest !== token) return;
         if (!silent || !dashboard) {
@@ -10986,51 +10859,10 @@ void main() {
     }
 
     byId("login").onclick = login;
-    byId("refresh").onclick = () => request("dashboard");
-    byId("create-invite").onclick = () => request("create_invite", undefined, {
-      after: ({ invite }) => { if (invite) setStatus(`邀请码有效至 ${date.format(new Date(invite.expiresAt))}。`); },
-    });
-    byId("copy-invite").onclick = async () => {
-      if (!dashboard?.invite) return;
-      try {
-        await navigator.clipboard.writeText(dashboard.invite.code);
-        setStatus("邀请码已复制。");
-      } catch {
-        const selection = window.getSelection();
-        if (!selection) {
-          setStatus("可以长按邀请码复制。");
-          return;
-        }
-        const range = document.createRange();
-        range.selectNodeContents(byId("invite-code"));
-        selection.removeAllRanges();
-        selection.addRange(range);
-        setStatus("邀请码已选中，可以长按复制。");
-      }
-    };
-    byId("join-form").onsubmit = (event) => {
-      event.preventDefault();
-      const input = byId("join-code");
-      const inviteCode = input.value.trim();
-      if (inviteCode) request("join", { invite_code: inviteCode }, {
-        after: () => { input.value = ""; setStatus("你们已成为同桌。"); },
-      });
-    };
-    byId("unpair").onclick = () => {
-      confirmUnpair = true;
-      render();
-      byId("unpair-cancel").focus();
-    };
-    byId("unpair-cancel").onclick = () => {
-      confirmUnpair = false;
-      render();
-      byId("unpair").focus();
-    };
-    byId("unpair-yes").onclick = () => request("unpair", undefined, {
-      after: () => { confirmUnpair = false; setStatus("已解除同桌关系。"); },
-    });
+    byId("refresh").onclick = () => requestDashboard();
+
     function refresh() {
-      if (active && account && !document.hidden) request("dashboard", undefined, { silent: true });
+      if (active && account && !document.hidden) requestDashboard({ silent: true });
     }
 
     window.addEventListener("online", refresh);
@@ -11063,13 +10895,10 @@ void main() {
         dashboard = null;
         activeRequest = null;
         actionInProgress = false;
-        confirmUnpair = false;
         renderedDashboard = null;
         selectedPaper = null;
         clearStats();
         renderArchive();
-        byId("join-code").value = "";
-        text("invite-code", "");
         text("status", account && active ? "正在同步学习进度…" : "");
         render();
         refresh();
