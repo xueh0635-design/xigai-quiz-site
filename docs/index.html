@@ -83,7 +83,7 @@
     const routeCanvas = document.getElementById("route-world-canvas");
     const scenes = {
       route: window.QuizCampScene?.attach(routeCanvas, { theme: root.dataset.worldTheme, variant: "route", lit: false }),
-      camp: window.QuizCampScene?.attach(document.getElementById("camp-world-canvas"), { theme: root.dataset.worldTheme, variant: "camp", lit: false }),
+      camp: window.QuizCampScene?.attach(document.getElementById("camp-world-canvas"), { theme: root.dataset.worldTheme, variant: "camp", lit: true }),
     };
 
     let lastTheme = "";
@@ -147,19 +147,6 @@
       const updateRoute = () => scenes.route.setProgress(Number(routeCanvas.dataset.progress) || 0);
       new MutationObserver(updateRoute).observe(routeCanvas, { attributes: true, attributeFilter: ["data-progress"] });
       updateRoute();
-    }
-    const mission = document.getElementById("social-daily");
-    if (mission) {
-      let lit = false;
-      const updateFire = () => {
-        const complete = mission.dataset.complete === "true";
-        if (complete === lit) return;
-        lit = complete;
-        scenes.camp?.setLit(lit);
-        if (lit && !document.hidden) sparks(document.getElementById("camp-world-canvas"));
-      };
-      new MutationObserver(updateFire).observe(mission, { attributes: true, attributeFilter: ["data-complete"] });
-      updateFire();
     }
     window.addEventListener("focus", () => sync());
     document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
@@ -2003,26 +1990,53 @@ a { color: var(--accent); }
   gap: 4px;
 }
 #desk .desk-compare .desk-metrics dd { font-size: .82rem; white-space: nowrap; }
-#desk .social-camp { padding: clamp(14px, 3.5vw, 20px); border-radius: 22px; }
-#desk .social-camp-top h3 { font-size: 1.18rem; }
-#desk .social-fire { width: 54px; height: 54px; }
+#desk .desk-compare { padding: clamp(14px, 3.5vw, 20px); border-radius: 22px; }
+#desk #desk-progress-open {
+  min-height: 44px;
+  padding-inline: 11px;
+  border-radius: 12px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  font-size: .85rem;
+  white-space: nowrap;
+}
+.desk-progress-dialog.account-dialog.glass {
+  width: min(540px, calc(100% - 16px));
+  max-height: min(84dvh, 760px);
+  color: var(--world-ink);
+}
+.desk-progress-dialog :is(button, summary) { min-height: 44px; }
+.desk-progress-dialog h3 { margin: 0 0 4px; font-size: 1.03rem; }
+.desk-progress-note, #desk-progress-status { margin: 0 0 10px; color: var(--world-muted); font-size: .82rem; }
+#desk-progress-status:empty { display: none; }
+.desk-progress-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .87rem; }
+.desk-progress-table :is(th, td) {
+  padding: 9px 5px;
+  border-bottom: 1px solid var(--world-edge);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.desk-progress-table th:first-child { width: 36%; }
+.desk-progress-table td { font-variant-numeric: tabular-nums; }
+.desk-progress-table td span { display: block; color: var(--world-muted); font-size: .76rem; }
+.desk-progress-chapters { margin-top: 12px; }
+.desk-progress-chapters summary { padding: 9px 8px; cursor: pointer; font-weight: 670; }
+#desk-progress-history { width: 100%; margin-top: 14px; }
 
 @media (min-width: 700px) {
   #desk .desk-paired {
     grid-template:
       "coop arena" auto
-      "daily arena" auto
-      "daily progress" auto
-      "records records" auto
+      "progress arena" auto
+      "progress records" auto
       "settings settings" auto / minmax(0, 1fr) minmax(0, 1fr);
   }
   #desk #live-lobby { grid-area: coop; }
   #desk #battle-arena { grid-area: arena; }
-  #desk #social-daily { grid-area: daily; }
   #desk .desk-compare { grid-area: progress; }
   #desk .desk-records { grid-area: records; }
   #desk .desk-settings { grid-area: settings; }
-  #desk #social-daily[hidden] ~ .desk-compare { grid-column: 1 / -1; }
   #desk:is([data-live-active], [data-arena-active]) .desk-paired { grid-template: none / minmax(0, 1fr); }
   #desk[data-arena-active] #battle-arena { grid-area: auto; }
 }
@@ -2578,142 +2592,7 @@ a { color: var(--accent); }
   box-shadow: 0 4px 0 #513766, inset 0 1px 0 #c39ae081;
 }
 .social-lobby .live-primary:not(:disabled):hover { border-color: #5b3879; background: #674583; }
-.social-lobby :focus-visible, .social-camp :focus-visible { outline-color: #634787; }
-
-.social-camp {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-width: 0;
-  padding: clamp(17px, 4.5vw, 28px);
-  border: 1px solid #e2be93;
-  border-radius: clamp(24px, 5vw, 32px);
-  background:
-    radial-gradient(ellipse at 101% -10%, #ffdf9f 0 7%, transparent 42%),
-    #fff9e9;
-  color: #493024;
-  box-shadow: 0 4px 0 #ddc8b0, 0 12px 23px #5f422921;
-}
-
-.social-camp h3, .social-camp h4, .social-camp p, .social-camp dl, .social-camp dd { margin: 0; }
-.social-camp-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.social-camp-copy { min-width: 0; }
-.social-camp-kicker {
-  color: #84512c;
-  font-size: .75rem;
-  font-weight: 750;
-  letter-spacing: .09em;
-}
-.social-camp-top h3 {
-  margin-top: 3px;
-  font-size: clamp(1.45rem, 6vw, 2.15rem);
-  font-weight: 820;
-  letter-spacing: .04em;
-  line-height: 1.14;
-}
-.social-camp .social-daily-status {
-  margin-top: 6px;
-  color: #704c39;
-  font-size: .83rem;
-  line-height: 1.35;
-  text-wrap: pretty;
-}
-
-.social-fire {
-  position: relative;
-  width: clamp(56px, 16vw, 78px);
-  aspect-ratio: 1;
-  flex: none;
-  border: 1px solid #ebbd82;
-  border-radius: 27%;
-  background:
-    radial-gradient(circle at 20% 28%, #fff9da 0 1.5px, transparent 2px),
-    radial-gradient(circle at 77% 20%, #fff9da 0 2px, transparent 2.5px),
-    radial-gradient(circle at 82% 49%, #fff9da 0 1px, transparent 1.5px),
-    linear-gradient(140deg, #ffe4a9, #f9c997);
-  box-shadow: 0 3px 0 #dcb68e, inset 0 1px #fff9;
-  transform: rotate(8deg);
-}
-
-.social-fire img {
-  display: block;
-  width: 82%;
-  height: 82%;
-  margin: 9%;
-  filter: saturate(.72);
-}
-
-.social-camp:has(#social-daily-reward:not([hidden])) .social-fire {
-  background-color: #ffd275;
-  box-shadow: 0 3px #d68d4f, inset 0 1px #fff9, 0 0 26px #f2aa56a8;
-}
-.social-camp:has(#social-daily-reward:not([hidden])) .social-fire img { filter: none; }
-
-@keyframes social-camp-kindled {
-  0% { transform: translateY(0) rotate(8deg) scale(.92); }
-  45% { transform: translateY(-5px) rotate(-8deg) scale(1.13); }
-  100% { transform: translateY(0) rotate(8deg) scale(1); }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .social-camp[data-complete="true"] .social-fire { animation: social-camp-kindled 570ms ease-out both; }
-}
-
-.social-camp-meter {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-block: 14px 9px;
-}
-.social-camp-meter progress {
-  appearance: none;
-  display: block;
-  min-width: 0;
-  flex: 1;
-  height: 9px;
-  overflow: hidden;
-  border: 0;
-  border-radius: 99px;
-  background: #eedccb;
-}
-.social-camp-meter progress::-webkit-progress-bar { background: #eedccb; }
-.social-camp-meter progress::-webkit-progress-value { border-radius: 99px; background: linear-gradient(90deg,#e49859,#e87547); }
-.social-camp-meter progress::-moz-progress-bar { border-radius: 99px; background: linear-gradient(90deg,#e49859,#e87547); }
-.social-camp-meter output { color: #704c39; font-size: .75rem; font-weight: 750; white-space: nowrap; }
-
-.social-camp-checks { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .82fr); gap: 8px; }
-.social-camp-check {
-  min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid #e9d6bb;
-  border-radius: 14px;
-  background: #fffcf4;
-}
-
-.social-camp-check h4 { font-size: .8rem; line-height: 1.2; }
-.social-camp-check dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
-  margin-top: 6px;
-  font-size: .76rem;
-}
-.social-camp-check dt { color: #735043; font-size: .72rem; }
-.social-camp-check dd, .social-camp-check > p { font-weight: 780; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.social-camp-check > p { margin-top: 5px; font-size: .92rem; }
-.social-camp .social-camp-reward {
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 10px;
-  padding: 3px 9px;
-  border: 1px solid #e6a774;
-  border-radius: 99px;
-  background: #ffe3ab;
-  color: #783a1f;
-  font-size: .8rem;
-  font-weight: 760;
-}
-.social-camp-reward::before { margin-right: .3em; content: "✦"; }
+.social-lobby :focus-visible { outline-color: #634787; }
 
 .social-reactions {
   display: grid;
@@ -2722,36 +2601,37 @@ a { color: var(--accent); }
   gap: 4px 9px;
   margin-top: 13px;
   padding-top: 10px;
-  border-top: 1px dashed #dfbea0;
+  border-top: 1px solid var(--world-edge);
 }
-.social-reactions h4 { min-width: 0; font-size: .82rem; color: #704734; }
+.social-reactions h4 { min-width: 0; margin: 0; font-size: .82rem; color: var(--world-muted); }
 .social-reaction-actions { display: flex; flex-wrap: wrap; gap: 5px; }
-.social-reaction-actions button {
+#desk .social-reaction-actions button {
   min-height: 44px;
   padding: 4px clamp(7px, 2.4vw, 12px);
-  border: 1px solid #dcb69e;
+  border: 1px solid var(--world-edge);
   border-radius: 12px;
-  background: #fff5e9;
-  box-shadow: 0 2px 0 #dbb79c7d;
-  color: #704734;
+  background: var(--world-card-alt);
+  box-shadow: 0 2px 0 var(--world-shadow);
+  color: var(--world-ink);
   font-size: .76rem;
   font-weight: 700;
   white-space: nowrap;
 }
-.social-reaction-actions button > [aria-hidden="true"] { color: #b6653c; }
+.social-reaction-actions button > [aria-hidden="true"] { color: var(--world-gold); }
 .social-reaction-actions button:disabled { box-shadow: none; opacity: .62; }
-.social-reaction-actions button[data-sent="true"] { background: #f3e3d5; opacity: 1; }
+#desk .social-reaction-actions button[data-sent="true"] { border-color: var(--world-accent); }
 .social-received, .social-reaction-status {
   grid-column: 1 / -1;
-  color: #704734;
+  margin: 0;
+  color: var(--world-ink);
   font-size: .78rem;
 }
-.social-camp .social-received {
+.social-reactions .social-received {
   width: fit-content;
   margin-top: 3px;
   padding: 3px 7px;
   border-radius: 9px;
-  background: #fae8cd;
+  background: var(--world-card-alt);
   font-weight: 660;
 }
 .social-received:empty, .social-reaction-status:empty { display: none; }
@@ -2770,11 +2650,9 @@ a { color: var(--accent); }
 
 @media (min-width: 670px) {
   .social-lobby .live-table { min-height: 160px; }
-  .social-camp { padding-inline: clamp(23px, 4vw, 35px); }
 }
 
 @media (max-width: 350px) {
-  .social-camp-check { padding-inline: 8px; }
   .social-reactions { gap: 4px 5px; }
 }
 </style>
@@ -3859,14 +3737,14 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
 #quiz .study-note .memory-note h3, #result .adventure-result-hero div, #result .adventure-result-hero div > span { color: var(--world-ink); }
 #result .adventure-result-hero::before { display: none; }
 
-#desk :is(.desk-surface,.social-camp,.live-room-overview,.live-question,.live-reveal,.live-summary) {
+#desk :is(.desk-surface,.live-room-overview,.live-question,.live-reveal,.live-summary) {
   border-color: var(--world-edge);
   background: var(--world-card);
   color: var(--world-ink);
   box-shadow: 0 8px 24px var(--world-shadow);
 }
 #desk :is(.desk-section-heading p,.live-room-status,.live-room-people strong,.desk-onboard p) { color: var(--world-muted); }
-#desk :is(.desk-invite-actions,.desk-join-form,.desk-round-header,.desk-learner,.desk-duel,.social-camp-check,.live-room-people > div,.live-choice-comparison) {
+#desk :is(.desk-invite-actions,.desk-join-form,.desk-round-header,.desk-learner,.desk-duel,.live-room-people > div,.live-choice-comparison) {
   border-color: var(--world-edge);
   background-color: var(--world-card-alt);
   color: var(--world-ink);
@@ -3877,12 +3755,10 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   color: var(--world-ink);
 }
 #desk .desk-learner h4, #desk .desk-learner :is(dt,dd), #desk .desk-learner .desk-completion > span,
-#desk .desk-duel-empty, #desk .desk-join-form label, #desk .social-camp :is(.social-daily-status,.social-camp-meter output) {
+#desk .desk-duel-empty, #desk .desk-join-form label {
   color: var(--world-muted);
 }
-#desk .social-camp-kicker { color: var(--world-gold); }
-#desk .social-camp-reward, #desk .social-received {
-  border-color: var(--world-gold);
+#desk .social-received {
   background: var(--world-card-alt);
   color: var(--world-gold);
 }
@@ -5395,7 +5271,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
       </div>
       <button type="button" id="adventure-together" class="adventure-community">
         <span class="adventure-community-mark" aria-hidden="true">✦</span>
-        <span><strong>和同桌点亮营火</strong><span>今日合力任务</span></span>
+        <span><strong>和同桌一起学</strong><span>共学与学习进度</span></span>
         <span class="adventure-community-arrow" aria-hidden="true">›</span>
       </button>
       <div class="overview-stats" aria-label="学习进度">
@@ -5525,7 +5401,7 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
       </div>
       <div class="actions">
         <button id="again" type="button" class="primary">返回章节</button>
-        <button id="adventure-result-together" type="button" hidden>去营火找同桌</button>
+        <button id="adventure-result-together" type="button" hidden>和同桌一起学</button>
         <button id="review-round" type="button">回看本次</button>
         <button id="retry" type="button">重练本次错题</button>
       </div>
@@ -5810,42 +5686,6 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
             </details>
           </div>
         </section>
-        <section id="social-daily" class="social-camp" aria-labelledby="social-daily-title">
-          <div class="social-camp-top">
-            <div class="social-camp-copy">
-              <h3 id="social-daily-title">今日营火</h3>
-              <p id="social-daily-status" class="social-daily-status" role="status" aria-live="polite">正在同步两人的进度…</p>
-            </div>
-            <div class="social-fire" aria-hidden="true"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+CiAgPHBhdGggZD0iTTkgMTh2Nm0tMy0zaDZNNTQgMTF2OG0tNC00aDgiIHN0cm9rZT0iIzU0NzU2YyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMyA1NGw1LTkgMzQgOS00IDctMzUtN1oiIGZpbGw9IiNiNzgxNjAiIHN0cm9rZT0iIzM2Mjk0NyIgc3Ryb2tlLXdpZHRoPSIxLjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNNDcgNDRsNSA5LTM0IDgtNC03IDMzLTEwWiIgZmlsbD0iI2Q3YTQ4NiIgc3Ryb2tlPSIjMzYyOTQ3IiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xNCA0MGMwLTggNi0xMiA4LTE3IDAgNCAyIDYgNCA3IDItNSA1LTEwIDQtMTkgOSA2IDE0IDEyIDE0IDE5IDMtMiA0LTQgNS02IDcgMTIgNSAyNy0xNiAyOC0xMSAwLTE5LTQtMTktMTJaIiBmaWxsPSIjZjE4MjU2IiBzdHJva2U9IiMzNjI5NDciIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0yMiA0NGw1LTkgNCA0IDQtMTQgOSAxNGM0IDgtMyAxMS0xMCAxMS02IDAtMTEtMi0xMi02WiIgZmlsbD0iI2ZmZGI3YyIgc3Ryb2tlPSIjYWU1MDNjIiBzdHJva2Utd2lkdGg9IjEuMzUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNMzUgMTVsNSA3TTE3IDU1bDQgMW0yMy00IDUtMSIgc3Ryb2tlPSIjZmZmMmNmIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=" alt=""></div>
-          </div>
-          <div class="social-camp-meter">
-            <progress id="social-daily-progress" max="2" value="0" aria-label="每日任务完成进度"></progress>
-            <output id="social-daily-count">—</output>
-          </div>
-          <div class="social-camp-checks">
-            <section class="social-camp-check">
-              <h4>各练五题</h4>
-              <dl>
-                <div><dt>我</dt><dd id="social-mine-count">—</dd></div>
-                <div><dt>同桌</dt><dd id="social-peer-count">—</dd></div>
-              </dl>
-            </section>
-            <section class="social-camp-check social-shared">
-              <h4>共学一轮</h4>
-              <p id="social-shared-count">—</p>
-            </section>
-          </div>
-          <p id="social-daily-reward" class="social-camp-reward" hidden>营火已点亮</p>
-          <section id="social-reactions" class="social-reactions" aria-labelledby="social-reactions-heading" hidden>
-            <h4 id="social-reactions-heading">给同桌打气</h4>
-            <div class="social-reaction-actions">
-              <button type="button" data-social-reaction="cheer"><span aria-hidden="true">✦</span> <span data-social-label>打气</span></button>
-              <button type="button" data-social-reaction="high_five"><span aria-hidden="true">✋</span> <span data-social-label>击掌</span></button>
-            </div>
-            <p id="social-received" class="social-received" role="status" hidden></p>
-            <p id="social-reaction-status" class="social-reaction-status" role="status"></p>
-          </section>
-        </section>
         <section id="live-room" class="live-room" aria-labelledby="live-room-title" hidden>
           <header class="live-room-top">
             <button id="live-back" type="button" class="live-back">返回课桌</button>
@@ -5892,10 +5732,8 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         </section>
         <section class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
           <div class="desk-section-heading">
-            <div>
-              <h3 id="desk-compare-heading">学习进度</h3>
-              <p>正确率按每题最近一次作答计算。</p>
-            </div>
+            <h3 id="desk-compare-heading">学习进度</h3>
+            <button id="desk-progress-open" type="button" aria-haspopup="dialog" aria-controls="desk-progress-dialog">查看记录 <span aria-hidden="true">›</span></button>
           </div>
           <div class="desk-comparison">
             <article class="desk-learner desk-learner-mine" aria-labelledby="desk-mine-name">
@@ -5908,9 +5746,9 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               </div>
               <progress id="desk-mine-bar" value="0" max="100" aria-label="我的题库完成度"></progress>
               <dl class="desk-metrics">
-                <div><dt>已答题</dt><dd id="desk-mine-answered">—</dd></div>
+                <div class="desk-today"><dt>今日练习</dt><dd id="desk-mine-today">—</dd></div>
+                <div><dt>累计已答</dt><dd id="desk-mine-answered">—</dd></div>
                 <div><dt>正确率</dt><dd id="desk-mine-accuracy">—</dd></div>
-                <div class="desk-today"><dt>今天练过</dt><dd id="desk-mine-today">—</dd></div>
               </dl>
             </article>
             <article class="desk-learner desk-learner-peer" aria-labelledby="desk-peer-name">
@@ -5923,13 +5761,46 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
               </div>
               <progress id="desk-peer-bar" value="0" max="100" aria-label="同桌的题库完成度"></progress>
               <dl class="desk-metrics">
-                <div><dt>已答题</dt><dd id="desk-peer-answered">—</dd></div>
+                <div class="desk-today"><dt>今日练习</dt><dd id="desk-peer-today">—</dd></div>
+                <div><dt>累计已答</dt><dd id="desk-peer-answered">—</dd></div>
                 <div><dt>正确率</dt><dd id="desk-peer-accuracy">—</dd></div>
-                <div class="desk-today"><dt>今天练过</dt><dd id="desk-peer-today">—</dd></div>
               </dl>
             </article>
           </div>
+          <section id="social-reactions" class="social-reactions" aria-labelledby="social-reactions-heading" hidden>
+            <h4 id="social-reactions-heading">给同桌鼓励</h4>
+            <div class="social-reaction-actions">
+              <button type="button" data-social-reaction="cheer"><span aria-hidden="true">✦</span> 打气</button>
+              <button type="button" data-social-reaction="high_five"><span aria-hidden="true">✋</span> 击掌</button>
+            </div>
+            <p id="social-reaction-status" class="social-reaction-status" role="status"></p>
+            <p id="social-received" class="social-received" role="status" hidden></p>
+          </section>
         </section>
+        <dialog id="desk-progress-dialog" class="account-dialog glass quiz-sheet desk-progress-dialog" aria-labelledby="desk-progress-title">
+          <div class="account-dialog-header" data-sheet-handle>
+            <h2 id="desk-progress-title">学习记录</h2>
+            <button id="desk-progress-close" type="button" autofocus>关闭</button>
+          </div>
+          <p id="desk-progress-status" role="status" aria-live="polite"></p>
+          <button id="desk-progress-retry" type="button" hidden>重新加载</button>
+          <div id="desk-progress-data" hidden>
+            <h3 id="desk-progress-week">近 7 天</h3>
+            <p class="desk-progress-note">按每题最近一次作答的日期统计，日期使用北京时间。</p>
+            <table class="desk-progress-table" aria-labelledby="desk-progress-week">
+              <thead><tr><th scope="col">日期</th><th scope="col">我</th><th scope="col">同桌</th></tr></thead>
+              <tbody id="desk-progress-days"></tbody>
+            </table>
+            <details id="desk-progress-by-chapter" class="desk-progress-chapters">
+              <summary id="desk-progress-chapter-title">按章节查看</summary>
+              <table class="desk-progress-table" aria-labelledby="desk-progress-chapter-title">
+                <thead><tr><th scope="col">章节</th><th scope="col">我</th><th scope="col">同桌</th></tr></thead>
+                <tbody id="desk-progress-chapters"></tbody>
+              </table>
+            </details>
+          </div>
+          <button id="desk-progress-history" type="button">回看我的作答</button>
+        </dialog>
         <section class="desk-surface desk-records" aria-labelledby="desk-records-heading">
           <h3 id="desk-records-heading">对局记录与收藏</h3>
           <details id="arena-history" class="battle-history" hidden>
@@ -7828,16 +7699,15 @@ void main() {
   const actions = { cheer: "打气", high_five: "击掌" };
 
   function connect({ rpc }) {
-    const section = get("daily");
+    const section = get("reactions");
     if (!section) return null;
-    const buttons = [...get("reactions").querySelectorAll("[data-social-reaction]")];
+    const buttons = [...section.querySelectorAll("[data-social-reaction]")];
     let snapshot = null;
     let account = null;
     let paired = false;
     let visible = false;
     let pending = null;
     let sending = false;
-    let issue = "";
     let feedback = "";
 
     function put(id, text) {
@@ -7846,33 +7716,12 @@ void main() {
     }
 
     function render() {
-      const mission = snapshot?.mission;
-      section.hidden = !paired || (snapshot && !snapshot.paired);
-      section.dataset.complete = String(Boolean(mission?.complete));
-      const criteria = mission ? Number(mission.practiceComplete) + Number(mission.sharedComplete) : 0;
-      const mine = mission ? `${mission.myPracticed} / ${mission.target}` : "—";
-      const peer = mission ? `${mission.partnerPracticed} / ${mission.target}` : "—";
-      const together = mission ? `${mission.sharedRounds} / ${mission.sharedTarget}` : "—";
-      put("daily-status", issue || (mission?.complete ? "你们完成了今天的约定。"
-        : mission ? "各练五题，再一起完成一轮共学。" : "正在同步两人的任务…"));
-      put("mine-count", mine);
-      put("peer-count", peer);
-      put("shared-count", together);
-      const progress = get("daily-progress");
-      if (mission) progress.value = criteria;
-      else progress.removeAttribute("value");
-      put("daily-count", mission ? `${criteria} / 2 项完成` : "等待同步");
-      get("daily-reward").hidden = !mission?.complete;
-      get("reactions").hidden = !snapshot?.paired;
-      const sent = snapshot?.reactions.sent || [];
-      const received = (snapshot?.reactions.received || []).map((value) => actions[value]).filter(Boolean);
+      section.hidden = !paired;
+      const sent = snapshot?.reactions?.sent || [];
+      const received = (snapshot?.reactions?.received || []).map((value) => actions[value]).filter(Boolean);
       for (const button of buttons) {
-        const type = button.dataset.socialReaction;
-        const used = sent.includes(type);
-        button.disabled = sending || used;
-        button.dataset.sent = String(used);
-        const label = button.querySelector("[data-social-label]");
-        if (label) label.textContent = used ? `已${actions[type]}` : actions[type];
+        button.disabled = sending;
+        button.dataset.sent = String(sent.includes(button.dataset.socialReaction));
       }
       get("received").hidden = !received.length;
       put("received", received.length ? `同桌送来了${received.join("和")}。` : "");
@@ -7891,14 +7740,15 @@ void main() {
         if (pending !== token) return;
         if (error || !data || typeof data.paired !== "boolean") throw error || new Error("bad social response");
         const dayChanged = snapshot && snapshot.day !== data.day;
+        const alreadySent = snapshot?.day === data.day && snapshot?.reactions?.sent?.includes(reaction);
         snapshot = data;
-        issue = "";
-        if (reaction) feedback = data.reactions.sent.includes(reaction) ? `已给同桌${actions[reaction]}。` : "";
-        else if (dayChanged) feedback = "";
+        if (reaction) {
+          if (!data.reactions?.sent?.includes(reaction)) throw new Error("reaction_unconfirmed");
+          feedback = `${alreadySent ? "今天已" : "已"}给同桌${actions[reaction]}。`;
+        } else if (dayChanged) feedback = "";
       } catch {
         if (pending !== token) return;
-        if (reaction) feedback = "还没送出，请稍后重试。";
-        else if (!snapshot) issue = "暂时无法同步营火进度。";
+        if (reaction) feedback = "还没送出，点一下再试。";
       } finally {
         if (pending === token) {
           pending = null;
@@ -7928,7 +7778,6 @@ void main() {
           snapshot = null;
           pending = null;
           sending = false;
-          issue = "";
           feedback = "";
           render();
         }
@@ -9570,7 +9419,7 @@ void main() {
     return node;
   }
 
-  function connect({ byId: questions, chapters, rpc, subscribeArena, avatar, login }) {
+  function connect({ byId: questions, chapters, rpc, subscribeArena, avatar, login, openOwnHistory }) {
     if (!document.getElementById("desk")) return null;
     let account = null;
     let dashboard = null;
@@ -9582,6 +9431,9 @@ void main() {
     let selectedPaper = null;
     let renderedPaper = "";
     let renderedArchive = "";
+    let progressRequest = null;
+    const progressDialog = byId("progress-dialog");
+    const progressSheet = window.QuizSheetMotion?.attach(progressDialog);
     const avatars = window.QuizDeskAvatar?.connect({
       run: avatar,
       saved: () => request("dashboard", undefined, { silent: true }),
@@ -9608,6 +9460,57 @@ void main() {
       text(kind + "-completion", `${completion}%`);
       text(kind + "-today", `${stats.today} 道`);
       byId(kind + "-bar").value = completion;
+    }
+
+    function progressRow(label, entry) {
+      const row = document.createElement("tr");
+      const heading = tag("th", label);
+      heading.scope = "row";
+      row.append(heading);
+      for (const side of ["mine", "peer"]) {
+        const cell = document.createElement("td");
+        const answered = entry[side];
+        const amount = entry.total ? `${answered} / ${entry.total}` : `${answered} 道`;
+        cell.append(tag("strong", amount), tag("span", `答对 ${entry[side + "Correct"]} 道`));
+        row.append(cell);
+      }
+      return row;
+    }
+
+    function renderProgress(data) {
+      byId("progress-days").replaceChildren(...data.days.map((day, index) => {
+        const [, month, date] = day.date.split("-").map(Number);
+        return progressRow(index === 0 ? "今天" : `${month}月${date}日`, day);
+      }));
+      const chapterData = new Map(data.chapters.map((entry) => [entry.chapter, entry]));
+      const chapterOrder = new Set([...questions.values()].map((item) => item.chapter));
+      byId("progress-chapters").replaceChildren(...[...chapterOrder].filter((name) => chapterData.has(name))
+        .map((name) => progressRow(name, chapterData.get(name))));
+      byId("progress-data").hidden = false;
+    }
+
+    async function loadProgress() {
+      if (!progressDialog.open || !dashboard?.partner || progressRequest) return;
+      const token = {};
+      progressRequest = token;
+      byId("progress-data").hidden = true;
+      byId("progress-retry").hidden = true;
+      text("progress-status", "正在加载学习记录…");
+      try {
+        const { data, error } = await rpc("quiz_pk_progress_details");
+        if (progressRequest !== token || !progressDialog.open) return;
+        if (error || !data?.paired || !Array.isArray(data.days) || !Array.isArray(data.chapters)) {
+          throw error || new Error("progress_unavailable");
+        }
+        renderProgress(data);
+        text("progress-status", "");
+      } catch {
+        if (progressRequest !== token || !progressDialog.open) return;
+        text("progress-status", "暂时无法加载学习记录。");
+        byId("progress-retry").hidden = false;
+      } finally {
+        if (progressRequest === token) progressRequest = null;
+      }
     }
 
     function renderReview(game) {
@@ -9716,6 +9619,7 @@ void main() {
       byId("companions").hidden = !dashboard?.partner;
       byId("unpaired").hidden = !dashboard || Boolean(dashboard.partner);
       byId("paired").hidden = !dashboard?.partner;
+      if (!dashboard?.partner && progressDialog.open) progressDialog.close();
       byId("refresh").hidden = !account;
       avatars?.show(Boolean(account && dashboard));
       byId("unpair-confirm").hidden = !confirmUnpair;
@@ -9759,6 +9663,26 @@ void main() {
     }
 
     byId("login").onclick = login;
+    byId("progress-open").onclick = () => {
+      if (!dashboard?.partner || progressDialog.open) return;
+      progressRequest = null;
+      byId("progress-by-chapter").open = false;
+      progressDialog.showModal();
+      loadProgress();
+    };
+    byId("progress-close").onclick = () => progressSheet ? progressSheet.close() : progressDialog.close();
+    byId("progress-retry").onclick = loadProgress;
+    byId("progress-history").onclick = () => {
+      progressDialog.close();
+      openOwnHistory();
+    };
+    progressDialog.addEventListener("close", () => {
+      if (progressDialog.open) return;
+      progressRequest = null;
+      byId("progress-days").replaceChildren();
+      byId("progress-chapters").replaceChildren();
+      if (byId("progress-open").getClientRects().length) byId("progress-open").focus({ preventScroll: true });
+    });
     byId("refresh").onclick = () => request("dashboard");
     byId("create-invite").onclick = () => request("create_invite", undefined, {
       after: ({ invite }) => { if (invite) setStatus(`邀请码有效至 ${date.format(new Date(invite.expiresAt))}。`); },
@@ -11288,6 +11212,10 @@ desk = window.QuizDesk?.connect({
   subscribeArena: (pairId, listener) => sync?.arenaSubscribe(pairId, listener),
   avatar: (action, input) => sync.deskAvatar(action, input),
   login: () => $("account-button").click(),
+  openOwnHistory: () => {
+    showTab("profile", true);
+    openProfileLibrary("done");
+  },
 });
 showTab("practice");
 sync = window.QuizAccount?.connect({
