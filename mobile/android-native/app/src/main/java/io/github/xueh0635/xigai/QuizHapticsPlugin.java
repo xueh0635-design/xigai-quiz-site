@@ -13,7 +13,8 @@ public class QuizHapticsPlugin extends Plugin {
     @PluginMethod
     public void answer(PluginCall call) {
         int effect = switch (call.getString("outcome", "")) {
-            case "correct" -> HapticFeedbackConstantsCompat.CONFIRM;
+            case "correct" -> HapticFeedbackConstantsCompat.CLOCK_TICK;
+            case "streak" -> HapticFeedbackConstantsCompat.CONFIRM;
             case "incorrect" -> HapticFeedbackConstantsCompat.REJECT;
             default -> -1;
         };

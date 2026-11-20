@@ -70,7 +70,16 @@
     ], { duration: 190, easing: easeOut });
   }
 
-  window.QuizWorldMotion = { page, answer, preference: motion };
+  function answerStreak(badge) {
+    if (motion.matches || !badge.animate) return null;
+    return badge.animate([
+      { opacity: 0, transform: "translateY(8px) scale(.88)" },
+      { opacity: 1, transform: "translateY(0) scale(1.07)", offset: .62 },
+      { opacity: 1, transform: "translateY(0) scale(1)" },
+    ], { duration: 300, easing: easeOut });
+  }
+
+  window.QuizWorldMotion = { page, answer, answerStreak, preference: motion };
 
   function connect() {
     const capacitor = window.Capacitor;
@@ -1097,6 +1106,33 @@ a { color: var(--accent); }
 }
 
 .lesson-header { margin-bottom: 14px; }
+#answer-streak {
+  position: fixed;
+  z-index: 15;
+  inset-block-start: calc(var(--top-inset) + 74px);
+  inset-inline: 0;
+  width: max-content;
+  max-width: calc(100% - 2 * var(--edge));
+  margin: 0 auto;
+  pointer-events: none;
+  text-align: center;
+  font-size: .9rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+#answer-streak:not(:empty) {
+  padding: 5px 14px;
+  border: 1px solid var(--world-gold);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 3px 15px var(--world-shadow);
+}
+#answer-streak:not(:empty)::before {
+  content: "✦" / "";
+  margin-inline-end: .42em;
+  color: var(--world-gold);
+}
 .lesson-header .quiz-bar {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
@@ -3452,18 +3488,6 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
 
 #quiz .lesson-header :is(#back,#star) { background: #fffbf3; }
 #quiz .lesson-header #where { color: #60436d; }
-#adventure-streak {
-  width: fit-content;
-  max-width: 100%;
-  padding: 3px 8px;
-  border: 1px solid #f0c998;
-  border-radius: 999px;
-  background: #ffedc9;
-  color: #83502c;
-  font-size: .78rem;
-  font-weight: 780;
-}
-#adventure-streak > span[aria-hidden="true"] { color: #a44934; }
 #quiz .lesson-card { border-color: #ded1e6; box-shadow: 0 4px 0 #e8d8ea, 0 10px 23px #65447515; }
 #quiz .lesson-card #kind { background: #eddef4; color: #67427e; }
 #quiz .lesson-card .option {
@@ -4250,12 +4274,11 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   background: var(--world-glass);
   color: var(--world-ink);
 }
-#quiz .lesson-header #star[aria-pressed="true"], #adventure-streak {
+#quiz .lesson-header #star[aria-pressed="true"] {
   border-color: var(--world-gold);
   background: var(--world-card-alt);
   color: var(--world-gold);
 }
-#adventure-streak > span[aria-hidden="true"] { color: var(--world-gold); }
 #quiz .lesson-card .option, #quiz .lesson-card .option .letter {
   border-color: var(--world-edge); background: var(--world-card-alt); color: var(--world-ink); box-shadow: none;
 }
@@ -6166,7 +6189,6 @@ button[data-option-note][data-option-holding]::after {
         <input id="question-position" type="range" min="1" max="1" value="1" aria-label="跳到题号">
         <p id="quiz-completion" class="quiz-completion" hidden></p>
         <p id="chapter-test-status" class="chapter-test-status" hidden></p>
-        <p id="adventure-streak" hidden><span aria-hidden="true">✦</span> 连中 <strong id="adventure-streak-value"></strong> 题</p>
       </header>
       <div class="lesson-card">
         <div class="question-header">
@@ -6861,6 +6883,7 @@ button[data-option-note][data-option-holding]::after {
     <p id="storage-status" role="status"></p>
   </main>
   </div>
+  <p id="answer-streak" role="status" aria-atomic="true"></p>
   <nav id="mobile-tabs" class="study-tabs glass" aria-label="主导航">
     <span class="tab-highlight" aria-hidden="true"><canvas class="tab-lens-optics" aria-hidden="true"></canvas></span>
     <button type="button" data-study-tab="practice" aria-current="page">
@@ -12871,6 +12894,8 @@ let openLibraryRow = null;
 let wrongUndo = null;
 let pageMotion;
 let answerMotion;
+let answerStreakMotion;
+let answerStreakTimer;
 let autoAdvanceTimer;
 let sync = null;
 let desk = null;
@@ -12909,6 +12934,7 @@ function saveSession(extra = []) {
 
 function view(name) {
   cancelAutoAdvance();
+  if (name !== "quiz") clearAnswerStreak();
   if (deferredResume && name !== "quiz" && name !== "result") {
     state.session = deferredResume;
     deferredResume = null;
@@ -12938,6 +12964,7 @@ reducedMotion.addEventListener("change", () => {
   pageMotion?.cancel();
   answerMotion?.cancel();
   lessonCard.style.removeProperty("translate");
+  answerStreakMotion?.cancel();
 });
 
 function showTab(tab, animate = false, fromNative = false) {
@@ -13277,9 +13304,25 @@ function setupAnswerHaptics() {
   $("answer-haptics-setting").hidden = false;
 }
 
-function playAnswerHaptic(correct) {
+function playAnswerHaptic(outcome) {
   if ($("answer-haptics-setting").hidden || !$("answer-haptics").checked || document.hidden) return;
-  window.Capacitor.Plugins.QuizHaptics.answer({ outcome: correct ? "correct" : "incorrect" }).catch(() => {});
+  window.Capacitor.Plugins.QuizHaptics.answer({ outcome }).catch(() => {});
+}
+
+function clearAnswerStreak() {
+  window.clearTimeout(answerStreakTimer);
+  answerStreakMotion?.cancel();
+  answerStreakMotion = null;
+  $("answer-streak").textContent = "";
+}
+
+function showAnswerStreak(count) {
+  clearAnswerStreak();
+  if (count < 2) return;
+  const badge = $("answer-streak");
+  badge.textContent = `连对 ${count} 题`;
+  answerStreakMotion = window.QuizWorldMotion?.answerStreak(badge);
+  answerStreakTimer = window.setTimeout(clearAnswerStreak, 1000);
 }
 
 function makeChapterCard(chapter, total) {
@@ -13444,6 +13487,7 @@ function hasAnswered(id) {
 }
 
 function clearRoundAnswer(session, id) {
+  if (session.results?.[id] && session.mode === "practice") session.correctStreak = 0;
   delete session.results?.[id];
   delete session.drafts?.[id];
   if (session.ids[session.index] === id && session.selected?.length) session.selected = [];
@@ -13477,6 +13521,7 @@ function redoQuestion(item, fromHistory = false) {
   const session = state.session;
   const roundOnly = !fromHistory && redoCurrentRoundOnly(session);
   cancelAutoAdvance();
+  clearAnswerStreak();
   if (roundOnly) {
     clearRoundAnswer(session, id);
     saveSession();
@@ -13967,7 +14012,7 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   }
 }
 
-function streak(ids, session) {
+function longestStreak(ids, session) {
   let highest = 0;
   let count = 0;
   for (const id of ids) {
@@ -13975,7 +14020,7 @@ function streak(ids, session) {
     count = questionResult(session, id)?.correct ? count + 1 : 0;
     highest = Math.max(highest, count);
   }
-  return { current: count, highest };
+  return highest;
 }
 
 function updateAvailability() {
@@ -14045,6 +14090,7 @@ function randomId() {
 function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
   const queue = mode === "chapter-test" ? ids.filter(requiresAnswer) : ids;
   if (!queue.length) return;
+  clearAnswerStreak();
   // Older clients can resume these IDs as a regular quiz without expanding them to the full chapter.
   const options = chapterOptions.bankScope === "common"
     ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan,
@@ -14228,9 +14274,6 @@ function renderRoundProgress(session) {
   const completion = $("quiz-completion");
   completion.hidden = scored.length === 0 || takingChapterTest(session);
   completion.textContent = `已答 ${answered} / ${scored.length}`;
-  const combo = isAdventureSession(session) && streak(session.ids.slice(0, session.index + 1), session).current;
-  $("adventure-streak").hidden = combo < 2;
-  $("adventure-streak-value").textContent = combo || "";
   return { answered, total: scored.length };
 }
 
@@ -14458,10 +14501,16 @@ function submit() {
     return;
   }
   if (!session.selected.length) return;
-  saveSession([recordAnswer(session, item, session.selected, Date.now())]);
+  const change = recordAnswer(session, item, session.selected, Date.now());
   const { correct } = session.results[item.id];
-  playAnswerHaptic(correct);
+  const previousStreak = Number.isSafeInteger(session.correctStreak) ? session.correctStreak : 0;
+  session.correctStreak = correct ? previousStreak + 1 : 0;
+  saveSession([change]);
+  let outcome = correct ? "correct" : "incorrect";
+  if (session.correctStreak >= 2) outcome = "streak";
+  playAnswerHaptic(outcome);
   renderQuestion();
+  showAnswerStreak(session.correctStreak);
   const delay = Number($("auto-advance-delay").value);
   if (correct && delay > 0) {
     answerMotion = window.QuizWorldMotion?.answer($("answer-summary"), true);
@@ -14554,7 +14603,7 @@ function completeRound(changes = []) {
   $("adventure-result").hidden = !adventure || !route;
   if (adventure && route) {
     $("adventure-result-stops").textContent = `${route.chapter} · ${route.answered} / ${route.total} 道已答`;
-    $("adventure-result-streak").textContent = `最高连中 ${streak(round, session).highest} 题`;
+    $("adventure-result-streak").textContent = `最高连中 ${longestStreak(round, session)} 题`;
   }
   $("review-round").textContent = testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
   const library = libraryTabs[profileLibrary || selectedTab];

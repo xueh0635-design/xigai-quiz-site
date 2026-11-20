@@ -45,21 +45,27 @@ private final class QuizHapticsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "answer", returnType: CAPPluginReturnPromise)
     ]
 
-    private lazy var correctFeedback = UIImpactFeedbackGenerator(style: .light)
-    private lazy var incorrectFeedback = UINotificationFeedbackGenerator()
+    private lazy var correctFeedback = UIImpactFeedbackGenerator(style: .soft)
+    private lazy var outcomeFeedback = UINotificationFeedbackGenerator()
+
+    private enum Outcome: String {
+        case correct, streak, incorrect
+    }
 
     @objc func answer(_ call: CAPPluginCall) {
-        let outcome = call.getString("outcome")
-        guard outcome == "correct" || outcome == "incorrect" else {
+        guard let outcome = Outcome(rawValue: call.getString("outcome") ?? "") else {
             call.reject("Unknown answer outcome.")
             return
         }
         DispatchQueue.main.async {
             if self.bridge?.webView?.window?.windowScene?.activationState == .foregroundActive {
-                if outcome == "correct" {
+                switch outcome {
+                case .correct:
                     self.correctFeedback.impactOccurred()
-                } else {
-                    self.incorrectFeedback.notificationOccurred(.warning)
+                case .streak:
+                    self.outcomeFeedback.notificationOccurred(.success)
+                case .incorrect:
+                    self.outcomeFeedback.notificationOccurred(.warning)
                 }
             }
             call.resolve()
