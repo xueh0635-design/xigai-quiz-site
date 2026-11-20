@@ -201,6 +201,26 @@ window.addEventListener("load", async () => {
       "the selected term is highlighted in the textbook evidence");
     field("option-notes-close").click();
     await until(() => !optionSheet.open, "review note can close");
+    const textbookQuestion = bank.find((item) => item.id === "第一章-3");
+    const textbook = textbookQuestion?.study?.reference;
+    check(textbook?.quote && textbook.highlights?.length === 2 &&
+      textbook.page === 15 && textbook.endPage === 16, "bundled textbook excerpt and page range");
+    const checkTextbook = (prefix = "") => {
+      const passage = field(prefix + "textbook-quote");
+      const marks = [...passage.querySelectorAll("mark")];
+      check(!field(prefix + "textbook-evidence").hidden && passage.textContent === textbook.quote &&
+        marks.length === textbook.highlights.length &&
+        marks.every((mark, index) => mark.textContent === textbook.highlights[index]) &&
+        text(prefix + "reference").includes("15–16"), "textbook shows the same excerpt and highlights");
+    };
+    start([textbookQuestion.id], "practice");
+    check(field("study-note").hidden, "textbook excerpt stays hidden before grading");
+    select(textbookQuestion.answer);
+    if (!state.session.results[textbookQuestion.id]) field("submit").click();
+    checkTextbook();
+    showHistoryQuestion(textbookQuestion);
+    checkTextbook("history-question-");
+    field("history-question").close();
     report.textContent = "XIGAI PASS";
   } catch (error) {
     report.textContent = "XIGAI FAIL: " + error.message;
