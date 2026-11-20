@@ -16,6 +16,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             let tabs = QuizNativeTabBarController(content: nativeContent)
             nativeContent.nativeTabs = tabs
             tabs.onTabSelected = { [weak nativeContent] tab in nativeContent?.selectWebTab(tab) }
+            tabs.onQuestionSwipe = { [weak nativeContent] direction in nativeContent?.swipeWebQuestion(direction) }
             content = nativeContent
             window.rootViewController = tabs
         } else {

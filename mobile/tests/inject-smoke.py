@@ -21,8 +21,7 @@ window.addEventListener("load", async () => {
     for (let count = 0; count < 35 && !condition(); count++) await wait(85);
     check(condition(), step);
   };
-  const swipe = (direction) => {
-    const target = field("question");
+  const swipe = (direction, target = field("question")) => {
     const start = new Touch({ identifier: 1, target, clientX: innerWidth / 2, clientY: 220 });
     const finish = new Touch({ identifier: 1, target, clientX: start.clientX - direction * 86, clientY: 220 });
     for (const [type, touches, changedTouches] of [
@@ -97,9 +96,14 @@ window.addEventListener("load", async () => {
     checkExplanation();
     await until(() => text("where").endsWith("2 / " + chapterCount) && field("answer-summary").hidden,
       "correct answer advances automatically");
-    swipe(-1);
+    swipe(-1, document.querySelector(".masthead"));
     check(text("question") === stem && field("feedback").dataset.state === "correct", "previous answer retained");
     checkExplanation();
+
+    swipe(1, document.querySelector(".quiz-actions"));
+    check(text("where").endsWith("2 / " + chapterCount), "swipe on quiz action row");
+    swipe(-1, document.body);
+    check(text("question") === stem && field("feedback").dataset.state === "correct", "swipe on page background");
 
     field("back").click();
     check(field("quiz").hidden && answeredCount() === before + 1, "progress saved");

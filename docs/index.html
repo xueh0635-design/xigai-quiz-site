@@ -12384,8 +12384,13 @@ function view(name) {
   }
   answerMotion?.cancel();
   answerMotion = null;
+  const wasAnswering = !$("quiz").hidden;
+  const answering = name === "quiz";
   for (const id of ["setup", "quiz", "result", "library", "desk", "profile"]) $(id).hidden = id !== name;
-  document.documentElement.classList.toggle("question-swipe-active", name === "quiz");
+  document.documentElement.classList.toggle("question-swipe-active", answering);
+  if (nativeNavigation && answering !== wasAnswering) {
+    nativeNavigation.postMessage({ kind: "question-swipe", enabled: answering }).catch(() => {});
+  }
   $("overview").hidden = name !== "setup";
   desk?.show(name === "desk");
 }
@@ -13842,14 +13847,13 @@ document.addEventListener("pointerdown", cancelAutoAdvance, { capture: true });
 document.addEventListener("wheel", cancelAutoAdvance, { passive: true });
 document.addEventListener("visibilitychange", () => { if (document.hidden) cancelAutoAdvance(); });
 
+function canSwipeQuestion() {
+  return !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
+}
+
 function connectQuestionSwipe() {
-  const quiz = $("quiz");
   const horizontalRatio = 1.12;
   let gesture = null;
-
-  function canSwipe() {
-    return !quiz.hidden && current() && !document.querySelector("dialog[open]");
-  }
 
   function clearGesture() {
     const start = gesture;
@@ -13869,9 +13873,8 @@ function connectQuestionSwipe() {
 
   document.addEventListener("touchstart", (event) => {
     if (gesture) clearGesture();
-    if (!canSwipe() || event.touches.length !== 1 ||
-        !quiz.contains(event.target) ||
-        event.target.closest(".quiz-actions, input, textarea, select, [contenteditable]") ||
+    if (!canSwipeQuestion() || event.touches.length !== 1 ||
+        event.target.closest?.("input, textarea, select, [contenteditable]") ||
         window.getSelection()?.toString()) return;
     const touch = event.touches[0];
     const session = state.session;
@@ -13884,7 +13887,7 @@ function connectQuestionSwipe() {
   document.addEventListener("touchmove", (event) => {
     if (!gesture) return;
     const touch = event.touches[0];
-    if (!canSwipe() || event.touches.length !== 1 || touch.identifier !== gesture.id || !event.cancelable) {
+    if (!canSwipeQuestion() || event.touches.length !== 1 || touch.identifier !== gesture.id || !event.cancelable) {
       clearGesture();
       return;
     }
@@ -13910,7 +13913,7 @@ function connectQuestionSwipe() {
   document.addEventListener("touchend", (event) => {
     if (!gesture) return;
     const start = clearGesture();
-    if (!canSwipe() || state.session !== start.session ||
+    if (!canSwipeQuestion() || state.session !== start.session ||
         state.session.index !== start.index) return;
     const touch = [...event.changedTouches].find((point) => point.identifier === start.id);
     if (!touch) return;
@@ -14083,6 +14086,11 @@ function connectTabLens() {
   tabDock.addEventListener("pointerdown", (event) => {
     const index = tabButtons.indexOf(event.target.closest("[data-study-tab]"));
     if (!event.isPrimary || event.button !== 0 || gesture || index < 0) return;
+    // In a quiz, the touch swipe turns the question while a tap still selects the tab.
+    if (event.pointerType === "touch" && !$("quiz").hidden) {
+      skipClick = false;
+      return;
+    }
     const first = tabButtons[0].getBoundingClientRect();
     const second = tabButtons[1].getBoundingClientRect();
     gesture = {
@@ -14151,6 +14159,11 @@ if (nativeNavigation) {
   window.QuizNativeUI = {
     selectTab(tab, animate = true) {
       if (tabButtons.some((button) => button.dataset.studyTab === tab)) showTab(tab, animate, true);
+    },
+    swipeQuestion(direction) {
+      if ((direction !== 1 && direction !== -1) || !canSwipeQuestion() || window.getSelection()?.toString()) return;
+      cancelAutoAdvance();
+      moveQuestion(direction, true);
     },
   };
 }

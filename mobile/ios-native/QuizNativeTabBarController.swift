@@ -1,7 +1,7 @@
 import UIKit
 
 @available(iOS 26.0, *)
-final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDelegate {
+final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDelegate, UIGestureRecognizerDelegate {
     private struct StudyTab {
         let name: String
         let title: String
@@ -19,7 +19,11 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
 
     private let content: UIViewController
     private var contentConstraints: [NSLayoutConstraint] = []
+    private let questionSwipeHorizontalRatio = 1.12
+    private var questionSwipeStartedAt: TimeInterval = 0
+    private lazy var questionSwipe = UIPanGestureRecognizer(target: self, action: #selector(finishQuestionSwipe))
     var onTabSelected: ((String) -> Void)?
+    var onQuestionSwipe: ((Int) -> Void)?
 
     init(content: UIViewController) {
         self.content = content
@@ -44,9 +48,45 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
             return host
         }
         setViewControllers(hosts, animated: false)
+        questionSwipe.isEnabled = false
+        questionSwipe.maximumNumberOfTouches = 1
+        questionSwipe.delegate = self
+        // UIKit can host floating tab controls beside the tab bar itself.
+        view.addGestureRecognizer(questionSwipe)
         if let selectedViewController {
             attachContent(to: selectedViewController)
         }
+    }
+
+    func setQuestionSwipeEnabled(_ enabled: Bool) {
+        questionSwipe.isEnabled = enabled
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        let location = touch.location(in: tabBar)
+        guard presentedViewController == nil, tabBar.bounds.contains(location) else { return false }
+        questionSwipeStartedAt = Date.now.timeIntervalSinceReferenceDate
+        return true
+    }
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        let offset = questionSwipe.translation(in: tabBar)
+        return abs(offset.x) >= abs(offset.y) * questionSwipeHorizontalRatio
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
+        guard let owner = other.view, !(other is UIScreenEdgePanGestureRecognizer) else { return false }
+        return owner === view || owner.isDescendant(of: view)
+    }
+
+    @objc private func finishQuestionSwipe() {
+        guard questionSwipe.state == .ended, presentedViewController == nil else { return }
+        let offset = questionSwipe.translation(in: tabBar)
+        let quick = Date.now.timeIntervalSinceReferenceDate - questionSwipeStartedAt <= 0.14
+        let distance = abs(offset.x)
+        guard distance >= (quick ? 10 : 16), distance >= abs(offset.y) * questionSwipeHorizontalRatio else { return }
+        onQuestionSwipe?(offset.x < 0 ? 1 : -1)
     }
 
     private func makeSharedStudyIcon(_ selected: Bool) -> UIImage {

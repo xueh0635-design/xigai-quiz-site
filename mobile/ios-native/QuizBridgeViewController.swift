@@ -75,6 +75,13 @@ final class QuizBridgeViewController: QuizWebViewController {
         )
     }
 
+    func swipeWebQuestion(_ direction: Int) {
+        webView?.callAsyncJavaScript(
+            "window.QuizNativeUI?.swipeQuestion(direction);",
+            arguments: ["direction": direction], in: nil, in: .page, completionHandler: nil
+        )
+    }
+
     fileprivate func handle(_ message: WKScriptMessage, reply: @escaping (Any?, String?) -> Void) {
         let origin = message.frameInfo.securityOrigin
         guard message.webView === webView, message.frameInfo.isMainFrame,
@@ -86,6 +93,11 @@ final class QuizBridgeViewController: QuizWebViewController {
 
         if kind == "tab", let tab = body["tab"] as? String {
             nativeTabs?.selectTab(tab, animated: body["animate"] as? Bool ?? true)
+            reply(true, nil)
+            return
+        }
+        if kind == "question-swipe", let enabled = body["enabled"] as? Bool {
+            nativeTabs?.setQuestionSwipeEnabled(enabled)
             reply(true, nil)
             return
         }
