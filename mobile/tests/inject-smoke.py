@@ -187,7 +187,14 @@ window.addEventListener("load", async () => {
     start(["导论-19", example.id], "practice");
     select(["B"]);
     const draft = JSON.stringify(state.session.selected);
+    const optionText = optionButtons()[0].lastElementChild;
+    check((getComputedStyle(optionText).userSelect || getComputedStyle(optionText).webkitUserSelect) === "none",
+      "option text cannot be selected");
+    for (const type of ["selectstart", "contextmenu"]) {
+      check(!optionText.dispatchEvent(new Event(type, { bubbles: true, cancelable: true })), "option blocks " + type);
+    }
     await hold(0);
+    check(document.getSelection().isCollapsed, "opening details leaves no selected text");
     check(JSON.stringify(state.session.selected) === draft, "long press keeps the existing answer draft");
     check(!optionBody.querySelector(".option-note-verdict"), "the practice note leaves grading hidden");
     for (const [index, count] of [10, 14, 13, 6].entries()) {
