@@ -3,9 +3,11 @@ package io.github.xueh0635.xigai;
 import android.content.res.Configuration;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
+import android.provider.Settings;
 import android.view.Window;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -53,13 +55,28 @@ public class QuizAppearancePlugin extends Plugin {
 
     @Override
     protected void handleOnResume() {
-        getBridge().executeOnMainThread(this::applyTheme);
+        getBridge().executeOnMainThread(() -> {
+            applyTheme();
+            notifyListeners("motionPreferenceChanged", motionPreference());
+        });
     }
 
     @Override
     protected void handleOnConfigurationChanged(Configuration configuration) {
         // SystemBars reapplies its own default during this callback.
         getBridge().executeOnMainThread(this::applyTheme);
+    }
+
+    @PluginMethod
+    public void getMotionPreference(PluginCall call) {
+        call.resolve(motionPreference());
+    }
+
+    private JSObject motionPreference() {
+        float durationScale = Settings.Global.getFloat(
+            getContext().getContentResolver(), Settings.Global.ANIMATOR_DURATION_SCALE, 1f
+        );
+        return new JSObject().put("reduced", durationScale == 0f);
     }
 
     private void applyTheme() {

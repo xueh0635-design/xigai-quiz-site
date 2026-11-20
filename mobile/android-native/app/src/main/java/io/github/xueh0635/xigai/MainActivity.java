@@ -1,17 +1,25 @@
 package io.github.xueh0635.xigai;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.webkit.PermissionRequest;
+import android.webkit.WebView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
+import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
+import com.getcapacitor.WebViewListener;
 
 public class MainActivity extends BridgeActivity {
+    private static final long LAUNCH_TIMEOUT_MS = 2_500;
+    private boolean pageVisible;
     private PermissionRequest pendingMicrophone;
     private boolean requestingMicrophone;
     private final ActivityResultLauncher<String> requestMicrophone = registerForActivityResult(
@@ -20,9 +28,27 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle state) {
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        long launchDeadline = SystemClock.uptimeMillis() + LAUNCH_TIMEOUT_MS;
+        bridgeBuilder.addWebViewListener(new WebViewListener() {
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                pageVisible = true;
+            }
+        });
         registerPlugin(QuizAppearancePlugin.class);
         registerPlugin(QuizUpdatePlugin.class);
         super.onCreate(state);
+        if (getBridge() != null) {
+            splash.setKeepOnScreenCondition(() -> !pageVisible && SystemClock.uptimeMillis() < launchDeadline);
+        }
+        splash.setOnExitAnimationListener(provider -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !ValueAnimator.areAnimatorsEnabled()) {
+                provider.remove();
+                return;
+            }
+            provider.getView().animate().alpha(0f).setDuration(160).withEndAction(provider::remove).start();
+        });
         if (getBridge() == null) return;
         getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
             @Override

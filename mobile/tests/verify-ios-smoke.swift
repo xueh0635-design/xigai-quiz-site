@@ -12,4 +12,4 @@ guard status?.uppercased().contains("XIGAI PASS") == true else {
     FileHandle.standardError.write(Data("Simulator result: \(status ?? "smoke marker absent")\n".utf8))
     exit(1)
 }
-print("iOS simulator verified quiz, explanations, local progress, memory mode and glass navigation.")
+print("iOS simulator verified timed advance, swipes, distractor notes, local progress, memory mode and quiz submission.")

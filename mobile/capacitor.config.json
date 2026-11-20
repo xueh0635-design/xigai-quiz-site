@@ -1,5 +1,10 @@
 {
   "appId": "io.github.xueh0635.xigai",
   "appName": "习概题库",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "SystemBars": {
+      "initialViewportFitValueHint": "cover"
+    }
+  }
 }

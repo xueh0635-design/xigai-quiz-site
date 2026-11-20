@@ -4,6 +4,8 @@ import WebKit
 
 class QuizWebViewController: CAPBridgeViewController {
     private var mediaDelegate: QuizMediaUIDelegate?
+    private var firstPageObservation: NSKeyValueObservation?
+    var onFirstPageLoaded: (() -> Void)?
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
@@ -11,6 +13,17 @@ class QuizWebViewController: CAPBridgeViewController {
         let delegate = QuizMediaUIDelegate(forwarding: webView.uiDelegate)
         mediaDelegate = delegate
         webView.uiDelegate = delegate
+        firstPageObservation = webView.observe(\.isLoading) { [weak self] view, _ in
+            guard !view.isLoading, view.url != nil else { return }
+            self?.firstPageObservation = nil
+            let ready = self?.onFirstPageLoaded
+            self?.onFirstPageLoaded = nil
+            // Give WebKit a frame to paint underneath the launch view.
+            view.callAsyncJavaScript(
+                "await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));",
+                arguments: [:], in: nil, in: .defaultClient
+            ) { _ in ready?() }
+        }
     }
 }
 
@@ -81,6 +94,16 @@ final class QuizBridgeViewController: QuizWebViewController {
             overrideUserInterfaceStyle = style
             nativeTabs?.overrideUserInterfaceStyle = style
             view.window?.overrideUserInterfaceStyle = style
+            if let accent = body["accent"] as? Int, (0...0xffffff).contains(accent) {
+                let tint = UIColor(
+                    red: CGFloat((accent >> 16) & 255) / 255,
+                    green: CGFloat((accent >> 8) & 255) / 255,
+                    blue: CGFloat(accent & 255) / 255,
+                    alpha: 1
+                )
+                nativeTabs?.view.tintColor = tint
+                nativeTabs?.tabBar.tintColor = tint
+            }
             reply(true, nil)
             return
         }
