@@ -829,6 +829,48 @@ a { color: var(--accent); }
 #history-question-result { font-weight: 720; }
 .profile-account { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; justify-content: space-between; padding: 13px; border: 1px solid var(--line); border-radius: 15px; }
 .profile-account h3 { margin: 0; font-size: .95rem; }
+.profile-switch {
+  flex: 1 0 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.profile-switch input {
+  appearance: none;
+  inline-size: 44px;
+  block-size: 26px;
+  flex: none;
+  margin: 0;
+  display: grid;
+  align-items: center;
+  padding: 2px;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  background: var(--paper);
+  cursor: inherit;
+}
+.profile-switch input::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.profile-switch input:checked {
+  justify-items: end;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.profile-switch input:checked::before { background: white; }
+.profile-switch input:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+@media (forced-colors: active) {
+  .profile-switch input { appearance: auto; }
+  .profile-switch input::before { content: none; }
+}
 #android-updates { margin-top: 12px; }
 #update-status { flex: 1 1 12ch; margin: 0; color: var(--muted); font-size: .83rem; }
 #account-register-hint { color: var(--muted); font-size: .87rem; }
@@ -6907,6 +6949,10 @@ button[data-option-note][data-option-holding]::after {
             <span id="auto-advance-delay-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
           </button>
         </div>
+        <label id="answer-haptics-setting" class="profile-switch" hidden>
+          <span>答题震动反馈</span>
+          <input id="answer-haptics" type="checkbox" role="switch" checked>
+        </label>
       </div>
       <section id="android-updates" class="profile-account" aria-labelledby="update-heading" hidden>
         <div>
@@ -12935,6 +12981,7 @@ const $ = (id) => document.getElementById(id);
 const storageKey = "xigai-local-quiz-v1";
 const bankStorageKey = "xigai-practice-bank-v1";
 const autoAdvanceStorageKey = "xigai-auto-advance-delay-v1";
+const answerHapticsStorageKey = "xigai-answer-haptics-v1";
 const bankLabels = { all: "全部题库", sizheng: "思政云", xuexitong: "学习通", common: "常考题" };
 const sharedQuestions = indexSharedQuestions(questions);
 const libraryPageSize = 12;
@@ -13306,6 +13353,7 @@ function selectBank(bank) {
 
 function setup() {
   setupAutoAdvanceDelay();
+  setupAnswerHaptics();
   $("stat-done").onclick = () => filterScope("done");
   $("stat-wrong").onclick = () => showTab("wrong", true);
   $("stat-starred").onclick = () => showTab("starred", true);
@@ -13378,6 +13426,31 @@ function setupAutoAdvanceDelay() {
       $("storage-status").textContent = "无法保存等待时间，本次仍可使用所选时长。";
     }
   });
+}
+
+function setupAnswerHaptics() {
+  const capacitor = window.Capacitor;
+  if (!capacitor?.isPluginAvailable?.("QuizHaptics")) return;
+
+  const field = $("answer-haptics");
+  try {
+    field.checked = localStorage.getItem(answerHapticsStorageKey) !== "off";
+  } catch {
+    // The switch still applies for the current session.
+  }
+  field.addEventListener("change", () => {
+    try {
+      localStorage.setItem(answerHapticsStorageKey, field.checked ? "on" : "off");
+    } catch {
+      $("storage-status").textContent = "无法保存震动设置，本次仍可使用所选设置。";
+    }
+  });
+  $("answer-haptics-setting").hidden = false;
+}
+
+function playAnswerHaptic(correct) {
+  if ($("answer-haptics-setting").hidden || !$("answer-haptics").checked || document.hidden) return;
+  window.Capacitor.Plugins.QuizHaptics.answer({ outcome: correct ? "correct" : "incorrect" }).catch(() => {});
 }
 
 function makeChapterCard(chapter, total) {
@@ -14557,9 +14630,11 @@ function submit() {
   }
   if (!session.selected.length) return;
   saveSession([recordAnswer(session, item, session.selected, Date.now())]);
+  const { correct } = session.results[item.id];
+  playAnswerHaptic(correct);
   renderQuestion();
   const delay = Number($("auto-advance-delay").value);
-  if (session.results[item.id].correct && delay > 0) {
+  if (correct && delay > 0) {
     answerMotion = window.QuizWorldMotion?.answer($("answer-summary"), true);
     scheduleAutoAdvance(session, delay);
   } else {

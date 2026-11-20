@@ -37,6 +37,7 @@ public class MainActivity extends BridgeActivity {
             }
         });
         registerPlugin(QuizAppearancePlugin.class);
+        registerPlugin(QuizHapticsPlugin.class);
         registerPlugin(QuizUpdatePlugin.class);
         super.onCreate(state);
         if (getBridge() != null) {

@@ -10,6 +10,7 @@ class QuizWebViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         guard let webView else { return }
+        bridge?.registerPluginInstance(QuizHapticsPlugin())
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         // WebKit can also magnify on a double-tap or when an input gains focus.
         webView.configuration.userContentController.addUserScript(WKUserScript(source: """
@@ -32,6 +33,36 @@ class QuizWebViewController: CAPBridgeViewController {
                 "await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));",
                 arguments: [:], in: nil, in: .defaultClient
             ) { _ in ready?() }
+        }
+    }
+}
+
+@objc(QuizHapticsPlugin)
+private final class QuizHapticsPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "QuizHapticsPlugin"
+    let jsName = "QuizHaptics"
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "answer", returnType: CAPPluginReturnPromise)
+    ]
+
+    private lazy var correctFeedback = UIImpactFeedbackGenerator(style: .light)
+    private lazy var incorrectFeedback = UINotificationFeedbackGenerator()
+
+    @objc func answer(_ call: CAPPluginCall) {
+        let outcome = call.getString("outcome")
+        guard outcome == "correct" || outcome == "incorrect" else {
+            call.reject("Unknown answer outcome.")
+            return
+        }
+        DispatchQueue.main.async {
+            if self.bridge?.webView?.window?.windowScene?.activationState == .foregroundActive {
+                if outcome == "correct" {
+                    self.correctFeedback.impactOccurred()
+                } else {
+                    self.incorrectFeedback.notificationOccurred(.warning)
+                }
+            }
+            call.resolve()
         }
     }
 }
