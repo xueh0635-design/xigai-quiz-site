@@ -1202,6 +1202,12 @@ a { color: var(--accent); }
     linear-gradient(-45deg, transparent 43%, currentColor 43% 57%, transparent 57%);
   transform: none;
 }
+.lesson-answer #submitted-answer {
+  margin: 0 0 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
 .lesson-answer #answer-text {
   margin: 0;
   font-size: clamp(1rem, 2.5vw, 1.16rem);
@@ -5919,6 +5925,7 @@ button[data-option-note][data-option-holding]::after {
           </div>
           <div class="route-actions">
             <button type="button" id="adventure-start" class="primary">开始本章</button>
+            <button type="button" id="route-answers" hidden>回看本章作答</button>
             <button type="button" id="route-next" hidden></button>
           </div>
         </div>
@@ -6037,6 +6044,7 @@ button[data-option-note][data-option-holding]::after {
       </div>
       <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
         <p id="feedback" role="status" tabindex="-1"></p>
+        <p id="submitted-answer" hidden></p>
         <h3 id="answer-heading">正确答案</h3>
         <p id="answer-text" tabindex="-1"></p>
         <section id="distractor-notes" class="distractor-notes" hidden>
@@ -12673,28 +12681,35 @@ function isChapterPractice(session) {
   return session?.mode === "practice" && Boolean(chapterForSession(session)) && session.routePlan?.kind !== "review";
 }
 
-function sessionQuestionKey(session, id) {
-  return bankForSession(session) === "common" ? byId.get(id)?.common_question_id || id : id;
+function usesChapterHistory(session) {
+  return isChapterPractice(session) && !session.repeatChapter;
 }
 
-function chapterPoolForSession(session) {
-  const pool = chapterQuestions(chapterForSession(session), bankForSession(session));
-  return session?.routePlan?.kind === "remaining" ? pool.filter((item) => !hasAnswered(item.id)) : pool;
+function questionResult(session, id) {
+  const saved = session?.results?.[id];
+  const entry = usesChapterHistory(session) && state.history[id];
+  if (typeof entry?.wrong === "boolean") {
+    const selected = Array.isArray(entry.selected) ? entry.selected : [];
+    return { selected, correct: !entry.wrong, roundSelection: selected.length ? undefined : saved?.selected };
+  }
+  return saved;
+}
+
+function sessionQuestionKey(session, id) {
+  return bankForSession(session) === "common" ? byId.get(id)?.common_question_id || id : id;
 }
 
 function canResumeSession(session = state.session) {
   if (byId.has(session?.ids?.[session.index])) return true;
   if (!isChapterPractice(session)) return false;
-  const chapter = chapterForSession(session);
-  if (!chapter) return false;
-  const answered = new Set(Object.keys(session.results).map((id) => sessionQuestionKey(session, id)));
-  return chapterPoolForSession(session)
-    .some((item) => !answered.has(sessionQuestionKey(session, item.id)));
+  return chapterQuestions(chapterForSession(session), bankForSession(session))
+    .some((item) => !questionResult(session, item.id));
 }
 
-function chapterPracticeDraft(chapter, bank) {
+function chapterPracticeDraft(chapter, bank, repeatChapter = false) {
   const matches = (session) => isChapterPractice(session) && chapterForSession(session) === chapter &&
-    bankForSession(session) === bank && session.ids?.every((id) => byId.has(id)) && canResumeSession(session);
+    bankForSession(session) === bank && Boolean(session.repeatChapter) === repeatChapter &&
+    session.ids?.every((id) => byId.has(id)) && canResumeSession(session);
   return [state.session, state.session?.chapterStudy?.pausedPractice].find(matches);
 }
 
@@ -12704,29 +12719,25 @@ function pauseChapterPractice(session) {
   return draft;
 }
 
-function openChapter(chapter, { bank = selectedBank, whole = false } = {}) {
+function openChapter(chapter, { bank = selectedBank, whole = false, review = false } = {}) {
   $("advanced-settings").open = false;
-  const draft = chapterPracticeDraft(chapter, bank);
+  const draft = chapterPracticeDraft(chapter, bank, whole);
   if (draft) {
     if (draft !== state.session) {
       const study = { ...state.session.chapterStudy, pausedPractice: pauseChapterPractice(state.session) };
       state.session = { ...draft, chapterStudy: study };
       saveSession();
     }
-    resumeQuestion();
+    resumeQuestion({ review });
     return;
   }
   const plan = chapterStudy(chapter, bank);
   if (!plan.total) return;
-  if (!whole && !plan.remaining.length) {
-    openChapterReview(chapter, bank);
-    return;
-  }
-  if (!whole && plan.answered) {
-    start(plan.remaining, "practice", { bankScope: bank, routePlan: { chapter, kind: "remaining" } });
-  } else {
-    start(plan.pool.map((item) => item.id), "practice", { quickChapter: chapter, adventure: true, bankScope: bank });
-  }
+  const ids = plan.pool.map((item) => item.id);
+  const target = review ? ids.findIndex(hasAnswered) : ids.indexOf(plan.remaining[0]);
+  start(ids, "practice", {
+    quickChapter: chapter, adventure: true, bankScope: bank, ...(whole ? { repeatChapter: true } : {}),
+  }, whole ? 0 : Math.max(0, target));
 }
 
 function openChapterReview(chapter, bank) {
@@ -13129,16 +13140,25 @@ function renderRouteStops(chapters, selected) {
 function expandChapterSession() {
   const session = state.session;
   if (!isChapterPractice(session)) return;
-  const pool = chapterPoolForSession(session);
+  const pool = chapterQuestions(chapterForSession(session), bankForSession(session));
   if (!pool.length) return;
-  const included = new Set(session.ids.map((id) => sessionQuestionKey(session, id)));
-  const missing = pool.map((item) => item.id).filter((id) => !included.has(sessionQuestionKey(session, id)));
-  if (!missing.length && current()) return;
-  // Preserve the saved order, current question and drafts when expanding an old session.
-  const previousLength = session.ids.length;
-  session.ids.push(...missing);
-  if (session.index >= previousLength) {
-    session.index = session.ids.findIndex((id) => !session.results[id]);
+  const openId = current()?.id;
+  const included = new Map(session.ids.map((id) => [sessionQuestionKey(session, id), id]));
+  const poolIds = pool.map(({ id }) => included.get(sessionQuestionKey(session, id)) || id);
+  const previousIds = new Set(session.ids);
+  const missing = poolIds.filter((id) => !previousIds.has(id));
+  if (!missing.length && openId) return;
+  if (session.routePlan?.kind === "remaining" && missing.length) {
+    // Older remaining-only sessions omitted the earlier answered questions.
+    const inChapter = new Set(poolIds);
+    session.ids = [...poolIds, ...session.ids.filter((id) => !inChapter.has(id))];
+  } else {
+    session.ids.push(...missing);
+  }
+  if (openId) {
+    session.index = session.ids.indexOf(openId);
+  } else {
+    session.index = session.ids.findIndex((id) => !questionResult(session, id));
     if (session.index < 0) session.index = session.ids.length - 1;
     const id = session.ids[session.index];
     session.selected = session.drafts?.[id] || [];
@@ -13149,6 +13169,7 @@ function expandChapterSession() {
 
 function renderLearningRoute(chapters, currentChapter, resume) {
   const start = $("adventure-start");
+  const review = $("route-answers");
   const next = $("route-next");
   const chapter = currentChapter?.chapter;
   const upcoming = currentChapter && nextUnfinishedChapter(chapters, currentChapter);
@@ -13158,9 +13179,11 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   $("route-all-chapters").hidden = !chapter;
   $("route-map").hidden = !chapter;
   start.hidden = !chapter;
+  review.hidden = !currentChapter?.answered;
   next.hidden = true;
   if (!currentChapter) return;
   const { answered, total, remaining, wrong } = currentChapter;
+  review.onclick = () => openChapter(chapter, { review: true });
   $("route-answered").textContent = `${answered} / ${total} 道已答`;
   $("route-wrong").textContent = `${wrong.length} 道错题`;
   $("route-wrong").hidden = !wrong.length;
@@ -13201,11 +13224,11 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   }
 }
 
-function streak(ids, results) {
+function streak(ids, session) {
   let highest = 0;
   let count = 0;
   for (const id of ids) {
-    count = results[id]?.correct ? count + 1 : 0;
+    count = questionResult(session, id)?.correct ? count + 1 : 0;
     highest = Math.max(highest, count);
   }
   return { current: count, highest };
@@ -13274,15 +13297,16 @@ function randomId() {
   return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join("-");
 }
 
-function start(ids, mode = $("mode").value, chapterOptions = {}) {
+function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
   // Older clients can resume these IDs as a regular quiz without expanding them to the full chapter.
   const options = chapterOptions.bankScope === "common"
-    ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan } : chapterOptions;
+    ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan,
+      repeatChapter: chapterOptions.repeatChapter } : chapterOptions;
   const previous = state.session;
   let study = previous?.chapterStudy;
   const pausedPractice = pauseChapterPractice(previous);
   if (pausedPractice) study = { ...study, pausedPractice };
-  state.session = { sid: randomId(), ids, mode, index: 0, results: {}, selected: [], ...options };
+  state.session = { sid: randomId(), ids, mode, index, results: {}, selected: [], ...options };
   if (study) state.session.chapterStudy = study;
   showStartedQuestion();
 }
@@ -13338,7 +13362,7 @@ function checksOnTap(item) {
 function choose(letter) {
   const item = current();
   if (!item || state.session.mode === "memory" || !Object.hasOwn(item.options, letter) ||
-      state.session.results[item.id]) return;
+      questionResult(state.session, item.id)) return;
   const selected = new Set(state.session.selected);
   if (item.type !== "多选") selected.clear();
   if (selected.has(letter)) selected.delete(letter);
@@ -13451,30 +13475,45 @@ function renderDistractorNotes(item, section) {
   section.hidden = !rows.length;
 }
 
+function renderRoundProgress(session) {
+  const answered = session.ids.reduce((count, id) => count + Number(Boolean(questionResult(session, id))), 0);
+  $("progress").max = session.ids.length;
+  $("progress").value = answered;
+  const combo = isAdventureSession(session) && streak(session.ids.slice(0, session.index + 1), session).current;
+  $("adventure-streak").hidden = combo < 2;
+  $("adventure-streak-value").textContent = combo || "";
+  return answered;
+}
+
+function renderQuestionActions(session, item, result, answered) {
+  const submitButton = $("submit");
+  const last = session.index === session.ids.length - 1;
+  const memoryMode = session.mode === "memory";
+  submitButton.hidden = result ? !last : checksOnTap(item);
+  submitButton.textContent = result ? (answered === session.ids.length ? "查看结果" : "去未答题")
+    : memoryMode ? (item.study?.explanation ? "显示答案与解析" : "显示答案") : "提交";
+  submitButton.disabled = !result && !memoryMode && session.selected.length === 0;
+  submitButton.parentElement.hidden = submitButton.hidden;
+}
+
 function renderQuestion() {
   const item = current();
   if (!item) return;
   const session = state.session;
   const adventure = isAdventureSession(session);
   const bank = bankForSession(session);
-  const result = session.results[item.id];
+  const result = questionResult(session, item.id);
   const memoryMode = session.mode === "memory";
   const testing = takingChapterTest(session);
   const selected = result?.selected || session.selected;
   const total = session.ids.length;
-  const answered = session.ids.reduce((count, id) => count + Number(Boolean(session.results[id])), 0);
-  const last = session.index === total - 1;
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
   const location = session.meetingPractice ? "会议专题" : item.chapter;
   $("where").textContent = `${testing ? "测验 · " : ""}${location} · ${session.index + 1} / ${total}`;
-  $("progress").max = total;
-  $("progress").value = answered;
+  const answered = renderRoundProgress(session);
   $("quiz-swipe-hint").hidden = total < 2;
-  const combo = adventure && streak(session.ids.slice(0, session.index + 1), session.results).current;
-  $("adventure-streak").hidden = combo < 2;
-  $("adventure-streak-value").textContent = combo || "";
   const source = bank === "sizheng" || bank === "xuexitong" ? bankLabels[bank] : item.source || bankLabels.sizheng;
   $("kind").textContent = `${item.type}题 · ${source}`;
   $("common-question-badge").hidden = !item.common_question;
@@ -13514,6 +13553,12 @@ function renderQuestion() {
     ? result.correct ? "答对了！" : "差一点，再记住这个考点"
     : result.correct ? "回答正确" : "回答错误") : "";
   $("feedback").dataset.state = result?.correct ? "correct" : "incorrect";
+  $("submitted-answer").hidden = !result || memoryMode;
+  $("submitted-answer").textContent = !result || memoryMode ? "" : selected.length
+    ? `我的作答\n${selected.map((answer) => historyOptionLabel(item, answer)).join("\n")}`
+    : result.roundSelection?.length
+      ? `最近的记录仅保存了判分。\n本轮保存的作答\n${result.roundSelection.map((answer) => historyOptionLabel(item, answer)).join("\n")}`
+      : "这条早期记录未保存所选答案。";
   const answerLabels = item.blank_answers?.map((choices) => choices.join(" / ")) || item.answer;
   $("answer-text").textContent = result ? answerLabels.map((answer) => {
     const option = item.options[answer];
@@ -13521,12 +13566,7 @@ function renderQuestion() {
   }).join("\n") : "";
   renderDistractorNotes(result ? item : null, $("distractor-notes"));
   const tapCheck = checksOnTap(item);
-  const submitButton = $("submit");
-  submitButton.hidden = result ? !last : tapCheck;
-  submitButton.textContent = result ? (answered === total ? "查看结果" : "去未答题")
-    : memoryMode ? (item.study?.explanation ? "显示答案与解析" : "显示答案") : "提交";
-  submitButton.disabled = !result && !memoryMode && selected.length === 0;
-  submitButton.parentElement.hidden = submitButton.hidden;
+  renderQuestionActions(session, item, result, answered);
   $("chapter-test-status").hidden = !testing;
   $("progress").setAttribute("aria-label", testing ? "测验作答进度" : "练习进度");
   if (testing) renderChapterTestActions(session);
@@ -13556,14 +13596,21 @@ function focusAnswer(reveal = false) {
   if (reveal) answerMotion = window.QuizWorldMotion?.answer(summary, feedback.dataset.state === "correct");
 }
 
-function resumeQuestion() {
+function resumeQuestion({ review = false } = {}) {
   inspectedChapter = null;
   expandChapterSession();
   const item = current();
   if (!item) return;
+  if (review) {
+    const first = state.session.ids.findIndex(hasAnswered);
+    if (first >= 0 && first !== state.session.index) {
+      goToQuestion(first);
+      return;
+    }
+  }
   renderQuestion();
   window.scrollTo(0, 0);
-  if (state.session.results[item.id]) focusAnswer();
+  if (!review && questionResult(state.session, item.id)) focusAnswer();
   else $("question").focus();
   animatePage(0, 11);
 }
@@ -13641,7 +13688,7 @@ function submitChapterTest(session) {
 function submit() {
   const item = current();
   const session = state.session;
-  if (!item || session.results[item.id]) return;
+  if (!item || questionResult(session, item.id)) return;
   if (takingChapterTest(session)) {
     submitChapterTest(session);
     return;
@@ -13667,8 +13714,8 @@ function submit() {
 function questionDestination(session, direction) {
   const adjacent = session.index + direction;
   if (byId.has(session.ids[adjacent])) return adjacent;
-  if (direction < 0 || takingChapterTest(session) || !session.results[session.ids[session.index]]) return null;
-  const pending = session.ids.findIndex((id) => !session.results[id]);
+  if (direction < 0 || takingChapterTest(session) || !questionResult(session, session.ids[session.index])) return null;
+  const pending = session.ids.findIndex((id) => !questionResult(session, id));
   return pending < 0 ? session.ids.length : pending;
 }
 
@@ -13704,7 +13751,7 @@ function completeRound(changes = []) {
   const memoryMode = session.mode === "memory";
   const testMode = session.mode === "chapter-test";
   const round = session.ids;
-  const wrong = round.filter((id) => !session.results[id]?.correct);
+  const wrong = round.filter((id) => !questionResult(session, id)?.correct);
   const bank = bankForSession(session);
   const chapter = chapterForSession(session);
   const reviewing = session.routePlan?.kind === "review";
@@ -13713,7 +13760,8 @@ function completeRound(changes = []) {
   $("result-title").textContent = testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
     : reviewing ? "本轮错题复练完成" : route && !route.remaining.length ? "本章练习完成"
     : memoryMode ? "本次背诵完成" : "本次练习完成";
-  $("score").textContent = memoryMode ? `已复习 ${round.length} 道。`
+  $("score").textContent = memoryMode ? `已复习 ${round.length} 道。` : usesChapterHistory(session)
+    ? `本章已答 ${round.length} 道 · 答对 ${round.length - wrong.length} 道`
     : `答对 ${round.length - wrong.length} 道，共 ${round.length} 道。`;
   const retry = $("retry");
   const retryCount = route ? route.wrong.length : wrong.length;
@@ -13742,9 +13790,9 @@ function completeRound(changes = []) {
   $("adventure-result").hidden = !adventure || !route;
   if (adventure && route) {
     $("adventure-result-stops").textContent = `${route.chapter} · ${route.answered} / ${route.total} 道已答`;
-    $("adventure-result-streak").textContent = `最高连中 ${streak(round, session.results).highest} 题`;
+    $("adventure-result-streak").textContent = `最高连中 ${streak(round, session).highest} 题`;
   }
-  $("review-round").textContent = testMode ? "回看试卷" : chapter && !session.routePlan ? "回看本章" : "回看本次";
+  $("review-round").textContent = testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
   const library = libraryTabs[profileLibrary || selectedTab];
   $("again").textContent = session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
   $("again").onclick = returnFromQuestion;
@@ -13777,7 +13825,7 @@ $("route-all-chapters").onclick = () => {
   $("setup-heading").scrollIntoView({ block: "start", behavior: reducedMotion.matches ? "instant" : "smooth" });
 };
 $("submit").onclick = () => {
-  if (state.session.results[current()?.id]) moveQuestion(1);
+  if (questionResult(state.session, current()?.id)) moveQuestion(1);
   else submit();
 };
 $("review-round").onclick = () => goToQuestion(state.session.ids.length - 1);
@@ -13817,7 +13865,7 @@ $("wrong-review").onclick = () => {
 $("option-notes-open").onclick = (event) => {
   const item = current();
   if (!item || takingChapterTest()) return;
-  const result = state.session.results[item.id];
+  const result = questionResult(state.session, item.id);
   const selected = result?.selected || state.session.selected;
   const first = selected.find((letter) => Object.hasOwn(item.options, letter)) || Object.keys(item.options)[0];
   if (first) optionNotes.open(item, first, Boolean(result), event.currentTarget);
@@ -13838,7 +13886,7 @@ document.addEventListener("keydown", (event) => {
                                    (document.activeElement.classList.contains("option") ||
                                    !["BUTTON", "A"].includes(document.activeElement.tagName))) {
     event.preventDefault();
-    if (takingChapterTest() || state.session.results[current()?.id]) moveQuestion(1);
+    if (takingChapterTest() || questionResult(state.session, current()?.id)) moveQuestion(1);
     else submit();
   }
 });
@@ -14295,6 +14343,8 @@ sync = window.QuizAccount?.connect({
   },
   receive(remote, reset) {
     const active = !reset && (!$("quiz").hidden || !$("result").hidden) ? state.session : null;
+    const item = usesChapterHistory(active) && !$("quiz").hidden ? current() : null;
+    const previous = item && questionResult(active, item.id);
     const session = Array.isArray(remote.session?.ids) && remote.session.ids.every((id) => byId.has(id))
       ? remote.session : null;
     // Keep the open question in place, and use the synced resume once the user leaves it.
@@ -14309,6 +14359,15 @@ sync = window.QuizAccount?.connect({
       showTab(selectedTab);
     } else {
       updateAvailability();
+      if (item) {
+        const result = questionResult(active, item.id);
+        if (previous?.correct !== result?.correct || JSON.stringify(previous?.selected) !== JSON.stringify(result?.selected) ||
+            JSON.stringify(previous?.roundSelection) !== JSON.stringify(result?.roundSelection)) {
+          renderQuestion();
+        } else {
+          renderQuestionActions(active, item, result, renderRoundProgress(active));
+        }
+      }
     }
   },
   guest() {
