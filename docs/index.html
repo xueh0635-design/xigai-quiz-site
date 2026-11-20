@@ -5674,6 +5674,119 @@ button[data-option-note][data-option-holding]::after {
 .option-notes-basis > summary { color: var(--accent); cursor: pointer; font-weight: 700; min-height: 34px; }
 .option-notes-basis > .reference { margin: 7px 0 0; color: var(--muted); font-size: .78rem; }
 </style>
+<style>
+#leaderboard-home.leaderboard-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--world-edge);
+  border-radius: 14px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  font-size: .92rem;
+  font-weight: 720;
+  text-align: start;
+}
+#leaderboard-home > :last-child { color: var(--world-muted); font-size: 1.3rem; }
+
+.leaderboard-dialog.account-dialog.glass {
+  width: min(530px, calc(100% - 16px));
+  max-height: min(87dvh, 780px);
+  color: var(--world-ink);
+  overflow: hidden;
+}
+.leaderboard-dialog[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.leaderboard-dialog :is(button, input) { min-height: 44px; }
+.leaderboard-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.leaderboard-scroll > :first-child p { margin-top: 0; }
+.leaderboard-note {
+  margin: 0 0 9px;
+  color: var(--world-muted);
+  font-size: .82rem;
+}
+#leaderboard-status:empty { display: none; }
+.leaderboard-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+.leaderboard-summary time { color: var(--world-ink); font-size: .91rem; font-weight: 730; }
+.leaderboard-summary p { margin: 3px 0 0; color: var(--world-muted); font-size: .82rem; }
+.leaderboard-dialog :is(.leaderboard-top, .leaderboard-rows) {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.leaderboard-top { grid-template-columns: repeat(var(--podium-count, 3), minmax(0, 1fr)); }
+.leaderboard-top li {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 10px 8px;
+  border: 1px solid var(--world-edge);
+  border-radius: 15px;
+  background: var(--world-card-alt);
+  text-align: center;
+}
+.leaderboard-top li[data-rank="1"] { border-color: var(--world-gold); }
+.leaderboard-top .leaderboard-place {
+  justify-self: center;
+  min-width: 26px;
+  padding: 3px 6px;
+  border-radius: 7px;
+  background: var(--world-card);
+  color: var(--world-muted);
+  font-size: .76rem;
+  font-weight: 780;
+}
+.leaderboard-top li[data-rank="1"] .leaderboard-place { color: var(--world-gold); }
+.leaderboard-name { min-width: 0; overflow-wrap: anywhere; font-size: .84rem; }
+.leaderboard-top .leaderboard-count { font-size: 1.12rem; }
+.leaderboard-count, .leaderboard-place { font-variant-numeric: tabular-nums; }
+.leaderboard-rows:not(:empty) { margin-top: 10px; }
+.leaderboard-rows li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px;
+  border-bottom: 1px solid var(--world-edge);
+  font-size: .88rem;
+}
+.leaderboard-dialog li[data-me] {
+  border-color: var(--world-accent);
+  background-color: color-mix(in srgb, var(--world-card) 90%, var(--world-accent));
+}
+.leaderboard-rule { margin: 12px 0 4px; }
+.leaderboard-self {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 9px;
+  padding: 9px 0 0;
+  border-top: 1px solid var(--world-edge);
+}
+.leaderboard-self span { display: block; font-size: .79rem; color: var(--world-muted); }
+.leaderboard-self strong { display: block; margin-top: 2px; font-size: 1.02rem; }
+.leaderboard-editor {
+  margin-bottom: 13px;
+  padding: 10px 12px;
+  border: 1px solid var(--world-edge);
+  border-radius: 13px;
+  background: var(--world-card-alt);
+}
+.leaderboard-editor input { margin-bottom: 7px; }
+.leaderboard-editor .actions { margin: 4px 0 0; }
+</style>
 </head>
 <body>
   <header class="top">
@@ -5819,6 +5932,9 @@ button[data-option-note][data-option-holding]::after {
         <span class="adventure-community-mark" aria-hidden="true">✦</span>
         <span><strong>和同桌一起学</strong><span>共学与学习进度</span></span>
         <span class="adventure-community-arrow" aria-hidden="true">›</span>
+      </button>
+      <button id="leaderboard-home" class="leaderboard-entry" type="button" data-open-leaderboard aria-haspopup="dialog" aria-controls="leaderboard-dialog">
+        <span>今日排行榜</span><span aria-hidden="true">›</span>
       </button>
       <div class="overview-stats" aria-label="学习进度">
         <button id="stat-done" type="button"><strong>0</strong><span>已答题</span></button>
@@ -6065,10 +6181,49 @@ button[data-option-note][data-option-holding]::after {
       <ol id="meeting-timeline" class="meeting-timeline" aria-label="按日期排列的会议"></ol>
       <ul id="meeting-questions" class="meeting-questions" aria-label="专题原题" hidden></ul>
     </dialog>
+    <dialog id="leaderboard-dialog" class="account-dialog glass quiz-sheet leaderboard-dialog" aria-labelledby="leaderboard-title">
+      <div class="account-dialog-header" data-sheet-handle>
+        <h2 id="leaderboard-title">今日排行榜</h2>
+        <button id="leaderboard-close" type="button" autofocus>关闭</button>
+      </div>
+      <div id="leaderboard-scroll" class="leaderboard-scroll">
+        <div id="leaderboard-guest" hidden>
+          <p>登录后可以查看榜单和今日题量。</p>
+          <button id="leaderboard-login" class="primary" type="button">登录</button>
+        </div>
+        <p id="leaderboard-status" class="leaderboard-note" role="status"></p>
+        <button id="leaderboard-retry" type="button" hidden>重试</button>
+        <div id="leaderboard-data" hidden>
+          <div class="leaderboard-summary">
+            <div><time id="leaderboard-day"></time><p id="leaderboard-total"></p></div>
+            <button id="leaderboard-refresh" type="button">刷新</button>
+          </div>
+          <form id="leaderboard-editor" class="leaderboard-editor" hidden>
+            <label for="leaderboard-nickname">榜单昵称</label>
+            <input id="leaderboard-nickname" type="text" autocomplete="off" maxlength="32" placeholder="留空使用自动昵称">
+            <p class="leaderboard-note">榜单显示你的昵称、今日题量和名次。</p>
+            <div class="actions">
+              <button id="leaderboard-save" class="primary" type="submit">加入榜单</button>
+              <button id="leaderboard-cancel" type="button">取消</button>
+              <button id="leaderboard-leave" type="button" hidden>退出榜单</button>
+            </div>
+          </form>
+          <p id="leaderboard-empty" class="leaderboard-note" hidden>今天还没有学友上榜。</p>
+          <ol id="leaderboard-top" class="leaderboard-top" aria-label="排名最靠前的学友"></ol>
+          <ol id="leaderboard-rows" class="leaderboard-rows" aria-label="其余名次"></ol>
+          <p class="leaderboard-note leaderboard-rule">按北京时间统计已同步的作答，同一道题每天计一次。题量相同并列。</p>
+        </div>
+      </div>
+      <footer id="leaderboard-self" class="leaderboard-self" hidden>
+        <div><span id="leaderboard-self-rank"></span><strong id="leaderboard-self-count"></strong></div>
+        <button id="leaderboard-edit" type="button"></button>
+      </footer>
+    </dialog>
     <section id="desk" class="desk-page" hidden aria-labelledby="desk-heading">
       <header class="desk-heading">
         <h2 id="desk-heading" tabindex="-1">一起学</h2>
         <div class="desk-heading-actions">
+          <button class="desk-heading-button" type="button" data-open-leaderboard aria-haspopup="dialog" aria-controls="leaderboard-dialog">排行榜</button>
           <button id="desk-avatar-edit" class="desk-heading-button" type="button" aria-haspopup="dialog" aria-controls="desk-avatar-dialog" hidden>更换头像</button>
           <button id="desk-refresh" class="desk-heading-button" type="button" hidden>
             <span class="desk-refresh-icon" aria-hidden="true"></span>刷新
@@ -11957,6 +12112,172 @@ window.QuizMeetingData = {
 })();
 </script>
 <script>
+(() => {
+  "use strict";
+
+  const get = (id) => document.getElementById("leaderboard-" + id);
+  const number = new Intl.NumberFormat("zh-CN");
+
+  function node(tag, value, className) {
+    const element = document.createElement(tag);
+    element.textContent = value;
+    if (className) element.className = className;
+    return element;
+  }
+
+  function boardRow(entry) {
+    const row = document.createElement("li");
+    row.dataset.rank = entry.rank;
+    row.toggleAttribute("data-me", entry.isMe);
+    row.append(
+      node("span", String(entry.rank), "leaderboard-place"),
+      node("span", entry.nickname + (entry.isMe ? "（我）" : ""), "leaderboard-name"),
+      node("strong", `${number.format(entry.answered)} 道`, "leaderboard-count")
+    );
+    return row;
+  }
+
+  function connect({ signedIn, rpc, login }) {
+    const dialog = get("dialog");
+    if (!dialog) return null;
+    const sheet = window.QuizSheetMotion?.attach(dialog);
+    const editor = get("editor");
+    const nickname = get("nickname");
+    let board = null;
+    let pending = null;
+
+    function render() {
+      get("data").hidden = !board;
+      get("self").hidden = !board;
+      if (!board) return;
+      const [year, month, day] = board.day.split("-").map(Number);
+      get("day").dateTime = board.day;
+      get("day").textContent = `${year}年${month}月${day}日`;
+      const answered = board.entries.reduce((total, entry) => total + entry.answered, 0);
+      get("total").textContent = `${board.entries.length} 人上榜 · 共答 ${number.format(answered)} 道`;
+      get("empty").hidden = Boolean(board.entries.length);
+      const top = board.entries.slice(0, 3);
+      get("top").hidden = !top.length;
+      get("top").style.setProperty("--podium-count", String(top.length || 1));
+      get("top").replaceChildren(...top.map(boardRow));
+      get("rows").replaceChildren(...board.entries.slice(3).map(boardRow));
+      const me = board.me;
+      get("self-rank").textContent = me.rank ? `我的名次 · 第 ${me.rank} 名`
+        : me.joined ? "我的名次 · 今日未上榜" : "我还未加入榜单";
+      get("self-count").textContent = `今日已答 ${number.format(me.answered)} 道`;
+      get("edit").textContent = me.joined ? "编辑昵称" : "加入榜单";
+    }
+
+    function busy(value) {
+      for (const id of ["refresh", "retry", "leave", "save"]) get(id).disabled = value;
+    }
+
+    async function request(update) {
+      if (!dialog.open || !signedIn() || (pending && (!update || pending.update))) return;
+      const token = { update };
+      pending = token;
+      busy(true);
+      get("retry").hidden = true;
+      get("status").textContent = update ? "正在保存…" : board ? "" : "正在加载今日榜单…";
+      try {
+        const { data, error } = await rpc(update ? "quiz_leaderboard_set_nickname" : "quiz_leaderboard_today", update);
+        if (pending !== token || !dialog.open) return;
+        if (error || !data?.me || !Array.isArray(data.entries) || typeof data.day !== "string") {
+          throw error || new Error("board_unavailable");
+        }
+        board = data;
+        if (update) editor.hidden = true;
+        render();
+        get("status").textContent = "";
+        if (update) get("edit").focus({ preventScroll: true });
+      } catch (error) {
+        if (pending !== token || !dialog.open) return;
+        get("status").textContent = error?.message === "leaderboard_invalid_nickname" ? "昵称请使用 16 个字以内的可见字符。"
+          : error?.message === "pk_membership_required" ? "该账号尚未开通学习同步。"
+          : update ? "保存失败，请重试。" : "暂时无法加载榜单。";
+        get("retry").hidden = Boolean(board);
+      } finally {
+        if (pending === token) {
+          pending = null;
+          busy(false);
+        }
+      }
+    }
+
+    function reset() {
+      board = null;
+      pending = null;
+      editor.hidden = true;
+      nickname.value = "";
+      get("guest").hidden = true;
+      get("retry").hidden = true;
+      get("status").textContent = "";
+      get("top").replaceChildren();
+      get("rows").replaceChildren();
+      busy(false);
+      render();
+    }
+
+    for (const button of document.querySelectorAll("[data-open-leaderboard]")) {
+      button.onclick = () => {
+        if (dialog.open) return;
+        reset();
+        button.focus({ preventScroll: true });
+        dialog.showModal();
+        get("scroll").scrollTop = 0;
+        get("guest").hidden = signedIn();
+        request();
+      };
+    }
+    get("close").onclick = () => sheet ? sheet.close() : dialog.close();
+    get("login").onclick = () => {
+      dialog.close();
+      login();
+    };
+    get("refresh").onclick = get("retry").onclick = () => request();
+    get("edit").onclick = () => {
+      if (!board) return;
+      nickname.value = board.me.nickname || "";
+      get("save").textContent = board.me.joined ? "保存昵称" : "加入榜单";
+      get("leave").hidden = !board.me.joined;
+      editor.hidden = false;
+      editor.scrollIntoView({ block: "nearest" });
+      nickname.focus({ preventScroll: true });
+    };
+    get("cancel").onclick = () => {
+      editor.hidden = true;
+      get("edit").focus({ preventScroll: true });
+    };
+    editor.onsubmit = (event) => {
+      event.preventDefault();
+      const label = nickname.value.trim();
+      if ([...label].length > 16) {
+        get("status").textContent = "昵称最多 16 个字。";
+        return;
+      }
+      request({ nickname: label });
+    };
+    get("leave").onclick = () => request({ nickname: null });
+    dialog.addEventListener("close", () => { if (!dialog.open) reset(); });
+    const refresh = () => {
+      if (!document.hidden && editor.hidden) request();
+    };
+    window.addEventListener("online", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    setInterval(refresh, 20000);
+
+    return {
+      accountChanged() {
+        if (dialog.open) dialog.close();
+        reset();
+      },
+    };
+  }
+
+  window.QuizLeaderboard = { connect };
+})();
+</script>
+<script>
 "use strict";
 
 const allQuestions = Array.isArray(window.QuizData) ? window.QuizData : [];
@@ -13927,6 +14248,11 @@ function connectLibrarySwipe() {
 
 connectLibrarySwipe();
 setup();
+const leaderboard = window.QuizLeaderboard?.connect({
+  signedIn: () => Boolean(sync?.enabled()),
+  rpc: (name, params) => sync.deskRpc(name, params),
+  login: () => $("account-button").click(),
+});
 meetingTimeline = window.QuizMeetingTimeline?.connect({
   questions: byId,
   priority: commonQuestionPriority,
@@ -13950,7 +14276,10 @@ desk = window.QuizDesk?.connect({
 showTab("practice");
 sync = window.QuizAccount?.connect({
   randomId,
-  accountChanged: (account) => desk?.accountChanged(account),
+  accountChanged(account) {
+    leaderboard?.accountChanged();
+    desk?.accountChanged(account);
+  },
   receive(remote, reset) {
     const active = !reset && (!$("quiz").hidden || !$("result").hidden) ? state.session : null;
     const session = Array.isArray(remote.session?.ids) && remote.session.ids.every((id) => byId.has(id))
