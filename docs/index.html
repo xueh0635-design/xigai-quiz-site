@@ -1060,6 +1060,11 @@ a { color: var(--accent); }
   grid-template-columns: max-content minmax(0, 1fr) max-content;
   gap: 8px;
 }
+.quiz-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
 .lesson-header :is(#back, #star) {
   display: inline-flex;
   align-items: center;
@@ -5866,6 +5871,25 @@ button[data-option-note][data-option-holding]::after {
   font-size: .85rem;
   font-weight: 720;
 }
+.question-development-shortcut {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: 44px;
+  min-block-size: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font: 650 .94rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.question-development-shortcut:active,
+.question-development-shortcut:focus-visible {
+  color: var(--ink);
+  background: var(--world-card-alt);
+}
 .quiz-tutor-sheet.account-dialog.glass {
   width: min(540px, calc(100% - 16px));
   max-height: min(46rem, calc(100dvh - 30px - var(--top-inset) - var(--bottom-inset)));
@@ -6174,7 +6198,10 @@ button[data-option-note][data-option-holding]::after {
         <div class="quiz-bar">
           <button id="back" type="button">返回章节</button>
           <span id="where"></span>
-          <button id="star" type="button" aria-pressed="false">收藏</button>
+          <div class="quiz-bar-tools">
+            <button class="question-development-shortcut" data-development-shortcut type="button" aria-label="开发助手" title="开发助手" aria-haspopup="dialog" aria-controls="development-requests" hidden><span aria-hidden="true">&lt;/&gt;</span></button>
+            <button id="star" type="button" aria-pressed="false">收藏</button>
+          </div>
         </div>
         <input id="question-position" type="range" min="1" max="1" value="1" aria-label="跳到题号">
         <p id="quiz-completion" class="quiz-completion" hidden></p>
@@ -6284,6 +6311,7 @@ button[data-option-note][data-option-holding]::after {
       <div class="history-question-heading">
         <p id="history-question-meta"></p>
         <div class="question-card-actions">
+          <button class="question-development-shortcut" data-development-shortcut type="button" aria-label="开发助手" title="开发助手" aria-haspopup="dialog" aria-controls="development-requests" hidden><span aria-hidden="true">&lt;/&gt;</span></button>
           <button id="history-question-redo" class="question-redo" type="button" aria-label="重做本题" disabled><span aria-hidden="true">↻</span>重做</button>
           <button id="history-question-close" type="button">关闭</button>
         </div>
@@ -6346,7 +6374,7 @@ button[data-option-note][data-option-holding]::after {
         <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="哪里没懂？"></textarea>
         <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
       </form>
-      <button id="tutor-development-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="development-requests" type="button" hidden>给题库提需求</button>
+      <button id="tutor-development-open" class="quiz-tutor-entry" data-development-shortcut aria-haspopup="dialog" aria-controls="development-requests" type="button" hidden>给题库提需求</button>
     </dialog>
     <dialog id="development-requests" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="development-title">
       <div data-sheet-handle>
@@ -12755,6 +12783,7 @@ window.QuizMeetingData = {
   const receipts = byId("development-receipts");
   const status = byId("development-status");
   const mac = byId("development-mac");
+  const shortcuts = document.querySelectorAll("[data-development-shortcut]");
   const states = { queued: "等待 Mac", running: "开发中", ready: "草稿已就绪", failed: "需要查看" };
 
   function requestId() {
@@ -12780,7 +12809,7 @@ window.QuizMeetingData = {
       const pairing = data?.pairing === true;
       byId("development-profile").hidden = !available && !pairing;
       byId("profile-development-open").textContent = available ? "提需求" : "绑定 Mac";
-      byId("tutor-development-open").hidden = !available;
+      for (const shortcut of shortcuts) shortcut.hidden = !available;
       pairForm.hidden = !pairing || available;
       requestForm.hidden = !available;
       const requests = Array.isArray(data?.requests) ? data.requests : [];
@@ -12860,7 +12889,7 @@ window.QuizMeetingData = {
 
     byId("development-close").onclick = sheet.close;
     byId("profile-development-open").onclick = open;
-    byId("tutor-development-open").onclick = open;
+    for (const shortcut of shortcuts) shortcut.onclick = open;
     dialog.addEventListener("close", () => {
       clearInterval(timer);
       pairCode.value = "";
