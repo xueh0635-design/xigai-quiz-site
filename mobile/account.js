@@ -186,14 +186,16 @@ function connect(callbacks) {
     callbacks.receive(result, reset);
   }
 
-  function queue(kind, record_key, payload) {
+  function queue(changes) {
     if (!actor) return;
-    const id = kind + ":" + record_key;
-    const previous = cache.records[id];
-    const revision = Math.max(Date.now(), (previous?.revision || 0) + 1);
-    const row = { kind, record_key, revision, change_id: callbacks.randomId(), payload: structuredClone(payload) };
-    cache.records[id] = row;
-    cache.pending[id] = row;
+    for (const [kind, record_key, payload] of changes) {
+      const id = kind + ":" + record_key;
+      const previous = cache.records[id];
+      const revision = Math.max(Date.now(), (previous?.revision || 0) + 1);
+      const row = { kind, record_key, revision, change_id: callbacks.randomId(), payload: structuredClone(payload) };
+      cache.records[id] = row;
+      cache.pending[id] = row;
+    }
     persist();
     schedule();
   }
