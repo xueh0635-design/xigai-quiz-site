@@ -1171,13 +1171,36 @@ a { color: var(--accent); }
   line-height: 1.4;
 }
 #option-hint { color: var(--muted); font-size: .82rem; }
-#wrong-review {
+.question-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-inline-start: auto;
+}
+#wrong-review {
   min-height: 44px;
   padding: 5px 11px;
   border-radius: 12px;
   font-size: .83rem;
 }
+#quiz .question-redo, #history-question .question-redo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  gap: 5px;
+  padding: 5px 11px;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--accent) 8%, var(--paper));
+  color: var(--accent);
+  font-size: .83rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.question-redo span { font-size: 1.05rem; line-height: 1; }
+.question-redo:disabled { opacity: .55; }
+.question-redo:not(:disabled):active { transform: translateY(1px); }
 .lesson-card #question {
   margin: 12px 0 17px;
   font-size: clamp(1.12rem, 3vw, 1.5rem);
@@ -6162,7 +6185,10 @@ button[data-option-note][data-option-holding]::after {
           <span id="kind"></span>
           <span id="common-question-badge" class="common-question-badge" hidden></span>
           <span id="option-hint" hidden>选齐后提交</span>
-          <button id="wrong-review" type="button" aria-label="留在错题本" aria-pressed="false">加入错题本</button>
+          <div class="question-card-actions">
+            <button id="wrong-review" type="button" aria-label="留在错题本" aria-pressed="false">加入错题本</button>
+            <button id="question-redo" class="question-redo" type="button" aria-label="重做本题" disabled><span aria-hidden="true">↻</span>重做</button>
+          </div>
         </div>
         <h2 id="question" tabindex="-1"></h2>
         <button id="quiz-tutor-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>AI 问这题</button>
@@ -6256,7 +6282,10 @@ button[data-option-note][data-option-holding]::after {
     <dialog id="history-question" class="account-dialog glass" aria-labelledby="history-question-title">
       <div class="history-question-heading">
         <p id="history-question-meta"></p>
-        <button id="history-question-close" type="button">关闭</button>
+        <div class="question-card-actions">
+          <button id="history-question-redo" class="question-redo" type="button" aria-label="重做本题" disabled><span aria-hidden="true">↻</span>重做</button>
+          <button id="history-question-close" type="button">关闭</button>
+        </div>
       </div>
       <h2 id="history-question-title"></h2>
       <ul id="history-question-options" class="history-question-options"></ul>
@@ -12937,6 +12966,7 @@ function save(changes = []) {
 
 function saveSession(extra = []) {
   const session = state.session;
+  applyQuestionRedos(session);
   if (session?.sid) deferredResume = null;
   save(session?.sid ? [...extra, ["session", "resume", session]] : extra);
 }
@@ -13268,6 +13298,7 @@ function setup() {
     state.session = null;
     save();
   }
+  applyQuestionRedos(state.session);
   const hasSavedBank = allowSources && Object.hasOwn(bankLabels, savedBank) && (savedBank !== "common" || allowCommon);
   selectBank(hasSavedBank ? savedBank : "all");
 }
@@ -13450,6 +13481,67 @@ function hasAnswered(id) {
   return typeof historyEntry(id)?.wrong === "boolean";
 }
 
+function clearRoundAnswer(session, id) {
+  delete session.results?.[id];
+  delete session.drafts?.[id];
+  if (session.ids[session.index] === id && session.selected?.length) session.selected = [];
+}
+
+function applyQuestionRedos(session) {
+  for (const round of [session, session?.chapterStudy?.pausedPractice]) {
+    // An exam keeps its own drafts and submitted score when a practice answer changes.
+    if (!round?.ids || round.mode === "chapter-test") continue;
+    for (const id of round.ids) {
+      const redo = state.history[id]?.redo;
+      if (!redo || round.questionRedos?.[id] === redo) continue;
+      clearRoundAnswer(round, id);
+      (round.questionRedos ??= {})[id] = redo;
+    }
+  }
+}
+
+function redoCurrentRoundOnly(session) {
+  return takingChapterTest(session) || session?.mode === "memory";
+}
+
+function canRedoCurrentQuestion(id) {
+  const session = state.session;
+  return Boolean(session.results[id] || session.selected.length ||
+    (!redoCurrentRoundOnly(session) && (hasAnswered(id) || inWrongLibrary(id))));
+}
+
+function redoQuestion(item, fromHistory = false) {
+  const id = item.id;
+  const session = state.session;
+  const roundOnly = !fromHistory && redoCurrentRoundOnly(session);
+  cancelAutoAdvance();
+  if (roundOnly) {
+    clearRoundAnswer(session, id);
+    saveSession();
+  } else {
+    // Clear all copies of this question without overwriting another device's resume.
+    const entry = { redo: randomId() };
+    const changes = (sharedQuestions.get(id) || [id]).map((key) => {
+      state.history[key] = entry;
+      return ["history", key, entry];
+    });
+    applyQuestionRedos(session);
+    applyQuestionRedos(deferredResume);
+    save(changes);
+  }
+  if (fromHistory) $("history-question").close();
+  const index = session?.ids.indexOf(id) ?? -1;
+  if ((!roundOnly && session?.mode !== "practice") || index < 0) {
+    start([id], "practice", { bankScope: bankForSession(session) });
+  } else if (index !== session.index) {
+    goToQuestion(index);
+  } else {
+    renderQuestion();
+    window.scrollTo(0, 0);
+    $("question").focus({ preventScroll: true });
+  }
+}
+
 function inWrongLibrary(id) {
   const entry = historyEntry(id);
   return entry?.review ?? (entry?.wrong === true);
@@ -13476,6 +13568,7 @@ function renderQuestionFlags(id) {
   $("star").setAttribute("aria-pressed", String(starred));
   $("star").textContent = starred ? "已收藏" : "收藏";
   renderWrongReview(id);
+  $("question-redo").disabled = !canRedoCurrentQuestion(id);
 }
 
 function inScope(item, scope) {
@@ -13709,7 +13802,12 @@ function renderHistoryAnswer(item) {
   const entry = state.history[key] || {};
   const answered = typeof entry.wrong === "boolean";
   const selected = translateSelection(entry.selected, key, item.id);
-  $("history-question-result").textContent = answered ? entry.wrong ? "上次答错" : "上次答对" : "手动加入，尚未作答";
+  const markedWrong = inWrongLibrary(item.id);
+  $("history-question-result").textContent = answered ? entry.wrong ? "上次答错" : "上次答对"
+    : markedWrong ? "手动加入，尚未作答" : "尚未作答";
+  $("history-question-redo").disabled = !answered && !markedWrong;
+  $("history-question-practice").hidden =
+    $("history-question").dataset.practice !== "true" || !markedWrong || !requiresAnswer(item.id);
   $("history-question-selection").textContent = selected.length
     ? selected.map((answer) => historyOptionLabel(item, answer)).join("\n")
     : answered ? "这条早期记录保存了判分。" : "暂无作答记录。";
@@ -13718,6 +13816,7 @@ function renderHistoryAnswer(item) {
 function showHistoryQuestion(item, practice = false) {
   const dialog = $("history-question");
   dialog.dataset.questionId = item.id;
+  dialog.dataset.practice = String(practice);
   $("history-question-meta").textContent = `${item.chapter} · ${item.type}题`;
   appendCommonQuestionBadge($("history-question-meta"), item);
   $("history-question-title").textContent = item.stem;
@@ -13744,7 +13843,6 @@ function showHistoryQuestion(item, practice = false) {
   renderStudyEvidence(study, "history-question-");
   meetingTimeline?.link($("meeting-from-history"), item.id);
   const retry = $("history-question-practice");
-  retry.hidden = !practice || !requiresAnswer(item.id);
   retry.onclick = () => {
     $("history-question").close();
     startWrongChapter(item.chapter, wrongBank, item.id);
@@ -14255,7 +14353,7 @@ function renderQuestion() {
   $("feedback").textContent = showGrade ? (adventure
     ? result.correct ? "答对了！" : "差一点，再记住这个考点"
     : result.correct ? "回答正确" : "回答错误") : "";
-  $("feedback").dataset.state = fill ? "" : result?.correct ? "correct" : "incorrect";
+  $("feedback").dataset.state = showGrade ? result.correct ? "correct" : "incorrect" : "";
   $("submitted-answer").hidden = !result || memoryMode;
   $("submitted-answer").textContent = !result || memoryMode ? "" : selected.length
     ? `我的作答\n${selected.map((answer) => historyOptionLabel(item, answer)).join("\n")}`
@@ -14349,6 +14447,8 @@ function recordAnswer(session, item, selected, timestamp) {
   session.results[item.id] = { selected, correct };
   const id = sharedQuestionId(item.id);
   const entry = { wrong: !correct, last: timestamp, selected: [...translateSelection(selected, item.id, id)] };
+  const redo = state.history[id]?.redo;
+  if (redo) entry.redo = redo;
   state.history[id] = entry;
   return ["history", id, entry];
 }
@@ -14531,6 +14631,10 @@ $("submit").onclick = () => {
 $("review-round").onclick = () => goToQuestion(state.session.ids.length - 1);
 $("back").onclick = returnFromQuestion;
 $("history-question-close").onclick = () => $("history-question").close();
+$("history-question-redo").onclick = () => {
+  const item = byId.get($("history-question").dataset.questionId);
+  if (item && (hasAnswered(item.id) || inWrongLibrary(item.id))) redoQuestion(item, true);
+};
 $("library-back").onclick = () => {
   if (wrongChapter) {
     wrongChapter = null;
@@ -14563,7 +14667,11 @@ $("wrong-review").onclick = () => {
   const item = current();
   if (!item) return;
   setWrongReview(item.id, !inWrongLibrary(item.id));
-  renderWrongReview(item.id);
+  renderQuestionFlags(item.id);
+};
+$("question-redo").onclick = () => {
+  const item = current();
+  if (item && canRedoCurrentQuestion(item.id)) redoQuestion(item);
 };
 $("option-notes-open").onclick = (event) => {
   const item = current();
@@ -15096,15 +15204,17 @@ sync = window.QuizAccount?.connect({
   },
   receive(remote, reset) {
     const active = !reset && (!$("quiz").hidden || !$("result").hidden) ? state.session : null;
-    const open = active && !$("quiz").hidden && current();
-    const item = open && (usesChapterHistory(active) || sharedQuestions.has(open.id)) ? open : null;
+    const item = active && !$("quiz").hidden ? current() : null;
     const previous = item && questionResult(active, item.id);
+    const previousSelection = item && active.selected;
     const session = Array.isArray(remote.session?.ids) && remote.session.ids.every((id) => byId.has(id))
-      ? remote.session : null;
+      ? structuredClone(remote.session) : null;
     // Keep the open question in place, and use the synced resume once the user leaves it.
     if (reset) deferredResume = null;
     else if (active && session) deferredResume = session;
     state = { ...remote, session: active || session };
+    applyQuestionRedos(state.session);
+    applyQuestionRedos(deferredResume);
     if (reset) {
       inspectedChapter = null;
       wrongChapter = null;
@@ -15115,11 +15225,11 @@ sync = window.QuizAccount?.connect({
       updateAvailability();
       if (item) {
         const result = questionResult(active, item.id);
-        if (previous?.correct !== result?.correct || JSON.stringify(previous?.selected) !== JSON.stringify(result?.selected) ||
+        if (previousSelection !== active.selected || previous?.correct !== result?.correct ||
+            JSON.stringify(previous?.selected) !== JSON.stringify(result?.selected) ||
             JSON.stringify(previous?.roundSelection) !== JSON.stringify(result?.roundSelection)) {
           renderQuestion();
-        } else {
-          renderQuestionFlags(item.id);
+        } else if (usesChapterHistory(active) || sharedQuestions.has(item.id)) {
           const progress = renderRoundProgress(active);
           if (takingChapterTest(active)) renderChapterTestActions(active);
           else renderQuestionActions(active, item, result, progress);
@@ -15130,6 +15240,7 @@ sync = window.QuizAccount?.connect({
   guest() {
     deferredResume = null;
     state = guestState();
+    applyQuestionRedos(state.session);
     inspectedChapter = null;
     wrongChapter = null;
     wrongBank = selectedBank;
