@@ -84,6 +84,7 @@ window.addEventListener("load", () => {
   } catch (error) {
     report.textContent = "XIGAI SYNC UI FAIL: " + error.message;
   }
+  if (field("history-question").open) field("history-question").close();
   document.body.append(report);
 });
 </script>
