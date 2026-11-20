@@ -150,7 +150,7 @@ function attachRecovery(dialog, loginForm, canStart, restoreLogin) {
       if (active === attempt) setBusy(false);
     }
   };
-  return { reset };
+  return { reset, start };
 }
 
 function connect(callbacks) {
@@ -162,7 +162,8 @@ function connect(callbacks) {
   let cache = null;
   let generation = 0;
   let scheduled;
-  let busy = false;
+  let inFlight = null;
+  let refreshAgain = false;
   let enrolled = false;
 
   function persist() {
@@ -175,11 +176,12 @@ function connect(callbacks) {
   }
 
   function giveState(reset) {
-    const result = { history: {}, stars: {}, session: null };
+    const result = { history: {}, stars: {}, notes: {}, session: null };
     let latest = null;
     for (const row of Object.values(cache.records)) {
       if (row.kind === "history") result.history[row.record_key] = row.payload;
       if (row.kind === "star") result.stars[row.record_key] = row.payload;
+      if (row.kind === "note" && typeof row.payload === "string" && row.payload) result.notes[row.record_key] = row.payload;
       if (row.kind === "session" && row.payload && isNewer(row, latest)) latest = row;
     }
     result.session = latest?.payload || null;
@@ -201,17 +203,37 @@ function connect(callbacks) {
   }
 
   function schedule() {
+    if (inFlight) {
+      refreshAgain = true;
+      return;
+    }
     clearTimeout(scheduled);
     scheduled = setTimeout(refresh, 550);
   }
 
-  async function refresh() {
-    if (!actor || busy) return;
-    busy = true;
+  function refresh() {
+    clearTimeout(scheduled);
+    if (!actor) return;
+    if (inFlight) return inFlight;
+    inFlight = (async () => {
+      try {
+        do {
+          refreshAgain = false;
+          await refreshOnce();
+        } while (actor && refreshAgain);
+      } finally {
+        inFlight = null;
+      }
+    })();
+    return inFlight;
+  }
+
+  async function refreshOnce() {
     const epoch = generation;
     const profile = actor;
     const sameAccount = () => generation === epoch;
     try {
+      accountLabel().textContent = "同步中…";
       if (!enrolled) {
         const membership = await client.from("quiz_members").select("account_id").eq("account_id", profile.id).maybeSingle();
         if (!sameAccount()) return;
@@ -222,19 +244,26 @@ function connect(callbacks) {
         }
         enrolled = true;
       }
-      accountLabel().textContent = "同步中…";
-      for (const batch of pendingBatches(Object.values(cache.pending))) {
-        const response = await client.rpc("merge_account_quiz_state", { expected_account: profile.id, changes: batch });
-        if (!sameAccount()) return;
-        if (response.error) throw response.error;
-        for (const sent of batch) {
-          const tag = keyFor(sent);
-          if (cache.pending[tag]?.change_id === sent.change_id) delete cache.pending[tag];
+      let uploadFailed = false;
+      try {
+        for (const batch of pendingBatches(Object.values(cache.pending))) {
+          const response = await client.rpc("merge_account_quiz_state", { expected_account: profile.id, changes: batch });
+          if (!sameAccount()) return;
+          if (response.error) throw response.error;
+          for (const sent of batch) {
+            const tag = keyFor(sent);
+            if (cache.pending[tag]?.change_id === sent.change_id) delete cache.pending[tag];
+          }
+          persist();
         }
-        persist();
+      } catch {
+        if (!sameAccount()) return;
+        uploadFailed = true;
       }
 
-      let changed = false;
+      // Apply only after all pages arrive, so a retry can still notify the view
+      // when new rows were returned on a page before the failure.
+      const rows = [];
       const size = 200;
       for (let from = 0; ; from += size) {
         const response = await client.from("quiz_state")
@@ -242,23 +271,23 @@ function connect(callbacks) {
           .eq("account_id", profile.id).order("kind").order("record_key").range(from, from + size - 1);
         if (!sameAccount()) return;
         if (response.error) throw response.error;
-        for (const row of response.data) {
-          const tag = keyFor(row);
-          if (isNewer(row, cache.records[tag])) {
-            cache.records[tag] = row;
-            changed = true;
-          }
-        }
+        rows.push(...response.data);
         if (response.data.length < size) break;
+      }
+      let changed = false;
+      for (const row of rows) {
+        const tag = keyFor(row);
+        if (isNewer(row, cache.records[tag])) {
+          cache.records[tag] = row;
+          changed = true;
+        }
       }
       persist();
       if (changed) giveState(false);
-      accountLabel().textContent = Object.keys(cache.pending).length ? "有更改待同步" : "进度已同步";
+      accountLabel().textContent = uploadFailed ? "已读取云端记录 · 本机更改待上传"
+        : Object.keys(cache.pending).length ? "有更改待同步" : "进度已同步";
     } catch {
-      if (sameAccount()) accountLabel().textContent = "暂未联网同步 · 本机记录已保留";
-    } finally {
-      busy = false;
-      if (!sameAccount() && actor) schedule();
+      if (sameAccount()) accountLabel().textContent = "未能读取云端记录 · 本机记录已保留";
     }
   }
 
@@ -275,6 +304,7 @@ function connect(callbacks) {
       byId("account-email").textContent = actor.email || "";
       byId("account-form").hidden = true;
       byId("account-active").hidden = false;
+      accountLabel().textContent = "等待同步…";
       giveState(true);
       schedule();
     } else {
@@ -312,7 +342,7 @@ function connect(callbacks) {
     message("");
   }
 
-  const recovery = config.passwordRecovery === true && !nativeUI ? attachRecovery(
+  const recovery = config.passwordRecovery === true ? attachRecovery(
     dialog, form, () => !actor && !submitButton.disabled,
     (address, notice) => {
       form.hidden = false;
@@ -329,10 +359,17 @@ function connect(callbacks) {
   byId("account-button").onclick = async () => {
     message("");
     if (nativePending || dialog.open) return;
+    if (actor) refresh();
     if (nativeUI) {
       nativePending = true;
       try {
-        await nativeUI.postMessage({ kind: "account", email: actor ? actor.email || "" : null });
+        const result = await nativeUI.postMessage({
+          kind: "account", email: actor ? actor.email || "" : null, recovery: Boolean(recovery),
+        });
+        if (recovery && !actor && typeof result?.recoveryEmail === "string") {
+          dialog.showModal();
+          recovery.start(result.recoveryEmail);
+        }
         return;
       } catch {
         // The bundled form remains available if native presentation fails.
@@ -459,7 +496,7 @@ function connect(callbacks) {
   });
   setInterval(() => {
     if (document.visibilityState === "visible") refresh();
-  }, 45000);
+  }, 15000);
   async function deskRpc(name, params) {
     if (!actor) return { error: { message: "pk_auth_required" } };
     const epoch = generation;
@@ -490,7 +527,34 @@ function connect(callbacks) {
     const result = await operations[action]();
     return epoch === generation ? result : { error: { message: "pk_auth_required" } };
   }
-  return { queue, deskRpc, deskAvatar, arenaSubscribe, enabled: () => Boolean(actor) };
+  async function tutor(method, body, signal) {
+    if (!actor) return { code: "sign_in" };
+    const epoch = generation;
+    try {
+      const { data, error } = await client.functions.invoke("quiz-tutor", {
+        method, ...(body ? { body } : {}), signal: signal || AbortSignal.timeout(8000),
+      });
+      if (epoch !== generation) return { code: "sign_in" };
+      if (!error) return { data };
+      if (error.context instanceof Response) {
+        const result = await error.context.json().catch(() => null);
+        return { code: result?.code || (error.context.status === 401 ? "sign_in" : "unavailable") };
+      }
+    } catch {
+      return { code: "unavailable" };
+    }
+    return { code: "unavailable" };
+  }
+
+  async function development(action, payload) {
+    if (!actor) return null;
+    const epoch = generation;
+    const { data, error } = await client.rpc("quiz_development_client", { action, payload })
+      .abortSignal(AbortSignal.timeout(10000));
+    return !error && epoch === generation ? data : null;
+  }
+
+  return { queue, deskRpc, deskAvatar, arenaSubscribe, tutor, development, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {
