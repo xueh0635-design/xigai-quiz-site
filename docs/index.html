@@ -70,13 +70,67 @@
     ], { duration: 190, easing: easeOut });
   }
 
-  function answerStreak(badge) {
-    if (motion.matches || !badge.animate) return null;
-    return badge.animate([
-      { opacity: 0, transform: "translateY(8px) scale(.88)" },
-      { opacity: 1, transform: "translateY(0) scale(1.07)", offset: .62 },
+  function answerStreak(scene, duration) {
+    if (motion.matches || !scene.animate) return null;
+
+    const { tier } = scene.dataset;
+    const milestone = tier === "milestone";
+    const sparkCount = { pair: 2, run: 5, milestone: 8 }[tier];
+    const lift = { pair: 8, run: 13, milestone: 22 }[tier];
+    const motions = [];
+    function play(target, frames, time, delay = 0) {
+      const element = target ? scene.querySelector(target) : scene;
+      motions.push(element.animate(frames, { duration: time, delay, easing: easeOut, fill: "both" }));
+    }
+    play(null, [
+      { opacity: 1, transform: "translateY(0)" },
+      { opacity: 1, transform: "translateY(0)", offset: .78 },
+      { opacity: 0, transform: "translateY(-11px)" },
+    ], duration);
+    play(".streak-crane", [
+      { opacity: 0, transform: "translate(-61px, 26px) rotate(-22deg) scale(.63)" },
+      { opacity: 1, transform: `translate(13px, -${lift}px) rotate(-9deg) scale(1.08)`, offset: .55 },
+      { opacity: 1, transform: "translate(0, 0) rotate(0) scale(1)" },
+    ], milestone ? 550 : 460);
+    play(".streak-trail", [
+      { opacity: 0, transform: "translateX(-43px) rotate(-19deg) scaleX(.36)" },
+      { opacity: .95, transform: "translateX(8px) rotate(-14deg) scaleX(1.02)", offset: .43 },
+      { opacity: .68, transform: "translateX(0) rotate(-12deg) scaleX(1)" },
+    ], milestone ? 700 : 550);
+    play(".streak-ticket", [
+      { opacity: 0, transform: "translate(-18px, 7px) skewX(-14deg) scale(.88)" },
+      { opacity: 1, transform: "translate(3px, -2px) skewX(1deg) scale(1.045)", offset: .63 },
+      { opacity: 1, transform: "translate(0, 0) skewX(0) scale(1)" },
+    ], 360, 74);
+    play(".streak-ticket strong", [
+      { opacity: 0, transform: "translateY(14px) scale(.68)" },
+      { opacity: 1, transform: "translateY(-2px) scale(1.15)", offset: .56 },
       { opacity: 1, transform: "translateY(0) scale(1)" },
-    ], { duration: 300, easing: easeOut });
+    ], 310, 141);
+    play(".streak-ticket-glint", [
+      { opacity: 0, transform: "translateX(-30%) skewX(-18deg)" },
+      { opacity: 1, offset: .24 },
+      { opacity: 0, transform: "translateX(360%) skewX(-18deg)" },
+    ], 470, 229);
+    if (milestone) {
+      play(".streak-halo", [
+        { opacity: 0, transform: "scale(.5)" },
+        { opacity: .85, transform: "scale(.97)", offset: .39 },
+        { opacity: .18, transform: "scale(1.12)" },
+      ], 1020, 18);
+    }
+    const sparkPaths = [[-103, -26], [108, -25], [-90, 33], [102, 31], [31, -44],
+      [-121, 11], [123, 3], [6, 45]];
+    const sparks = scene.querySelectorAll(".streak-sparks i");
+    for (const [index, spark] of [...sparks].slice(0, sparkCount).entries()) {
+      const [x, y] = sparkPaths[index];
+      motions.push(spark.animate([
+        { opacity: 0, transform: "translate(0, 0) scale(.3)" },
+        { opacity: 1, transform: `translate(${x * .63}px, ${y * .63}px) scale(1.3)`, offset: .37 },
+        { opacity: 0, transform: `translate(${x}px, ${y}px) scale(.35) rotate(32deg)` },
+      ], { duration: 640, delay: 65 + index * 22, easing: easeOut }));
+    }
+    return { cancel: () => motions.forEach((animation) => animation.cancel()) };
   }
 
   window.QuizWorldMotion = { page, answer, answerStreak, preference: motion };
@@ -1106,33 +1160,132 @@ a { color: var(--accent); }
 }
 
 .lesson-header { margin-bottom: 14px; }
+#answer-streak-status {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 #answer-streak {
+  --streak-light: #fff3cc;
+  --streak-gold: #ffc878;
+  --streak-edge: #729e90;
+  --streak-shape: polygon(0 15px, 15px 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%);
   position: fixed;
   z-index: 15;
-  inset-block-start: calc(var(--top-inset) + 74px);
+  inset-block-start: calc(var(--top-inset) + 70px);
+  inset-block-start: calc(var(--top-inset) + clamp(57px, 9.5dvh, 82px));
   inset-inline: 0;
-  width: max-content;
-  max-width: calc(100% - 2 * var(--edge));
-  margin: 0 auto;
+  width: min(310px, calc(100% - 28px));
+  height: 106px;
+  margin-inline: auto;
+  isolation: isolate;
   pointer-events: none;
-  text-align: center;
-  font-size: .9rem;
-  font-weight: 750;
+  filter: drop-shadow(0 5px 8px #101b2280);
+}
+#answer-streak[data-tier="milestone"] {
+  --streak-edge: #ffdf9b;
+}
+.streak-ticket {
+  position: absolute;
+  z-index: 2;
+  inset: 21px 7% auto 29%;
+  min-height: 60px;
+  padding: 4px 17px 6px min(12vw, 40px);
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 5px;
+  clip-path: var(--streak-shape);
+  background: linear-gradient(130deg, var(--streak-light), var(--streak-edge) 35%, #49716d 72%, var(--streak-gold));
+  color: var(--streak-light);
+  white-space: nowrap;
+  font-size: .82rem;
+  font-weight: 730;
+  line-height: 1.16;
+}
+.streak-ticket::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  clip-path: var(--streak-shape);
+  background:
+    radial-gradient(ellipse at 88% 0%, #59796880, transparent 76%),
+    linear-gradient(128deg, #2a5352, #152b35 62%, #122933);
+}
+[data-tier="milestone"] .streak-ticket::before {
+  background:
+    radial-gradient(ellipse at 79% 0%, #b8793d96, transparent 72%),
+    linear-gradient(128deg, #4c4650, #293438 58%, #243437);
+}
+.streak-ticket strong {
+  display: inline-block;
+  color: #ffe9ab;
+  font-size: clamp(30px, 10vw, 44px);
+  font-weight: 850;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -.045em;
+  text-shadow: 0 1px 0 #3c291f, 0 0 14px #ffc66d55;
 }
-#answer-streak:not(:empty) {
-  padding: 5px 14px;
-  border: 1px solid var(--world-gold);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 3px 15px var(--world-shadow);
+#answer-streak[data-wide] .streak-ticket strong { font-size: clamp(24px, 8vw, 34px); }
+.streak-ticket-glint {
+  position: absolute;
+  inset: -40% auto -40% 0;
+  width: 32%;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent, #fff1b248, transparent);
 }
-#answer-streak:not(:empty)::before {
-  content: "✦" / "";
-  margin-inline-end: .42em;
-  color: var(--world-gold);
+.streak-crane {
+  position: absolute;
+  z-index: 3;
+  inset: 6px auto auto 0;
+  width: 43%;
+  height: auto;
+  filter: drop-shadow(0 2px 3px #131e2a);
 }
+.streak-halo {
+  position: absolute;
+  inset: -12px 0 0;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 48%, #ffd18481, #eba86824 43%, transparent 69%);
+}
+.streak-trail {
+  position: absolute;
+  inset: 36px 7% 14px 3%;
+  opacity: .78;
+  transform: rotate(-12deg);
+  border-radius: 50%;
+  border-bottom: 2px solid var(--streak-gold);
+  box-shadow: 0 6px 8px -6px #ffd491b0;
+}
+.streak-trail::after {
+  content: "";
+  position: absolute;
+  inset: 7px 15% -5px 5%;
+  border-radius: 50%;
+  border-bottom: 1px solid #b5e1d295;
+}
+[data-tier="pair"] .streak-trail::after { display: none; }
+[data-tier="milestone"] .streak-trail { border-bottom-color: #ffeba9; }
+.streak-sparks i {
+  position: absolute;
+  z-index: 4;
+  inset: 49% auto auto 45%;
+  width: 7px;
+  height: 7px;
+  opacity: 0;
+  clip-path: polygon(50% 0, 64% 36%, 100% 50%, 64% 64%, 50% 100%, 36% 64%, 0 50%, 36% 36%);
+  background: var(--streak-light);
+}
+.streak-sparks i:nth-child(even) { background: #9edbd5; }
+:root[data-reduced-motion] .streak-trail,
+:root[data-reduced-motion] .streak-halo,
+:root[data-reduced-motion] .streak-ticket-glint,
+:root[data-reduced-motion] .streak-sparks { display: none; }
 .lesson-header .quiz-bar {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
@@ -6883,7 +7036,19 @@ button[data-option-note][data-option-holding]::after {
     <p id="storage-status" role="status"></p>
   </main>
   </div>
-  <p id="answer-streak" role="status" aria-atomic="true"></p>
+  <p id="answer-streak-status" role="status" aria-atomic="true"></p>
+  <div id="answer-streak" hidden aria-hidden="true">
+    <div class="streak-halo"></div>
+    <div class="streak-trail"></div>
+    <div class="streak-ticket">
+      <span class="streak-ticket-glint"></span>
+      <span>连对</span>
+      <strong id="answer-streak-count"></strong>
+      <span>题</span>
+    </div>
+    <img class="streak-crane" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzY3JpcHRpb24iPgogIDx0aXRsZSBpZD0idGl0bGUiPuW8lei3r+e6uOm5pDwvdGl0bGU+CiAgPGRlc2MgaWQ9ImRlc2NyaXB0aW9uIj7kuIDlj6rlsZXlvIDmnY/nuqLoibLkuI7mt6HntKvoibLlj4znv7znmoTnurjpuaQ8L2Rlc2M+CiAgPGcgaWQ9ImZsaWdodC1tYXJrcyIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4KICAgIDxwYXRoIGQ9Ik0yNyA5OGMxMy03IDI1LTExIDM4LTEyTTM5IDExMWM4LTQgMTctNiAyNi03IiBzdHJva2U9IiM5YjY3NGMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iMyA1Ii8+CiAgICA8cGF0aCBkPSJNMzQxIDI2YzAgNy00IDExLTExIDExIDcgMCAxMSA0IDExIDExIDAtNyA0LTExIDExLTExLTcgMC0xMS00LTExLTExWiIgZmlsbD0iI2ZmZjBhYSIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgPHBhdGggZD0iTTM2MiA1MnY4bS00LTRoOG0tMjQgNjV2MTBtLTUtNWgxMCIgc3Ryb2tlPSIjOGQ1NjY4IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogIDwvZz4KICA8ZyBpZD0iY3JhbmUiIHN0cm9rZT0iIzYwM2M0NSIgc3Ryb2tlLXdpZHRoPSIyLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8ZyBpZD0idGFpbCI+CiAgICAgIDxwYXRoIGQ9Im0yMiAxMzEgOTgtMTAgNjMtNiAyNyAzNy01MyAxNVoiIGZpbGw9IiNmNTk0NjkiLz4KICAgICAgPHBhdGggZD0ibTIyIDEzMSAxMTAgOSAyNSAyNyIgZmlsbD0iI2RjNjk1YyIvPgogICAgICA8cGF0aCBkPSJtNjggMTMzIDY1IDUgMjggMjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYzZhMyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJmYXItd2luZyI+CiAgICAgIDxwYXRoIGQ9Im0xNzYgMTExIDQxLTUzIDc5LTQwLTIyIDY5LTQwIDUwWiIgZmlsbD0iI2Q0YmNlYSIvPgogICAgICA8cGF0aCBkPSJtMTc2IDExMSA2Ny0zOSA1My01NC0yMiA2OS00MCA1MFoiIGZpbGw9IiNiOTliZGIiLz4KICAgICAgPHBhdGggZD0ibTE5MiAxMDQgMjktNDIgNTgtMzIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2VhZDhmYiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8L2c+CiAgICA8ZyBpZD0iaGVhZC1hbmQtbmVjayI+CiAgICAgIDxwYXRoIGQ9Im0yMTAgMTM2IDUwLTcgMjAtNTMgMjUtMTQgMjQgNSA0NyAyNC01Mi0yLTIyIDExLTIxIDQ5LTQzIDIwWiIgZmlsbD0iI2ZmZWZjZSIvPgogICAgICA8cGF0aCBkPSJtMjYwIDEyOSAyNi00MiAxOS0yNS0yNSAxNFoiIGZpbGw9IiNmZmJjODEiLz4KICAgICAgPHBhdGggZD0ibTI2MCAxMjkgMjMtMTQgMTktMTUgMjItMTEtMzgtMloiIGZpbGw9IiNmNDk4NzIiLz4KICAgICAgPHBhdGggZD0ibTMyNCA4OSA1LTIyIDQ3IDI0WiIgZmlsbD0iI2Y3YjI2NyIvPgogICAgICA8cGF0aCBkPSJtMjkyIDc2IDEzLTggMTggNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmOWU5IiBzdHJva2Utd2lkdGg9IjEuOCIvPgogICAgICA8Y2lyY2xlIGN4PSIzMTYiIGN5PSI3OCIgcj0iMi40IiBmaWxsPSIjNjAzYzQ1IiBzdHJva2U9Im5vbmUiLz4KICAgIDwvZz4KICAgIDxnIGlkPSJib2R5Ij4KICAgICAgPHBhdGggZD0ibTEzMiAxNDAgNDAtMjUgNDQtNiAzNyAyMCAyOCAyMC03MiAzNS01Mi0xN1oiIGZpbGw9IiNmZmUwYTQiLz4KICAgICAgPHBhdGggZD0ibTE1NyAxNjcgNTMtMTMgNzEtNS03MiAzNVoiIGZpbGw9IiNmMGExNmUiLz4KICAgICAgPHBhdGggZD0ibTE3MiAxMTUgMzggMzkgNDMtMjUtMzctMjBaIiBmaWxsPSIjZjViZDg4Ii8+CiAgICAgIDxwYXRoIGQ9Ik0xNzAgMTY5bDM5IDEyIDQ4LTI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmNjOWQiIHN0cm9rZS13aWR0aD0iMS42Ii8+CiAgICA8L2c+CiAgICA8ZyBpZD0ibmVhci13aW5nIj4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEzMiA0MiA0NiA0MiAxMiAyMC00MyAyNS02Mi0yNloiIGZpbGw9IiNmZmM0N2QiLz4KICAgICAgPHBhdGggZD0ibTYzIDI1IDEwNSA3MCA0MiA1OS02Mi0yNloiIGZpbGw9IiNmMThhNjgiLz4KICAgICAgPHBhdGggZD0ibTE2OCA5NSA3MyAxNCAxMiAyMC00MyAyNVoiIGZpbGw9IiNlYjc3NWQiLz4KICAgICAgPHBhdGggZD0ibTc4IDMzIDExNCAzOSA0MCAzNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZlZGI0IiBzdHJva2Utd2lkdGg9IjIiLz4KICAgICAgPHBhdGggZD0ibTE3MCAxMDMgMzQgNDciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmYWY4NyIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPgo=" width="128" height="64" alt="">
+    <div class="streak-sparks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
   <nav id="mobile-tabs" class="study-tabs glass" aria-label="主导航">
     <span class="tab-highlight" aria-hidden="true"><canvas class="tab-lens-optics" aria-hidden="true"></canvas></span>
     <button type="button" data-study-tab="practice" aria-current="page">
@@ -13313,16 +13478,23 @@ function clearAnswerStreak() {
   window.clearTimeout(answerStreakTimer);
   answerStreakMotion?.cancel();
   answerStreakMotion = null;
-  $("answer-streak").textContent = "";
+  $("answer-streak").hidden = true;
+  $("answer-streak-status").textContent = "";
 }
 
 function showAnswerStreak(count) {
   clearAnswerStreak();
   if (count < 2) return;
-  const badge = $("answer-streak");
-  badge.textContent = `连对 ${count} 题`;
-  answerStreakMotion = window.QuizWorldMotion?.answerStreak(badge);
-  answerStreakTimer = window.setTimeout(clearAnswerStreak, 1000);
+  const scene = $("answer-streak");
+  const milestone = count % 5 === 0;
+  scene.dataset.tier = milestone ? "milestone" : count === 2 ? "pair" : "run";
+  scene.toggleAttribute("data-wide", count > 99);
+  $("answer-streak-count").textContent = count;
+  $("answer-streak-status").textContent = `连对 ${count} 题`;
+  scene.hidden = false;
+  const duration = milestone ? 1440 : 1180;
+  answerStreakMotion = window.QuizWorldMotion?.answerStreak(scene, duration);
+  answerStreakTimer = window.setTimeout(clearAnswerStreak, duration);
 }
 
 function makeChapterCard(chapter, total) {
@@ -14719,7 +14891,11 @@ document.addEventListener("keydown", (event) => {
 
 document.addEventListener("pointerdown", cancelAutoAdvance, { capture: true });
 document.addEventListener("wheel", cancelAutoAdvance, { passive: true });
-document.addEventListener("visibilitychange", () => { if (document.hidden) cancelAutoAdvance(); });
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) return;
+  cancelAutoAdvance();
+  clearAnswerStreak();
+});
 
 function canSwipeQuestion() {
   return !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
