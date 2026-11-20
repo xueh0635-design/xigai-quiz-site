@@ -520,7 +520,6 @@ legend { margin-bottom: 6px; color: var(--muted); font-weight: 650; font-size: .
 .option.correct { border-color: #458160; background: #e6f3ea; }
 .option.incorrect { border-color: #b5453e; background: #fdeeea; }
 .option:disabled { opacity: 1; }
-#fill-label { display: grid; gap: 6px; max-width: 560px; }
 #feedback { min-height: 1.5em; font-weight: 650; margin: 13px 0 4px; }
 #star[aria-pressed=true] { background: #fff3d6; border-color: #b98928; }
 .keys { margin: 14px 0 0; }
@@ -1154,7 +1153,6 @@ a { color: var(--accent); }
 .lesson-card .option.correct .letter { background: #276447; color: #fff; }
 .lesson-card .option.incorrect { border-color: #ae5144; background: #fff0eb; }
 .lesson-card .option.incorrect .letter { background: #9b4339; color: #fff; }
-.lesson-card #fill-answer { width: 100%; }
 
 .lesson-answer, #quiz .study-note, .lesson-related {
   margin: 11px 0 0;
@@ -1239,7 +1237,6 @@ a { color: var(--accent); }
   font-size: .8rem;
   overflow-wrap: anywhere;
 }
-#fill-answer.correct { border-color: var(--accent); }
 #quiz .study-note .memory-note {
   margin: 0;
   padding: 10px 12px;
@@ -6038,9 +6035,6 @@ button[data-option-note][data-option-holding]::after {
           <span>可长按任一选项</span>
           <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button">选项详解</button>
         </div>
-        <label id="fill-label" hidden>填写答案
-          <input id="fill-answer" type="text" autocomplete="off">
-        </label>
       </div>
       <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
         <p id="feedback" role="status" tabindex="-1"></p>
@@ -12547,18 +12541,26 @@ function chapterQuestions(chapter, bank = selectedBank) {
   return bankQuestions(bank, chapterPools.get(chapter) || []);
 }
 
+function requiresAnswer(id) {
+  return byId.get(id)?.type !== "填空";
+}
+
 function chapterStudy(chapter, bank) {
   const pool = chapterQuestions(chapter, bank);
   const remaining = [];
-  const wrong = [];
+  const marked = [];
+  let total = 0;
   let latest = 0;
   for (const item of pool) {
+    if (inWrongLibrary(item.id)) marked.push(item.id);
+    if (!requiresAnswer(item.id)) continue;
+    total++;
     if (hasAnswered(item.id)) latest = Math.max(latest, Number(state.history[item.id].last) || 0);
     else remaining.push(item.id);
-    if (inWrongLibrary(item.id)) wrong.push(item.id);
   }
+  const wrong = marked.filter(requiresAnswer);
   const test = state.session?.chapterStudy?.tests?.[bank + ":" + chapter];
-  return { chapter, bank, pool, total: pool.length, answered: pool.length - remaining.length, remaining, wrong, latest, test };
+  return { chapter, bank, pool, total, answered: total - remaining.length, remaining, wrong, marked, latest, test };
 }
 
 function selectBank(bank) {
@@ -12740,7 +12742,7 @@ function canResumeSession(session = state.session) {
   if (byId.has(session?.ids?.[session.index])) return true;
   if (!isChapterPractice(session)) return false;
   return chapterQuestions(chapterForSession(session), bankForSession(session))
-    .some((item) => !questionResult(session, item.id));
+    .some((item) => requiresAnswer(item.id) && !questionResult(session, item.id));
 }
 
 function chapterPracticeDraft(chapter, bank, repeatChapter = false) {
@@ -12751,7 +12753,8 @@ function chapterPracticeDraft(chapter, bank, repeatChapter = false) {
 }
 
 function pauseChapterPractice(session) {
-  if (!isChapterPractice(session) || !session.ids?.some((id) => byId.has(id) && !session.results[id])) return undefined;
+  if (!isChapterPractice(session) ||
+      !session.ids?.some((id) => byId.has(id) && requiresAnswer(id) && !session.results[id])) return undefined;
   const { chapterStudy, ...draft } = session;
   return draft;
 }
@@ -12769,7 +12772,7 @@ function openChapter(chapter, { bank = selectedBank, whole = false, review = fal
     return;
   }
   const plan = chapterStudy(chapter, bank);
-  if (!plan.total) return;
+  if (!plan.pool.length) return;
   const ids = plan.pool.map((item) => item.id);
   const target = review ? ids.findIndex(hasAnswered) : ids.indexOf(plan.remaining[0]);
   start(ids, "practice", {
@@ -12791,7 +12794,7 @@ function chapterRoundInProgress(chapter, bank, kind) {
   const session = state.session;
   return session?.routePlan?.kind === kind && session.routePlan.chapter === chapter &&
     bankForSession(session) === bank && canResumeSession(session) && session.index < session.ids.length &&
-    (kind === "test" ? !session.testSubmitted : session.ids.some((id) => !session.results[id]));
+    (kind === "test" ? !session.testSubmitted : session.ids.some((id) => requiresAnswer(id) && !session.results[id]));
 }
 
 function startWrongChapter(chapter, bank, id) {
@@ -12913,7 +12916,7 @@ function makeWrongRow(item, questionButton) {
 
 function renderWrongChapters(list) {
   const chapters = [...chapterPools.keys()].map((chapter) => chapterStudy(chapter, wrongBank))
-    .filter((plan) => plan.total && (plan.answered || plan.wrong.length || plan.test))
+    .filter((plan) => plan.answered || plan.marked.length || plan.test)
     .sort((first, second) => Number(Boolean(second.wrong.length)) - Number(Boolean(first.wrong.length)));
   const pending = chapters.filter((plan) => plan.wrong.length);
   const mistakes = pending.reduce((count, plan) => count + plan.wrong.length, 0);
@@ -12929,7 +12932,7 @@ function renderWrongChapters(list) {
     const heading = document.createElement("strong");
     heading.textContent = plan.chapter;
     const detail = document.createElement("small");
-    detail.textContent = `已练 ${plan.answered} / ${plan.total} 道`;
+    detail.textContent = plan.total ? `已练 ${plan.answered} / ${plan.total} 道` : "填空题回看";
     const badge = document.createElement("span");
     badge.className = "chapter-review-count";
     badge.textContent = plan.wrong.length ? `${plan.wrong.length} 道待复练 ›` : "查看进度 ›";
@@ -12942,8 +12945,9 @@ function renderWrongChapters(list) {
 }
 
 function renderChapterStudy(plan) {
-  const passed = !plan.remaining.length && !plan.wrong.length &&
-    plan.test?.total === plan.total && plan.test.correct === plan.total;
+  const testSize = plan.test?.total;
+  const passed = plan.total > 0 && !plan.remaining.length && !plan.wrong.length &&
+    (testSize === plan.total || testSize === plan.pool.length) && plan.test?.correct === testSize;
   const steps = [
     ["已练", `${plan.answered} / ${plan.total}`],
     ["待复练", `${plan.wrong.length} 道`, plan.wrong.length ? "pending" : ""],
@@ -12967,7 +12971,7 @@ function renderChapterStudy(plan) {
   next.textContent = resume ? "继续本章" : "练剩余题";
   next.onclick = () => openChapter(plan.chapter, { bank: plan.bank });
   const test = $("wrong-test");
-  test.hidden = false;
+  test.hidden = !plan.total;
   test.textContent = chapterRoundInProgress(plan.chapter, plan.bank, "test") ? "继续测验" : "整章测验";
   test.onclick = () => startChapterTest(plan.chapter, plan.bank);
   const primary = plan.wrong.length ? $("library-start") : !next.hidden ? next : test;
@@ -12995,7 +12999,7 @@ function renderLibrary() {
     renderWrongChapters(list);
     return;
   }
-  const items = plan ? plan.wrong.map((id) => byId.get(id)) : questions.filter((item) => inScope(item, scope));
+  const items = plan ? plan.marked.map((id) => byId.get(id)) : questions.filter((item) => inScope(item, scope));
   if (done) items.sort((first, second) => (state.history[second.id].last || 0) - (state.history[first.id].last || 0));
   const focused = list.contains(document.activeElement) ? document.activeElement : null;
   const focusedId = focused?.closest("[data-question-id]")?.dataset.questionId;
@@ -13023,7 +13027,7 @@ function renderLibrary() {
   const startButton = $("library-start");
   startButton.hidden = done || Boolean(plan && !plan.wrong.length);
   startButton.textContent = plan ? chapterRoundInProgress(plan.chapter, plan.bank, "review")
-    ? "继续复练" : `复练 ${items.length} 道错题` : `练习${title}`;
+    ? "继续复练" : `复练 ${plan.wrong.length} 道错题` : `练习${title}`;
   startButton.disabled = items.length === 0;
   startButton.onclick = plan ? () => startWrongChapter(plan.chapter, plan.bank)
     : () => start(items.map((item) => item.id), "practice");
@@ -13101,7 +13105,7 @@ function showHistoryQuestion(item, practice = false) {
   renderStudyEvidence(study, "history-question-");
   meetingTimeline?.link($("meeting-from-history"), item.id);
   const retry = $("history-question-practice");
-  retry.hidden = !practice;
+  retry.hidden = !practice || !requiresAnswer(item.id);
   retry.onclick = () => {
     $("history-question").close();
     startWrongChapter(item.chapter, wrongBank, item.id);
@@ -13110,7 +13114,7 @@ function showHistoryQuestion(item, practice = false) {
 }
 
 function studyRoute(bank = selectedBank) {
-  return [...chapterPools.keys()].map((chapter) => chapterStudy(chapter, bank)).filter((plan) => plan.total);
+  return [...chapterPools.keys()].map((chapter) => chapterStudy(chapter, bank)).filter((plan) => plan.pool.length);
 }
 
 function routeChapterForSession(session) {
@@ -13150,7 +13154,7 @@ function renderRouteStops(chapters, selected) {
     button.type = "button";
     button.className = "route-stop";
     button.dataset.chapter = row.chapter;
-    button.style.setProperty("--stop-progress", `${row.answered / row.total * 100}%`);
+    button.style.setProperty("--stop-progress", `${row.total ? row.answered / row.total * 100 : 0}%`);
     if (row === selected) button.setAttribute("aria-current", "step");
     if (!row.remaining.length) button.dataset.complete = "true";
     const pin = document.createElement("span");
@@ -13160,7 +13164,7 @@ function renderRouteStops(chapters, selected) {
     label.textContent = row.chapter;
     const count = document.createElement("span");
     count.className = "route-stop-count";
-    count.textContent = !row.remaining.length ? "已练完" : `${row.answered} / ${row.total}`;
+    count.textContent = !row.total ? "看填空" : !row.remaining.length ? "已练完" : `${row.answered} / ${row.total}`;
     button.append(pin, label, count);
     button.onclick = () => {
       if (row === selected) return;
@@ -13195,7 +13199,7 @@ function expandChapterSession() {
   if (openId) {
     session.index = session.ids.indexOf(openId);
   } else {
-    session.index = session.ids.findIndex((id) => !questionResult(session, id));
+    session.index = session.ids.findIndex((id) => requiresAnswer(id) && !questionResult(session, id));
     if (session.index < 0) session.index = session.ids.length - 1;
     const id = session.ids[session.index];
     session.selected = session.drafts?.[id] || [];
@@ -13212,7 +13216,7 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   const upcoming = currentChapter && nextUnfinishedChapter(chapters, currentChapter);
   $("course-title").textContent = chapter || "学习路线";
   $("adventure-target").textContent = chapter ? chapterTopics[chapter] || "" : "当前题库暂无习题";
-  $("route-progress").hidden = !chapter;
+  $("route-progress").hidden = !currentChapter?.total;
   $("route-all-chapters").hidden = !chapter;
   $("route-map").hidden = !chapter;
   start.hidden = !chapter;
@@ -13242,6 +13246,9 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   } else if (remaining.length) {
     start.textContent = answered ? "练剩余题" : "开始本章";
     start.onclick = () => startRouteChapter(currentChapter);
+  } else if (!total) {
+    start.textContent = "看填空答案";
+    start.onclick = () => startRouteChapter(currentChapter);
   } else if (wrong.length) {
     start.textContent = "复习本章错题";
     start.onclick = () => openChapterReview(chapter, selectedBank);
@@ -13265,6 +13272,7 @@ function streak(ids, session) {
   let highest = 0;
   let count = 0;
   for (const id of ids) {
+    if (!requiresAnswer(id)) continue;
     count = questionResult(session, id)?.correct ? count + 1 : 0;
     highest = Math.max(highest, count);
   }
@@ -13298,10 +13306,10 @@ function updateAvailability() {
     card.hidden = !row;
     if (!row) continue;
     const { total, answered } = row;
-    card.dataset.count = total;
-    card.querySelector(".chapter-count").textContent = `${answered} / ${total} 道已练`;
-    card.style.setProperty("--chapter-progress", `${100 * answered / total}%`);
-    const step = answered === total ? "done" : row === routeChapter ? "next" : "open";
+    card.dataset.count = row.pool.length;
+    card.querySelector(".chapter-count").textContent = total ? `${answered} / ${total} 道已练` : `${row.pool.length} 道填空`;
+    card.style.setProperty("--chapter-progress", `${total ? 100 * answered / total : 0}%`);
+    const step = total && answered === total ? "done" : row === routeChapter ? "next" : "open";
     card.dataset.adventureState = step;
     if (row === routeChapter) card.setAttribute("aria-current", "step");
     else card.removeAttribute("aria-current");
@@ -13335,6 +13343,8 @@ function randomId() {
 }
 
 function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
+  const queue = mode === "chapter-test" ? ids.filter(requiresAnswer) : ids;
+  if (!queue.length) return;
   // Older clients can resume these IDs as a regular quiz without expanding them to the full chapter.
   const options = chapterOptions.bankScope === "common"
     ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan,
@@ -13343,7 +13353,7 @@ function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
   let study = previous?.chapterStudy;
   const pausedPractice = pauseChapterPractice(previous);
   if (pausedPractice) study = { ...study, pausedPractice };
-  state.session = { sid: randomId(), ids, mode, index, results: {}, selected: [], ...options };
+  state.session = { sid: randomId(), ids: queue, mode, index, results: {}, selected: [], ...options };
   if (study) state.session.chapterStudy = study;
   showStartedQuestion();
 }
@@ -13399,7 +13409,7 @@ function checksOnTap(item) {
 function choose(letter) {
   const item = current();
   if (!item || state.session.mode === "memory" || !Object.hasOwn(item.options, letter) ||
-      questionResult(state.session, item.id)) return;
+      !requiresAnswer(item.id) || questionResult(state.session, item.id)) return;
   const selected = new Set(state.session.selected);
   if (item.type !== "多选") selected.clear();
   if (selected.has(letter)) selected.delete(letter);
@@ -13513,23 +13523,27 @@ function renderDistractorNotes(item, section) {
 }
 
 function renderRoundProgress(session) {
-  const answered = session.ids.reduce((count, id) => count + Number(Boolean(questionResult(session, id))), 0);
-  $("progress").max = session.ids.length;
+  const scored = session.ids.filter(requiresAnswer);
+  const answered = scored.filter((id) => questionResult(session, id)).length;
+  $("progress").hidden = scored.length === 0;
+  $("progress").max = scored.length || 1;
   $("progress").value = answered;
   const combo = isAdventureSession(session) && streak(session.ids.slice(0, session.index + 1), session).current;
   $("adventure-streak").hidden = combo < 2;
   $("adventure-streak-value").textContent = combo || "";
-  return answered;
+  return { answered, total: scored.length };
 }
 
-function renderQuestionActions(session, item, result, answered) {
+function renderQuestionActions(session, item, result, { answered, total }) {
   const submitButton = $("submit");
   const last = session.index === session.ids.length - 1;
   const memoryMode = session.mode === "memory";
-  submitButton.hidden = result ? !last : checksOnTap(item);
-  submitButton.textContent = result ? (answered === session.ids.length ? "查看结果" : "去未答题")
+  const fill = !requiresAnswer(item.id);
+  submitButton.hidden = !fill && (result ? !last : checksOnTap(item));
+  submitButton.textContent = fill && !last ? "下一题"
+    : fill || result ? (answered === total ? "查看结果" : "去未答题")
     : memoryMode ? (item.study?.explanation ? "显示答案与解析" : "显示答案") : "提交";
-  submitButton.disabled = !result && !memoryMode && session.selected.length === 0;
+  submitButton.disabled = !fill && !result && !memoryMode && session.selected.length === 0;
   submitButton.parentElement.hidden = submitButton.hidden;
 }
 
@@ -13542,6 +13556,9 @@ function renderQuestion() {
   const result = questionResult(session, item.id);
   const memoryMode = session.mode === "memory";
   const testing = takingChapterTest(session);
+  const fill = !requiresAnswer(item.id);
+  const showAnswer = fill || Boolean(result);
+  const showGrade = result && !fill && !memoryMode;
   const selected = result?.selected || session.selected;
   const total = session.ids.length;
   view("quiz");
@@ -13549,7 +13566,7 @@ function renderQuestion() {
   if (session.meetingPractice) $("back").textContent = "返回时间线";
   const location = session.meetingPractice ? "会议专题" : item.chapter;
   $("where").textContent = `${testing ? "测验 · " : ""}${location} · ${session.index + 1} / ${total}`;
-  const answered = renderRoundProgress(session);
+  const progress = renderRoundProgress(session);
   $("quiz-swipe-hint").hidden = total < 2;
   const source = bank === "sizheng" || bank === "xuexitong" ? bankLabels[bank] : item.source || bankLabels.sizheng;
   $("kind").textContent = `${item.type}题 · ${source}`;
@@ -13560,12 +13577,6 @@ function renderQuestion() {
   renderQuestionFlags(item.id);
   $("wrong-review").hidden = testing;
   $("star").disabled = testing;
-  const fill = item.type === "填空";
-  $("fill-label").hidden = !fill || memoryMode;
-  $("fill-answer").placeholder = fill && item.answer.length > 1 ? "按顺序填写，各空用空格分隔" : "";
-  $("fill-answer").disabled = Boolean(result);
-  $("fill-answer").value = fill ? selected[0] || "" : "";
-  $("fill-answer").classList.toggle("correct", Boolean(fill && result?.correct));
   const buttons = [];
   const readOnly = Boolean(result) || memoryMode;
   for (const [letter, value] of Object.entries(item.options)) {
@@ -13584,12 +13595,13 @@ function renderQuestion() {
   $("options").replaceChildren(...buttons);
   $("option-note-tools").hidden = testing || !buttons.length;
   if (focusedOption >= 0 && !result) buttons[focusedOption]?.focus();
-  $("answer-summary").hidden = !result;
-  meetingTimeline?.link($("meeting-from-answer"), result ? item.id : undefined);
-  $("feedback").textContent = result && !memoryMode ? (adventure
+  $("answer-summary").hidden = !showAnswer;
+  $("answer-heading").textContent = fill ? "参考答案" : "正确答案";
+  meetingTimeline?.link($("meeting-from-answer"), showAnswer ? item.id : undefined);
+  $("feedback").textContent = showGrade ? (adventure
     ? result.correct ? "答对了！" : "差一点，再记住这个考点"
     : result.correct ? "回答正确" : "回答错误") : "";
-  $("feedback").dataset.state = result?.correct ? "correct" : "incorrect";
+  $("feedback").dataset.state = fill ? "" : result?.correct ? "correct" : "incorrect";
   $("submitted-answer").hidden = !result || memoryMode;
   $("submitted-answer").textContent = !result || memoryMode ? "" : selected.length
     ? `我的作答\n${selected.map((answer) => historyOptionLabel(item, answer)).join("\n")}`
@@ -13597,19 +13609,19 @@ function renderQuestion() {
       ? `最近的记录仅保存了判分。\n本轮保存的作答\n${result.roundSelection.map((answer) => historyOptionLabel(item, answer)).join("\n")}`
       : "这条早期记录未保存所选答案。";
   const answerLabels = item.blank_answers?.map((choices) => choices.join(" / ")) || item.answer;
-  $("answer-text").textContent = result ? answerLabels.map((answer) => {
+  $("answer-text").textContent = showAnswer ? answerLabels.map((answer) => {
     const option = item.options[answer];
     return option && item.type !== "判断" ? `${answer}　${option}` : option || answer;
   }).join("\n") : "";
   renderDistractorNotes(result ? item : null, $("distractor-notes"));
   const tapCheck = checksOnTap(item);
-  renderQuestionActions(session, item, result, answered);
+  renderQuestionActions(session, item, result, progress);
   $("chapter-test-status").hidden = !testing;
   $("progress").setAttribute("aria-label", testing ? "测验作答进度" : "练习进度");
   if (testing) renderChapterTestActions(session);
-  $("source").hidden = !result || !item.source_image;
+  $("source").hidden = !showAnswer || !item.source_image;
   $("source").href = item.source_image || "#";
-  const study = result && optionNotes.study(item);
+  const study = showAnswer && optionNotes.study(item);
   $("study-note").hidden = !study;
   if (study) {
     $("explanation").textContent = study.explanation;
@@ -13617,11 +13629,12 @@ function renderQuestion() {
     $("memory").parentElement.hidden = !study.memory;
     renderStudyEvidence(study);
   }
-  renderRelated(result && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
-  document.querySelector(".keys").textContent = testing ? "方向键翻题，可回到前面修改答案"
+  renderRelated(showAnswer && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
+  document.querySelector(".keys").textContent = fill ? "方向键翻题"
+    : testing ? "方向键翻题，可回到前面修改答案"
     : memoryMode
     ? "Enter 查看答案，方向键翻题"
-    : fill ? "Enter 提交" : tapCheck ? "按 A–H 作答，方向键翻题" : "按 A–H 选择，Enter 提交，方向键翻题";
+    : tapCheck ? "按 A–H 作答，方向键翻题" : "按 A–H 选择，Enter 提交，方向键翻题";
 }
 
 function focusAnswer(reveal = false) {
@@ -13652,26 +13665,6 @@ function resumeQuestion({ review = false } = {}) {
   animatePage(0, 11);
 }
 
-function normalizeFill(value) {
-  return value.normalize("NFKC").replace(/[\p{P}\s]/gu, "").toLocaleLowerCase();
-}
-
-function matchesFill(value, item) {
-  const input = normalizeFill(value);
-  const blanks = item.blank_answers || item.answer.map((answer) => answer.split(/[;；]/));
-  let offsets = new Set([0]);
-  for (const choices of blanks) {
-    const next = new Set();
-    for (const choice of choices.map(normalizeFill)) {
-      for (const offset of offsets) {
-        if (choice && input.startsWith(choice, offset)) next.add(offset + choice.length);
-      }
-    }
-    offsets = next;
-  }
-  return offsets.has(input.length);
-}
-
 function takingChapterTest(session = state.session) {
   return session?.mode === "chapter-test" && !session.testSubmitted;
 }
@@ -13682,21 +13675,22 @@ function testSelections(session) {
 
 function renderChapterTestActions(session) {
   const answers = testSelections(session);
-  const count = session.ids.reduce((sum, id) => sum + Number(Boolean(answers[id]?.length)), 0);
-  const ready = count === session.ids.length;
+  const scored = session.ids.filter(requiresAnswer);
+  const count = scored.filter((id) => answers[id]?.length).length;
+  const ready = count === scored.length;
   const last = session.index === session.ids.length - 1;
-  $("chapter-test-status").textContent = `已答 ${count} / ${session.ids.length} 道 · 交卷后查看答案`;
+  const reading = !requiresAnswer(current().id) && !last;
+  $("chapter-test-status").textContent = scored.length ? `已答 ${count} / ${scored.length} 道 · 交卷后查看答案` : "";
   $("progress").value = count;
-  $("submit").hidden = !ready && !last;
+  $("submit").hidden = !reading && !ready && !last;
   $("submit").disabled = false;
-  $("submit").textContent = ready ? "交卷" : "去未答题";
+  $("submit").textContent = reading ? "下一题" : !scored.length ? "查看结果" : ready ? "交卷" : "去未答题";
   $("submit").parentElement.hidden = $("submit").hidden;
 }
 
 function recordAnswer(session, item, selected, timestamp) {
-  const correct = selected.length > 0 && (item.type === "填空"
-    ? matchesFill(selected[0], item)
-    : item.answer.length === selected.length && item.answer.every((letter) => selected.includes(letter)));
+  const correct = selected.length > 0 &&
+    item.answer.length === selected.length && item.answer.every((letter) => selected.includes(letter));
   session.results[item.id] = { selected, correct };
   const entry = { wrong: !correct, last: timestamp, selected: [...selected] };
   state.history[item.id] = entry;
@@ -13705,18 +13699,21 @@ function recordAnswer(session, item, selected, timestamp) {
 
 function submitChapterTest(session) {
   const answers = testSelections(session);
-  const pending = session.ids.findIndex((id) => !answers[id]?.length);
+  const pending = session.ids.findIndex((id) => requiresAnswer(id) && !answers[id]?.length);
   if (pending >= 0) {
     if (session.index !== pending) goToQuestion(pending);
-    else ($("fill-label").hidden ? $("options").firstElementChild : $("fill-answer"))?.focus();
+    else $("options").firstElementChild?.focus();
     return;
   }
   const timestamp = Date.now();
-  const changes = session.ids.map((id) => recordAnswer(session, byId.get(id), answers[id], timestamp));
-  const correct = session.ids.filter((id) => session.results[id].correct).length;
-  const study = session.chapterStudy ??= {};
-  const tests = study.tests ??= {};
-  tests[bankForSession(session) + ":" + chapterForSession(session)] = { correct, total: session.ids.length };
+  const scored = session.ids.filter(requiresAnswer);
+  const changes = scored.map((id) => recordAnswer(session, byId.get(id), answers[id], timestamp));
+  if (scored.length) {
+    const correct = scored.filter((id) => session.results[id].correct).length;
+    const study = session.chapterStudy ??= {};
+    const tests = study.tests ??= {};
+    tests[bankForSession(session) + ":" + chapterForSession(session)] = { correct, total: scored.length };
+  }
   session.testSubmitted = true;
   delete session.drafts;
   completeRound(changes);
@@ -13725,11 +13722,12 @@ function submitChapterTest(session) {
 function submit() {
   const item = current();
   const session = state.session;
-  if (!item || questionResult(session, item.id)) return;
+  if (!item) return;
   if (takingChapterTest(session)) {
     submitChapterTest(session);
     return;
   }
+  if (!requiresAnswer(item.id) || questionResult(session, item.id)) return;
   if (session.mode === "memory") {
     session.results[item.id] = { selected: [] };
     saveSession();
@@ -13752,8 +13750,9 @@ function submit() {
 function questionDestination(session, direction) {
   const adjacent = session.index + direction;
   if (byId.has(session.ids[adjacent])) return adjacent;
-  if (direction < 0 || takingChapterTest(session) || !questionResult(session, session.ids[session.index])) return null;
-  const pending = session.ids.findIndex((id) => !questionResult(session, id));
+  const id = session.ids[session.index];
+  if (direction < 0 || takingChapterTest(session) || (requiresAnswer(id) && !questionResult(session, id))) return null;
+  const pending = session.ids.findIndex((key) => requiresAnswer(key) && !questionResult(session, key));
   return pending < 0 ? session.ids.length : pending;
 }
 
@@ -13788,22 +13787,22 @@ function completeRound(changes = []) {
   saveSession(changes);
   const memoryMode = session.mode === "memory";
   const testMode = session.mode === "chapter-test";
-  const round = session.ids;
+  const round = testMode ? session.ids.filter((id) => session.results[id]) : session.ids.filter(requiresAnswer);
   const wrong = round.filter((id) => !questionResult(session, id)?.correct);
   const bank = bankForSession(session);
   const chapter = chapterForSession(session);
   const reviewing = session.routePlan?.kind === "review";
   const adventure = isAdventureSession(session);
   const route = chapter ? chapterStudy(chapter, bank) : null;
-  $("result-title").textContent = testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
+  $("result-title").textContent = !round.length ? "填空题查看完成" : testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
     : reviewing ? "本轮错题复练完成" : route && !route.remaining.length ? "本章练习完成"
     : memoryMode ? "本次背诵完成" : "本次练习完成";
-  $("score").textContent = memoryMode ? `已复习 ${round.length} 道。` : usesChapterHistory(session)
+  $("score").textContent = !round.length ? `本轮有 ${session.ids.length} 道填空题。` : memoryMode ? `已复习 ${session.ids.length} 道。` : usesChapterHistory(session)
     ? `本章已答 ${round.length} 道 · 答对 ${round.length - wrong.length} 道`
     : `答对 ${round.length - wrong.length} 道，共 ${round.length} 道。`;
   const retry = $("retry");
   const retryCount = route ? route.wrong.length : wrong.length;
-  retry.hidden = memoryMode || Boolean(route && !retryCount);
+  retry.hidden = memoryMode || !round.length || Boolean(route && !retryCount);
   retry.disabled = !retryCount;
   retry.textContent = route ? `复练 ${retryCount} 道错题` : "重练本次错题";
   retry.onclick = route ? () => startWrongChapter(chapter, bank)
@@ -13813,14 +13812,14 @@ function completeRound(changes = []) {
   review.textContent = retryCount ? "查看本章错题" : "查看本章进度";
   review.onclick = () => openChapterReview(chapter, bank);
   const test = $("result-chapter-test");
-  test.hidden = !route || retryCount > 0 || route.remaining.length > 0 || testMode;
+  test.hidden = !route?.total || retryCount > 0 || route.remaining.length > 0 || testMode;
   test.onclick = () => startChapterTest(chapter, bank);
   const advance = $("route-result-next");
   advance.hidden = !route?.remaining.length;
   advance.textContent = "练剩余题";
   advance.onclick = () => openChapter(chapter, { bank });
   const step = $("chapter-result-next-step");
-  step.hidden = !route || (testMode && !retryCount);
+  step.hidden = !route?.total || (testMode && !retryCount);
   step.textContent = !route ? "" : route.remaining.length ? `全章还有 ${route.remaining.length} 道未练。`
     : retryCount ? "这轮仍答错的题可以接着复练。" : "可以开始整章测验，交卷后查看答案和解析。";
   const primary = [retry, test, advance].find((button) => !button.hidden && !button.disabled) || $("again");
@@ -13848,13 +13847,6 @@ $("setup-form").addEventListener("submit", (event) => {
   const ids = pool.slice(0, $("count").valueAsNumber).map((item) => item.id);
   if (ids.length) start(ids, $("mode").value, { bankScope: selectedBank });
 });
-$("fill-answer").oninput = (event) => {
-  const value = event.target.value;
-  state.session.selected = value.trim() ? [value] : [];
-  $("submit").disabled = state.session.selected.length === 0;
-  if (takingChapterTest()) renderChapterTestActions(state.session);
-  saveSession();
-};
 $("resume").onclick = resumeQuestion;
 $("adventure-chapter-long").onclick = () => openChapter($("chapter").value, { whole: true });
 $("adventure-together").onclick = () => showTab("desk", true);
@@ -13863,7 +13855,12 @@ $("route-all-chapters").onclick = () => {
   $("setup-heading").scrollIntoView({ block: "start", behavior: reducedMotion.matches ? "instant" : "smooth" });
 };
 $("submit").onclick = () => {
-  if (questionResult(state.session, current()?.id)) moveQuestion(1);
+  const session = state.session;
+  const id = current()?.id;
+  if (takingChapterTest(session)) {
+    if (!requiresAnswer(id) && session.index < session.ids.length - 1) moveQuestion(1);
+    else submit();
+  } else if (!requiresAnswer(id) || questionResult(session, id)) moveQuestion(1);
   else submit();
 };
 $("review-round").onclick = () => goToQuestion(state.session.ids.length - 1);
@@ -13924,7 +13921,8 @@ document.addEventListener("keydown", (event) => {
                                    (document.activeElement.classList.contains("option") ||
                                    !["BUTTON", "A"].includes(document.activeElement.tagName))) {
     event.preventDefault();
-    if (takingChapterTest() || questionResult(state.session, current()?.id)) moveQuestion(1);
+    const id = current()?.id;
+    if (takingChapterTest() || !requiresAnswer(id) || questionResult(state.session, id)) moveQuestion(1);
     else submit();
   }
 });

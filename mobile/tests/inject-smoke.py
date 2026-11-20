@@ -50,7 +50,7 @@ window.addEventListener("load", async () => {
     const answeredCount = () => Number(field("stat-done").firstElementChild.textContent);
     const before = answeredCount();
     route.click();
-    const chapterCount = field("progress").max;
+    const chapterCount = state.session.ids.length;
     const chapterName = text("where").split(" · ")[0];
     check(!field("quiz").hidden && text("where").includes(chapterName) &&
       chapterCount > 1 && text("where").endsWith("1 / " + chapterCount),
@@ -68,16 +68,9 @@ window.addEventListener("load", async () => {
       Object.keys(item.options).length === letters.length);
     check(question?.answer.length && question.study?.explanation, "opened question and explanation data");
 
-    if (question.type === "填空") {
-      const blanks = question.blank_answers || question.answer.map((answer) => answer.split(/[;；]/));
-      const input = field("fill-answer");
-      input.value = blanks.map((choices) => choices[0]).join(" ");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    } else {
-      for (const answer of question.answer) {
-        check(letters.includes(answer), "correct option available");
-        optionButtons()[letters.indexOf(answer)].click();
-      }
+    for (const answer of question.answer) {
+      check(letters.includes(answer), "correct option available");
+      optionButtons()[letters.indexOf(answer)].click();
     }
     if (!field("submit").hidden) field("submit").click();
 
@@ -221,6 +214,43 @@ window.addEventListener("load", async () => {
     showHistoryQuestion(textbookQuestion);
     checkTextbook("history-question-");
     field("history-question").close();
+
+    const fill = bank.find((item) => item.type === "填空" && item.study?.reference?.quote);
+    const savedFill = JSON.stringify(state.history[fill.id]);
+    const optionsAnswer = textbookQuestion.answer;
+    const answerLines = fill.blank_answers?.map((choices) => choices.join(" / ")) || fill.answer;
+    const checkFill = () => {
+      check(!field("answer-summary").hidden && text("answer-heading") === "参考答案" &&
+        text("answer-text") === answerLines.join("\n") && !field("fill-answer") &&
+        text("feedback") === "", "fill-in displays the answer immediately");
+      check(!field("study-note").hidden && field("textbook-quote").querySelector("mark"),
+        "fill-in displays explanation and textbook highlights");
+    };
+
+    start([fill.id, textbookQuestion.id, fill.id], "practice");
+    checkFill();
+    check(field("progress").max === 1 && field("progress").value === 0 &&
+      text("submit") === "下一题", "fill-ins are study pages and choices count toward progress");
+    field("submit").click();
+    check(field("answer-summary").hidden, "next question still waits for an answer");
+    select(optionsAnswer);
+    if (!state.session.results[textbookQuestion.id]) field("submit").click();
+    swipe(1);
+    checkFill();
+    field("submit").click();
+    check(!field("result").hidden && text("score").includes("共 1 道") &&
+      JSON.stringify(state.history[fill.id]) === savedFill, "mixed practice scores only submitted questions");
+
+    start([fill.id], "memory");
+    checkFill();
+    check(field("progress").hidden, "fill-only study has no scoring progress");
+    field("submit").click();
+    check(text("result-title") === "填空题查看完成", "fill-only study finishes");
+
+    startChapterTest(fill.chapter, "all");
+    check(state.session.mode === "chapter-test" && state.session.ids.length > 0 &&
+      state.session.ids.every((id) => byId.get(id).type !== "填空") &&
+      field("answer-summary").hidden, "chapter tests only include graded question types");
     report.textContent = "XIGAI PASS";
   } catch (error) {
     report.textContent = "XIGAI FAIL: " + error.message;
