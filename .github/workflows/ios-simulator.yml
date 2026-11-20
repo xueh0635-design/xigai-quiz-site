@@ -1,4 +1,4 @@
-name: iPhone simulator
+name: Option details iPhone QA
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: iphone-simulator
+  group: option-details-iphone-qa
   cancel-in-progress: true
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
           xcrun simctl boot "$phone"
           xcodebuild -project mobile/ios/App/App.xcodeproj -scheme App -configuration Debug \
             -destination "platform=iOS Simulator,id=$phone" -derivedDataPath "$RUNNER_TEMP/xigai-ios" \
-            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xigai-build.log" 2>&1 || {
+            MARKETING_VERSION=1.1.26 CURRENT_PROJECT_VERSION=28 CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/xigai-build.log" 2>&1 || {
             tail -120 "$RUNNER_TEMP/xigai-build.log"
             exit 1
           }

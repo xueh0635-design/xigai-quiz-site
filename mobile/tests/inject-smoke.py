@@ -166,6 +166,37 @@ window.addEventListener("load", async () => {
       "test draft survives a round trip");
     field("submit").click();
     check(!field("result").hidden && text("score").includes("答对 2 道"), "explicit test submission");
+
+    const optionSheet = field("option-notes-dialog");
+    const optionBody = field("option-notes-content");
+    const hold = async (index) => {
+      const option = optionButtons()[index];
+      const event = { bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, pointerType: "touch", button: 0 };
+      option.dispatchEvent(new PointerEvent("pointerdown", event));
+      await until(() => optionSheet.open, "long press opens option details");
+      option.dispatchEvent(new PointerEvent("pointerup", event));
+      option.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 }));
+    };
+    start(["导论-19", example.id], "practice");
+    select(["B"]);
+    const draft = JSON.stringify(state.session.selected);
+    await hold(0);
+    check(JSON.stringify(state.session.selected) === draft, "long press keeps the existing answer draft");
+    check(!optionBody.querySelector(".option-note-verdict"), "the practice note leaves grading hidden");
+    for (const [index, count] of [10, 14, 13, 6].entries()) {
+      field("option-notes-tabs").children[index].click();
+      check(optionBody.querySelectorAll(".option-note-outline li").length === count, "four complete option outlines");
+    }
+    field("option-notes-close").click();
+    await until(() => !optionSheet.open, "option sheet can close");
+    field("submit").click();
+    await hold(3);
+    check(text("option-notes-content").includes("本题不选") &&
+      text("option-notes-content").includes("党的二十大"), "review explains why the fourth option is outside the question");
+    check(text("option-note-reference").includes("第 6 页") && field("option-note-textbook-quote").querySelector("mark"),
+      "the selected term is highlighted in the textbook evidence");
+    field("option-notes-close").click();
+    await until(() => !optionSheet.open, "review note can close");
     report.textContent = "XIGAI PASS";
   } catch (error) {
     report.textContent = "XIGAI FAIL: " + error.message;

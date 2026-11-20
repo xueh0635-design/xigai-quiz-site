@@ -5528,6 +5528,152 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   clip-path: none;
 }
 </style>
+  <style>
+.option-note-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-block-start: 7px;
+  color: var(--muted);
+  font-size: .8rem;
+}
+.option-note-tools button {
+  min-height: 40px;
+  padding: 5px 11px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: .84rem;
+  font-weight: 700;
+}
+
+button[data-option-note] {
+  position: relative;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button[data-option-note][data-option-holding]::after {
+  position: absolute;
+  inset: auto 11px 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: .65;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: option-note-hold 480ms linear both;
+  content: "";
+}
+@keyframes option-note-hold { to { transform: scaleX(1); } }
+:root[data-reduced-motion] button[data-option-holding]::after { display: none; }
+.history-question-options {
+  list-style: none;
+  padding-inline-start: 0;
+}
+.history-question-options .option {
+  border-radius: 14px;
+  font-size: .88rem;
+}
+.history-question-options .option .letter {
+  background: var(--world-card-alt);
+  color: var(--accent);
+}
+
+.option-notes-sheet.account-dialog.glass {
+  width: min(540px, calc(100% - 16px));
+  max-height: min(45rem, calc(100dvh - 30px - var(--top-inset) - var(--bottom-inset)));
+  padding: 14px clamp(14px, 4.2vw, 24px) 15px;
+  border-color: var(--line);
+  overflow: hidden;
+}
+.option-notes-sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+.option-notes-sheet [data-sheet-handle] { flex: none; }
+.option-notes-sheet [data-sheet-handle]::before { background: var(--muted); opacity: .48; }
+.option-notes-sheet h2 { font-size: 1.06rem; }
+.option-notes-sheet #option-notes-close { min-height: 42px; }
+.option-notes-tabs {
+  display: flex;
+  gap: 7px;
+  padding: 10px 0 11px;
+  flex: none;
+}
+.option-notes-tabs button {
+  flex: 1 1 0;
+  min-height: 42px;
+  min-width: 0;
+  padding: 5px 4px;
+  border-color: var(--line);
+  background: var(--world-card-alt);
+  color: var(--ink);
+  font-weight: 740;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.option-notes-tabs button[aria-pressed="true"] {
+  background: var(--world-action);
+  color: var(--world-action-text);
+  border-color: var(--world-action);
+}
+.option-notes-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior-y: contain;
+  padding: 4px 4px 12px;
+  line-height: 1.6;
+  scrollbar-width: thin;
+}
+.option-notes-scroll:focus-visible {
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.option-note-lead { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.option-note-letter, .option-note-verdict {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--world-card-alt);
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 700;
+}
+.option-note-verdict[data-correct="true"] { background: var(--world-good); color: var(--world-good-ink); }
+.option-note-verdict[data-correct="false"] { background: var(--world-bad); color: var(--world-bad-ink); }
+.option-note-title { margin: 8px 0 3px; font-size: 1.18rem; line-height: 1.45; overflow-wrap: anywhere; }
+.option-note-category, .option-note-source { margin: 4px 0 9px; color: var(--muted); font-size: .8rem; }
+.option-note-source a { color: var(--accent); }
+.option-note-summary { margin: 9px 0 13px; font-size: .94rem; }
+.option-note-reason, .option-note-memory, .option-note-question-context {
+  padding: 10px 12px;
+  margin: 10px 0;
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 0 11px 11px 0;
+  background: var(--world-card-alt);
+  font-size: .9rem;
+}
+.option-note-memory p, .option-note-question-context p, .option-note-question-context h4 { margin: 4px 0 0; }
+.option-note-question-context h4 { margin-block-start: 0; }
+.option-note-outline { padding-inline-start: 26px; margin: 10px 0; }
+.option-note-outline li {
+  padding: 8px 0 8px 4px;
+  border-block-end: 1px solid var(--line);
+}
+.option-note-outline li::marker { color: var(--accent); font-size: .86rem; font-weight: 760; }
+.option-note-outline li p { margin: 2px 0 0; color: var(--muted); font-size: .87rem; }
+.option-notes-basis {
+  padding-block-start: 9px;
+  margin-block-start: 9px;
+  border-block-start: 1px solid var(--line);
+  font-size: .87rem;
+}
+.option-notes-basis > summary { color: var(--accent); cursor: pointer; font-weight: 700; min-height: 34px; }
+.option-notes-basis > .reference { margin: 7px 0 0; color: var(--muted); font-size: .78rem; }
+</style>
 </head>
 <body>
   <header class="top">
@@ -5765,6 +5911,10 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
         </div>
         <h2 id="question" tabindex="-1"></h2>
         <div id="options" class="options"></div>
+        <div id="option-note-tools" class="option-note-tools" hidden>
+          <span>可长按任一选项</span>
+          <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button">选项详解</button>
+        </div>
         <label id="fill-label" hidden>填写答案
           <input id="fill-answer" type="text" autocomplete="off">
         </label>
@@ -5876,6 +6026,24 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
       </div>
       <button id="meeting-from-history" class="meeting-jump" type="button" aria-haspopup="dialog" aria-controls="meeting-dialog" hidden>看会议时间线 ›</button>
       <button id="history-question-practice" type="button" class="primary" hidden>复练此题</button>
+    </dialog>
+    <dialog id="option-notes-dialog" class="account-dialog glass quiz-sheet option-notes-sheet" aria-labelledby="option-notes-heading">
+      <div data-sheet-handle>
+        <h2 id="option-notes-heading">选项详解</h2>
+        <button id="option-notes-close" type="button" autofocus>关闭</button>
+      </div>
+      <div id="option-notes-tabs" class="option-notes-tabs" role="group" aria-label="切换选项"></div>
+      <div id="option-notes-scroll" class="option-notes-scroll" tabindex="0" role="region" aria-label="选项内容">
+        <article id="option-notes-content"></article>
+        <details id="option-notes-basis" class="option-notes-basis" hidden>
+          <summary>本题依据</summary>
+          <div id="option-note-textbook-evidence" class="lesson-textbook" hidden>
+            <h3 id="option-note-textbook-label">教材原文</h3>
+            <blockquote id="option-note-textbook-quote"></blockquote>
+          </div>
+          <p id="option-note-reference" class="reference"></p>
+        </details>
+      </div>
     </dialog>
     <dialog id="meeting-dialog" class="account-dialog glass quiz-sheet meeting-dialog" aria-labelledby="meeting-title">
       <div class="account-dialog-header" data-sheet-handle>
@@ -11353,6 +11521,442 @@ window.QuizMeetingData = {
 })();
 </script>
 <script>
+(() => {
+  "use strict";
+
+  const nineteenth = { title: "党的十九大报告", url: "https://www.fmprc.gov.cn/ziliao_674904/zt_674979/dnzt_674981/qtzt/twwt/xjpzsjstzyjh/202206/t20220606_10698869.html" };
+  const resolution = { title: "党的十九届六中全会《决议》", url: "https://www.spb.gov.cn/gjyzj/c200061/202111/b157e3b8982d497f8dd31d6bb92dcf7d.shtml" };
+  const twentieth = { title: "党的二十大报告", url: "https://www.moe.gov.cn/jyb_xwfb/moe_176/202210/t20221026_672311.html" };
+
+  const concepts = new Map(Object.entries({
+    "十个明确": {
+      category: "主体内容 · 党的十九届六中全会（2021）",
+      summary: "十个方面的理论判断，集中回答新时代坚持和发展中国特色社会主义的基本问题。十九大概括了“八个明确”，十九届六中全会《决议》作了进一步概括。",
+      items: [
+        ["党的领导", "中国共产党领导是中国特色社会主义最本质的特征和制度的最大优势，中国共产党是最高政治领导力量。"],
+        ["总任务", "实现社会主义现代化和中华民族伟大复兴，分两步走建成社会主义现代化强国，以中国式现代化推进民族复兴。"],
+        ["我国社会主要矛盾", "人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾。坚持以人民为中心，发展全过程人民民主，推动人的全面发展和全体人民共同富裕。"],
+        ["总体布局和战略布局", "总体布局是经济、政治、文化、社会、生态文明建设“五位一体”，战略布局是“四个全面”。"],
+        ["全面深化改革总目标", "完善和发展中国特色社会主义制度，推进国家治理体系和治理能力现代化。"],
+        ["全面推进依法治国总目标", "建设中国特色社会主义法治体系、建设社会主义法治国家。"],
+        ["基本经济制度与高质量发展", "坚持和完善社会主义基本经济制度，发挥市场在资源配置中的决定性作用和政府作用，贯彻新发展理念、构建新发展格局，统筹发展和安全。"],
+        ["新时代强军目标", "建设听党指挥、能打胜仗、作风优良的人民军队，建设世界一流军队。"],
+        ["中国特色大国外交", "服务民族复兴、促进人类进步，推动建设新型国际关系和构建人类命运共同体。"],
+        ["全面从严治党", "落实新时代党的建设总要求和管党治党政治责任，以伟大自我革命引领伟大社会革命。"],
+      ],
+      memory: "先记领导、任务、矛盾、布局，再记改革、法治、发展，最后记强军、外交、治党。",
+      pages: "导论第 6–7 页（PDF 第 7–8 页）",
+      source: resolution,
+    },
+    "十四个坚持": {
+      category: "基本方略 · 党的十九大（2017）",
+      summary: "十九大报告从十四个方面说明新时代怎样坚持和发展中国特色社会主义，为治国理政提供基本行动方略。",
+      items: [
+        ["坚持党对一切工作的领导", "保证党始终总揽全局、协调各方。"],
+        ["坚持以人民为中心", "让人民共享发展成果，依靠人民推进事业。"],
+        ["坚持全面深化改革", "完善制度，推进国家治理体系和治理能力现代化。"],
+        ["坚持新发展理念", "按照创新、协调、绿色、开放、共享的理念推动发展。"],
+        ["坚持人民当家作主", "把党的领导、人民当家作主、依法治国有机统一起来。"],
+        ["坚持全面依法治国", "用制度和法治推进国家治理。"],
+        ["坚持社会主义核心价值体系", "坚定文化自信，培育和践行社会主义核心价值观。"],
+        ["坚持在发展中保障和改善民生", "回应人民对更好生活的需求，使发展更公平地惠及人民。"],
+        ["坚持人与自然和谐共生", "把生态保护和绿色发展贯穿现代化建设。"],
+        ["坚持总体国家安全观", "统筹发展和安全，在各领域维护国家安全。"],
+        ["坚持党对人民军队的绝对领导", "贯彻党领导人民军队的根本原则和制度。"],
+        ["坚持“一国两制”和推进祖国统一", "坚持一个中国原则和推进祖国统一。"],
+        ["坚持推动构建人类命运共同体", "以和平发展、国际合作促进共同发展。"],
+        ["坚持全面从严治党", "加强党的建设，以自我革命推进党和国家事业。"],
+      ],
+      memory: "顺序可以分成党与人民、改革与发展、治理与民生、安全与统一、外交与治党。",
+      pages: "导论第 7 页（PDF 第 8 页）",
+      source: nineteenth,
+    },
+    "十三个方面成就": {
+      category: "实践成就 · 党的十九届六中全会（2021）",
+      summary: "十九届六中全会《决议》从十三个领域总结中国特色社会主义新时代的历史性成就和历史性变革。",
+      items: [
+        ["坚持党的全面领导", "加强党中央集中统一领导，把党的领导落实到各领域。"],
+        ["全面从严治党", "推进党的自我革命和反腐败斗争。"],
+        ["经济建设", "推动经济转向高质量发展。"],
+        ["全面深化改革开放", "推动各领域制度改革和更高水平开放。"],
+        ["政治建设", "发展全过程人民民主和社会主义民主政治。"],
+        ["全面依法治国", "推进中国特色社会主义法治体系建设。"],
+        ["文化建设", "增强文化自信，推动社会主义文化发展。"],
+        ["社会建设", "改善民生，推进脱贫攻坚和社会治理。"],
+        ["生态文明建设", "推动绿色发展和生态环境保护。"],
+        ["国防和军队建设", "推进国防和军队现代化。"],
+        ["维护国家安全", "完善国家安全体系和能力。"],
+        ["坚持“一国两制”和推进祖国统一", "推进“一国两制”实践和祖国统一进程。"],
+        ["外交工作", "推进中国特色大国外交和构建人类命运共同体。"],
+      ],
+      memory: "答案问的是新时代实践取得了哪些成就时，先想这十三个领域。",
+      pages: "导论第 7–8 页（PDF 第 8–9 页）",
+      source: resolution,
+    },
+    "六个必须坚持": {
+      category: "世界观和方法论 · 党的二十大（2022）",
+      summary: "习近平在党的二十大报告中提出这六条。教材把它们归入这一思想的世界观、方法论和贯穿其中的立场观点方法，也是完整科学体系的一部分。",
+      items: [
+        ["必须坚持人民至上", "根本价值立场。看理论和政策从谁的利益出发、依靠谁来落实。"],
+        ["必须坚持自信自立", "内在精神特质。立足中国实际，依靠自己的力量推进实践和理论创新。"],
+        ["必须坚持守正创新", "鲜明理论品格。坚持根本原则，根据实践的发展推进创新。"],
+        ["必须坚持问题导向", "重要实践要求。从具体矛盾和实际问题出发，检验思路能否解决问题。"],
+        ["必须坚持系统观念", "基本思想和工作方法。考虑整体与局部、当前与长远以及各领域之间的联系。"],
+        ["必须坚持胸怀天下", "体现中国共产党人的境界格局。观察世界共同面临的问题，关注人类发展和进步。"],
+      ],
+      memory: "按顺序记六个关键词：人民、自立、守正、问题、系统、天下。",
+      pages: "导论第 6、8 页（PDF 第 7、9 页）",
+      source: twentieth,
+    },
+    "两个结合": {
+      category: "马克思主义中国化时代化",
+      summary: "把马克思主义基本原理同中国具体实际相结合、同中华优秀传统文化相结合。两个结合都以马克思主义基本原理为出发点，分别强调中国的实际问题和文化根基。",
+      items: [["第一个结合", "同中国具体实际相结合。"], ["第二个结合", "同中华优秀传统文化相结合。"]],
+      pages: "导论第二节",
+      source: twentieth,
+    },
+    "两个确立": {
+      category: "新时代重大政治成果",
+      summary: "确立习近平同志党中央的核心、全党的核心地位，确立习近平新时代中国特色社会主义思想的指导地位。",
+      pages: "导论第五节",
+      source: resolution,
+    },
+    "两个维护": {
+      category: "政治要求",
+      summary: "坚决维护习近平总书记党中央的核心、全党的核心地位，坚决维护党中央权威和集中统一领导。可记为维护核心、维护党中央权威和集中统一领导。",
+      pages: "导论第 6 页",
+      source: resolution,
+    },
+    "四个意识": {
+      category: "党的政治建设",
+      summary: "政治意识、大局意识、核心意识、看齐意识。",
+      pages: "导论第 6 页",
+      source: resolution,
+    },
+    "四个自信": {
+      category: "中国特色社会主义",
+      summary: "中国特色社会主义道路自信、理论自信、制度自信、文化自信。",
+      pages: "导论第 6 页",
+      source: resolution,
+    },
+    "五位一体": {
+      category: "中国特色社会主义事业总体布局",
+      summary: "统筹推进经济建设、政治建设、文化建设、社会建设、生态文明建设。五个方面共同回答事业布局包含哪些建设领域。",
+      pages: "导论第 6 页",
+      source: resolution,
+    },
+    "四个全面": {
+      category: "中国特色社会主义事业战略布局",
+      summary: "现阶段指全面建设社会主义现代化国家、全面深化改革、全面依法治国、全面从严治党。全面建设社会主义现代化国家是战略目标，其余三个是战略举措。记历史题时注意，此前第一项是全面建成小康社会。",
+      pages: "导论第 6 页",
+      source: resolution,
+    },
+    "新发展理念": {
+      category: "高质量发展",
+      summary: "创新、协调、绿色、开放、共享。五个词分别对应发展动力、发展不平衡、人与自然关系、内外联动以及社会公平正义。",
+      pages: "导论第 7 页、第六章",
+      source: resolution,
+    },
+    "新发展格局": {
+      category: "高质量发展",
+      summary: "以国内大循环为主体、国内国际双循环相互促进。记住两个要点：国内大循环的主体地位，以及国内国际循环的相互促进。",
+      pages: "导论第 7 页、第六章",
+      source: twentieth,
+    },
+    "全过程人民民主": {
+      category: "社会主义民主政治",
+      summary: "把人民当家作主贯穿民主选举、民主协商、民主决策、民主管理、民主监督等环节，以制度和实践保证人民参与。",
+      pages: "第八章",
+      source: twentieth,
+    },
+    "三个务必": {
+      category: "党的二十大（2022）",
+      summary: "务必不忘初心、牢记使命，务必谦虚谨慎、艰苦奋斗，务必敢于斗争、善于斗争。",
+      source: twentieth,
+    },
+    "新时代党的强军目标": {
+      category: "国防和军队现代化",
+      summary: "建设一支听党指挥、能打胜仗、作风优良的人民军队，把人民军队建设成为世界一流军队。三个要求分别强调政治方向、打仗本领和军队作风。",
+      pages: "导论第 7 页、第十四章",
+      source: resolution,
+    },
+  }));
+
+  const mainContentQuestion = {
+    terms: { A: "十个明确", B: "十四个坚持", C: "十三个方面成就", D: "六个必须坚持" },
+    answers: ["A", "B", "C"],
+    explanation: "教材导论将“十个明确”“十四个坚持”“十三个方面成就”归为主要内容，分别侧重主体内容、基本方略和新时代实践成就。“六个必须坚持”是习近平在党的二十大报告中提出的，着重体现这一思想的世界观和方法论，同样属于这一思想的科学体系。按题干的会议和考查范围，应选 A、B、C。",
+    memory: "十个明确是主体内容，十四个坚持是基本方略，十三个方面成就是实践成果，六个必须坚持体现世界观和方法论。",
+    reference: {
+      chapter: "导论",
+      page: 6,
+      pdfPage: 7,
+      quote: "习近平新时代中国特色社会主义思想内涵十分丰富，党的十九大、十九届六中全会提出的“十个明确”“十四个坚持”“十三个方面成就”概括了习近平新时代中国特色社会主义思想的主要内容。党的二十大提出的“六个必须坚持”，是习近平新时代中国特色社会主义思想的世界观、方法论和贯穿其中的立场观点方法的重要体现。",
+      highlights: ["十九大、十九届六中全会", "主要内容", "党的二十大", "世界观、方法论"],
+    },
+    reasons: {
+      A: "十九届六中全会《决议》概括，教材称其为这一思想的主体内容，符合题干。",
+      B: "十九大报告提出的基本方略，教材把它列入主要内容，符合题干。",
+      C: "十九届六中全会《决议》对新时代实践的总结，教材把它列入主要内容，符合题干。",
+      D: "题干限定党的十九大、十九届六中全会和“主要内容”。这组表述出自习近平在党的二十大所作的报告，教材用它说明这一思想的世界观和方法论，因此本题不选。",
+    },
+  };
+  const questionNotes = new Map([
+    ["导论-19", mainContentQuestion],
+    ["章节自测-导论-多选-1", mainContentQuestion],
+  ]);
+
+  window.QuizOptionKnowledge = { concepts, questionNotes };
+})();
+</script>
+<script>
+(() => {
+  "use strict";
+
+  const dialog = document.getElementById("option-notes-dialog");
+  const closeButton = document.getElementById("option-notes-close");
+  const tabs = document.getElementById("option-notes-tabs");
+  const scroll = document.getElementById("option-notes-scroll");
+  const content = document.getElementById("option-notes-content");
+  const evidence = document.getElementById("option-notes-basis");
+  const { concepts, questionNotes } = window.QuizOptionKnowledge;
+  const sheet = window.QuizSheetMotion.attach(dialog);
+  const bindings = new WeakMap();
+  const holdTime = 480;
+  let session;
+  let gesture;
+  let suppressClickUntil = 0;
+  let renderEvidence;
+
+  function element(tag, text, className) {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function term(value) {
+    return value.normalize("NFKC").trim().replace(/^[“”「」‘’"']+|[“”「」‘’"'。]+$/g, "");
+  }
+
+  function lookup(value) {
+    const name = term(value);
+    const concept = concepts.get(name);
+    if (concept) return concept;
+    const meeting = window.QuizMeetingData?.events.find((event) => event.title === name);
+    if (meeting) return { category: meeting.date, summary: meeting.detail, source: meeting.sources?.[0] };
+  }
+
+  function contextualNote(item) {
+    const note = questionNotes.get(item.id);
+    if (note && item.answer.length === note.answers.length &&
+        note.answers.every((letter) => item.answer.includes(letter)) &&
+        Object.entries(note.terms).every(([letter, name]) => item.options[letter] && term(item.options[letter]) === name)) {
+      return note;
+    }
+  }
+
+  function distractor(item, letter) {
+    const note = window.QuizDistractorNotes?.[item.id]?.[letter];
+    if (note && item.options[letter] === note.option && !item.answer.includes(letter)) return note;
+  }
+
+  function study(item) {
+    const note = contextualNote(item);
+    if (!note) return item.study;
+    const { explanation, memory, reference } = note;
+    return { ...item.study, explanation, memory, reference };
+  }
+
+  function showEvidence(note, value, revealed) {
+    const reference = note?.reference;
+    const quote = reference?.quote;
+    evidence.hidden = !revealed || (!reference && !note?.source?.url);
+    if (evidence.hidden) return;
+    evidence.open = false;
+    const name = term(value);
+    // The passage is the question's source. Mark the selected wording only when it occurs literally.
+    const highlighted = name.length >= 2 && quote?.includes(name);
+    renderEvidence(highlighted
+      ? { ...note, reference: { ...reference, highlights: [name] } }
+      : note, "option-note-");
+  }
+
+  function select(letter) {
+    const { item, revealed } = session;
+    const value = item.options[letter];
+    const concept = lookup(value);
+    const questionStudy = study(item);
+    const correct = item.answer.includes(letter);
+    const falseChoice = revealed ? distractor(item, letter) : null;
+    const reason = revealed ? contextualNote(item)?.reasons[letter] || falseChoice?.reason : "";
+    for (const button of tabs.children) button.setAttribute("aria-pressed", String(button.value === letter));
+
+    const lead = element("header", "", "option-note-lead");
+    lead.append(element("span", `${letter} 选项`, "option-note-letter"));
+    if (revealed) {
+      const verdict = element("span", correct ? "本题应选" : "本题不选", "option-note-verdict");
+      verdict.dataset.correct = String(correct);
+      lead.append(verdict);
+    }
+    const parts = [lead, element("h3", value, "option-note-title")];
+    if (concept?.category) parts.push(element("p", concept.category, "option-note-category"));
+    if (reason) parts.push(element("p", reason, "option-note-reason"));
+    if (concept?.summary) parts.push(element("p", concept.summary, "option-note-summary"));
+    if (concept?.items) {
+      const list = element("ol", "", "option-note-outline");
+      for (const [title, description] of concept.items) {
+        const row = element("li");
+        row.append(element("strong", title), element("p", description));
+        list.append(row);
+      }
+      parts.push(list);
+    }
+    if (concept?.memory) {
+      const memory = element("aside", "", "option-note-memory");
+      memory.append(element("strong", "速记"), element("p", concept.memory));
+      parts.push(memory);
+    }
+    if (falseChoice?.applies) {
+      const transfer = element("aside", "", "option-note-memory");
+      transfer.append(element("strong", "换个问法"), element("p", falseChoice.applies));
+      parts.push(transfer);
+    }
+    const reference = concept?.source || falseChoice?.source;
+    if (concept?.pages || reference) {
+      const source = element("p", concept?.pages ? `教材 · ${concept.pages}` : "", "option-note-source");
+      if (reference) {
+        const link = element("a", reference.title || reference.label);
+        link.href = reference.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        if (concept?.pages) source.append(" · ");
+        source.append(link);
+      }
+      parts.push(source);
+    }
+    if (!reason && revealed) {
+      const answers = item.answer.map((key) => item.options[key] ? `${key} ${item.options[key]}` : key);
+      const context = element("section", "", "option-note-question-context");
+      context.append(element("h4", "本题解析"), element("p", `标准答案 · ${answers.join("；")}`));
+      const note = questionStudy?.explanation;
+      if (note) context.append(element("p", note));
+      parts.push(context);
+    } else if (!concept && !revealed) {
+      parts.push(element("p", "作答后可在这里对照本题解析和依据。", "option-note-category"));
+    }
+    content.replaceChildren(...parts);
+    showEvidence(questionStudy, value, revealed);
+    scroll.scrollTop = 0;
+  }
+
+  function open(item, letter, revealed, trigger) {
+    if (dialog.open || !Object.hasOwn(item.options, letter) ||
+        document.querySelector("dialog[open]:not(#history-question)")) return false;
+    session = { item, revealed, trigger };
+    const options = Object.keys(item.options).map((key) => {
+      const button = element("button", key);
+      button.type = "button";
+      button.value = key;
+      button.setAttribute("aria-label", `${key} 选项`);
+      button.setAttribute("aria-controls", content.id);
+      return button;
+    });
+    tabs.replaceChildren(...options);
+    tabs.hidden = options.length < 2;
+    select(letter);
+    dialog.showModal();
+    return true;
+  }
+
+  function attach(button, item, letter, revealed, opensOnTap = false) {
+    button.dataset.optionNote = "";
+    bindings.set(button, { item, letter, revealed });
+    if (opensOnTap) {
+      button.dataset.optionNoteAction = "open";
+      button.setAttribute("aria-haspopup", "dialog");
+      button.addEventListener("click", () => open(item, letter, revealed, button));
+    }
+  }
+
+  function stopGesture() {
+    if (!gesture) return;
+    stopHold(gesture);
+    gesture = null;
+  }
+
+  function stopHold(press) {
+    clearTimeout(press.timer);
+    press.button.removeAttribute("data-option-holding");
+  }
+
+  document.addEventListener("pointerdown", (event) => {
+    stopGesture();
+    if (!event.isPrimary || event.button !== 0) return;
+    suppressClickUntil = 0;
+    const button = event.target.closest("button[data-option-note]");
+    const target = bindings.get(button);
+    if (!target || dialog.open) return;
+    const press = {
+      id: event.pointerId, button, x: event.clientX, y: event.clientY, opened: false,
+      timer: setTimeout(() => {
+        if (!button.isConnected) return stopGesture();
+        press.opened = open(target.item, target.letter, target.revealed, button);
+        button.removeAttribute("data-option-holding");
+      }, holdTime),
+    };
+    gesture = press;
+    button.setAttribute("data-option-holding", "");
+  }, true);
+
+  document.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== gesture?.id || gesture.opened || gesture.moved) return;
+    if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) >= 8) {
+      gesture.moved = true;
+      stopHold(gesture);
+    }
+  }, { capture: true, passive: true });
+
+  function finishGesture(event) {
+    if (event.pointerId !== gesture?.id) return;
+    if (gesture.opened || gesture.moved) suppressClickUntil = performance.now() + 550;
+    stopGesture();
+  }
+
+  document.addEventListener("pointerup", finishGesture, true);
+  document.addEventListener("pointercancel", finishGesture, true);
+  window.addEventListener("blur", stopGesture);
+  document.addEventListener("contextmenu", (event) => {
+    if (event.target.closest("[data-option-note]")) event.preventDefault();
+  });
+  document.addEventListener("click", (event) => {
+    if (event.detail === 0 || (!gesture?.opened && performance.now() >= suppressClickUntil)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    suppressClickUntil = 0;
+  }, true);
+
+  tabs.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (button && button.getAttribute("aria-pressed") !== "true") {
+      select(button.value);
+      if (!document.documentElement.hasAttribute("data-reduced-motion")) {
+        content.animate?.([{ opacity: .54, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+          { duration: 175, easing: "cubic-bezier(.2,.72,.22,1)" });
+      }
+    }
+  });
+  closeButton.addEventListener("click", sheet.close);
+  dialog.addEventListener("close", () => {
+    if (dialog.open) return;
+    if (session?.trigger?.isConnected) session.trigger.focus({ preventScroll: true });
+    session = null;
+  });
+
+  window.QuizOptionNotes = { attach, open, study, distractor, useEvidence: (render) => { renderEvidence = render; } };
+})();
+</script>
+<script>
 "use strict";
 
 const allQuestions = Array.isArray(window.QuizData) ? window.QuizData : [];
@@ -11372,6 +11976,8 @@ const libraryTabs = {
 const tabDock = $("mobile-tabs");
 const tabButtons = [...tabDock.querySelectorAll("[data-study-tab]")];
 const nativeNavigation = window.webkit?.messageHandlers?.quizNativeUI;
+const optionNotes = window.QuizOptionNotes;
+optionNotes.useEvidence(renderStudyEvidence);
 const chapterTopics = {
   "新增（必刷）": "综合考点",
   "导论": "理论的形成、内容与地位",
@@ -12056,6 +12662,19 @@ function renderLibrary() {
   }
 }
 
+function optionButton(letter, value) {
+  const option = document.createElement("button");
+  option.type = "button";
+  option.className = "option";
+  const tag = document.createElement("span");
+  tag.className = "letter";
+  tag.textContent = letter;
+  const text = document.createElement("span");
+  text.textContent = value;
+  option.append(tag, text);
+  return option;
+}
+
 function showHistoryQuestion(item, practice = false) {
   const entry = state.history[item.id] || {};
   const toText = (answer) => item.options[answer] ? `${answer}　${item.options[answer]}` : answer;
@@ -12064,7 +12683,9 @@ function showHistoryQuestion(item, practice = false) {
   $("history-question-title").textContent = item.stem;
   const rows = Object.entries(item.options).map(([letter, text]) => {
     const row = document.createElement("li");
-    row.textContent = `${letter}　${text}`;
+    const option = optionButton(letter, text);
+    optionNotes.attach(option, item, letter, true, true);
+    row.append(option);
     return row;
   });
   $("history-question-options").replaceChildren(...rows);
@@ -12076,9 +12697,10 @@ function showHistoryQuestion(item, practice = false) {
   const answers = item.blank_answers?.map((choices) => choices.join(" / ")) || item.answer.map(toText);
   $("history-question-answer").textContent = answers.join("\n");
   renderDistractorNotes(item, $("history-distractor-notes"));
-  $("history-question-study").hidden = !item.study?.explanation;
-  $("history-question-explanation").textContent = item.study?.explanation || "";
-  renderStudyEvidence(item.study, "history-question-");
+  const study = optionNotes.study(item);
+  $("history-question-study").hidden = !study?.explanation;
+  $("history-question-explanation").textContent = study?.explanation || "";
+  renderStudyEvidence(study, "history-question-");
   meetingTimeline?.link($("meeting-from-history"), item.id);
   const retry = $("history-question-practice");
   retry.hidden = !practice;
@@ -12451,10 +13073,9 @@ function renderStudyEvidence(study, prefix = "") {
 
 function renderDistractorNotes(item, section) {
   const rows = [];
-  const notes = item && window.QuizDistractorNotes?.[item.id];
-  for (const [letter, note] of Object.entries(notes || {})) {
-    // A bank correction may reorder the options or make a distractor a correct answer.
-    if (item.options[letter] !== note.option || item.answer.includes(letter)) continue;
+  for (const letter of Object.keys(item?.options || {})) {
+    const note = optionNotes.distractor(item, letter);
+    if (!note) continue;
     const row = document.createElement("li");
     const title = document.createElement("h4");
     title.textContent = `${letter} · ${note.option}`;
@@ -12520,25 +13141,22 @@ function renderQuestion() {
   $("fill-answer").value = fill ? selected[0] || "" : "";
   $("fill-answer").classList.toggle("correct", Boolean(fill && result?.correct));
   const buttons = [];
+  const readOnly = Boolean(result) || memoryMode;
   for (const [letter, value] of Object.entries(item.options)) {
-    const option = document.createElement("button");
-    option.type = "button";
-    option.className = "option";
-    option.setAttribute("aria-pressed", String(selected.includes(letter)));
-    option.disabled = Boolean(result) || memoryMode;
+    const option = optionButton(letter, value);
+    if (!readOnly) {
+      option.setAttribute("aria-pressed", String(selected.includes(letter)));
+      option.addEventListener("click", () => choose(letter));
+    }
+    if (!testing) optionNotes.attach(option, item, letter, Boolean(result), readOnly);
+    else option.disabled = readOnly;
     option.classList.toggle("correct", Boolean(result && item.answer.includes(letter)));
     option.classList.toggle("incorrect", Boolean(result && selected.includes(letter) && !item.answer.includes(letter)));
-    const tag = document.createElement("span");
-    tag.className = "letter";
-    tag.textContent = letter;
-    const text = document.createElement("span");
-    text.textContent = value;
-    option.append(tag, text);
-    option.addEventListener("click", () => choose(letter));
     buttons.push(option);
   }
   const focusedOption = [...$("options").children].indexOf(document.activeElement);
   $("options").replaceChildren(...buttons);
+  $("option-note-tools").hidden = testing || !buttons.length;
   if (focusedOption >= 0 && !result) buttons[focusedOption]?.focus();
   $("answer-summary").hidden = !result;
   meetingTimeline?.link($("meeting-from-answer"), result ? item.id : undefined);
@@ -12564,12 +13182,13 @@ function renderQuestion() {
   if (testing) renderChapterTestActions(session);
   $("source").hidden = !result || !item.source_image;
   $("source").href = item.source_image || "#";
-  $("study-note").hidden = !result || !item.study;
-  if (result && item.study) {
-    $("explanation").textContent = item.study.explanation;
-    $("memory").textContent = item.study.memory;
-    $("memory").parentElement.hidden = !item.study.memory;
-    renderStudyEvidence(item.study);
+  const study = result && optionNotes.study(item);
+  $("study-note").hidden = !study;
+  if (study) {
+    $("explanation").textContent = study.explanation;
+    $("memory").textContent = study.memory;
+    $("memory").parentElement.hidden = !study.memory;
+    renderStudyEvidence(study);
   }
   renderRelated(result && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = testing ? "方向键翻题，可回到前面修改答案"
@@ -12845,6 +13464,14 @@ $("wrong-review").onclick = () => {
   setWrongReview(item.id, !inWrongLibrary(item.id));
   renderWrongReview(item.id);
 };
+$("option-notes-open").onclick = (event) => {
+  const item = current();
+  if (!item || takingChapterTest()) return;
+  const result = state.session.results[item.id];
+  const selected = result?.selected || state.session.selected;
+  const first = selected.find((letter) => Object.hasOwn(item.options, letter)) || Object.keys(item.options)[0];
+  if (first) optionNotes.open(item, first, Boolean(result), event.currentTarget);
+};
 document.addEventListener("keydown", (event) => {
   cancelAutoAdvance();
   if ($("quiz").hidden || document.querySelector("dialog[open]") || event.ctrlKey || event.metaKey || event.altKey ||
@@ -12857,7 +13484,8 @@ document.addEventListener("keydown", (event) => {
   } else if (!editing && /^[A-H]$/.test(key)) {
     event.preventDefault();
     choose(key);
-  } else if (key === "ENTER" && (document.activeElement.classList.contains("option") ||
+  } else if (key === "ENTER" && document.activeElement.dataset.optionNoteAction !== "open" &&
+                                   (document.activeElement.classList.contains("option") ||
                                    !["BUTTON", "A"].includes(document.activeElement.tagName))) {
     event.preventDefault();
     if (takingChapterTest() || state.session.results[current()?.id]) moveQuestion(1);
