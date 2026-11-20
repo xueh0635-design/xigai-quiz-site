@@ -85,13 +85,23 @@ window.addEventListener("load", async () => {
         check(text("reference").includes(String(question.study.reference.page)), "textbook reference displayed");
       }
     };
-    check(field("feedback").dataset.state === "correct" && field("progress").value === 1, "correct answer scored");
+    check(field("feedback").dataset.state === "correct" && text("quiz-completion").startsWith("已答 1 / "), "correct answer scored");
     checkExplanation();
     await until(() => text("where").endsWith("2 / " + chapterCount) && field("answer-summary").hidden,
       "correct answer advances automatically");
     swipe(-1, document.querySelector(".masthead"));
     check(text("question") === stem && field("feedback").dataset.state === "correct", "previous answer retained");
     checkExplanation();
+
+    const slider = field("question-position");
+    slider.value = chapterCount;
+    slider.dispatchEvent(new Event("input", { bubbles: true }));
+    check(state.session.index === 0 && text("question") === stem &&
+      text("where").endsWith(chapterCount + " / " + chapterCount), "position drag previews without changing questions");
+    slider.dispatchEvent(new Event("change", { bubbles: true }));
+    check(state.session.index === chapterCount - 1, "position change jumps to the last question");
+    change("question-position", 1);
+    check(text("question") === stem && field("feedback").dataset.state === "correct", "jumping back retains the answer");
 
     swipe(1, document.querySelector(".quiz-actions"));
     check(text("where").endsWith("2 / " + chapterCount), "swipe on quiz action row");
@@ -115,7 +125,7 @@ window.addEventListener("load", async () => {
     change("mode", "memory");
     change("count", "1");
     field("start").click();
-    check(!field("quiz").hidden && field("progress").max === 1 && text("question") === stem &&
+    check(!field("quiz").hidden && field("question-position").disabled && text("question") === stem &&
       field("answer-summary").hidden && !field("submit").disabled, "memory round started");
     field("submit").click();
     checkExplanation();
@@ -229,7 +239,7 @@ window.addEventListener("load", async () => {
 
     start([fill.id, textbookQuestion.id, fill.id], "practice");
     checkFill();
-    check(field("progress").max === 1 && field("progress").value === 0 &&
+    check(text("quiz-completion") === "已答 0 / 1" &&
       text("submit") === "下一题", "fill-ins are study pages and choices count toward progress");
     field("submit").click();
     check(field("answer-summary").hidden, "next question still waits for an answer");
@@ -243,7 +253,7 @@ window.addEventListener("load", async () => {
 
     start([fill.id], "memory");
     checkFill();
-    check(field("progress").hidden, "fill-only study has no scoring progress");
+    check(field("quiz-completion").hidden, "fill-only study has no scoring progress");
     field("submit").click();
     check(text("result-title") === "填空题查看完成", "fill-only study finishes");
 

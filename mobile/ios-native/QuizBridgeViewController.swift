@@ -59,6 +59,32 @@ private final class QuizMediaUIDelegate: NSObject, WKUIDelegate {
 @available(iOS 26.0, *)
 final class QuizBridgeViewController: QuizWebViewController {
     weak var nativeTabs: QuizNativeTabBarController?
+    private let questionSlider = UISlider()
+    private lazy var questionGlass: UIVisualEffectView = {
+        let glass = UIGlassEffect(style: .regular)
+        glass.isInteractive = true
+        let panel = UIVisualEffectView(effect: glass)
+        panel.cornerConfiguration = .capsule()
+        panel.isHidden = true
+        questionSlider.accessibilityLabel = "跳到题号"
+        questionSlider.accessibilityIdentifier = "quiz-question-position"
+        questionSlider.isContinuous = true
+        questionSlider.addTarget(self, action: #selector(beginQuestionDrag), for: .touchDown)
+        questionSlider.addTarget(self, action: #selector(previewQuestionDrag), for: .valueChanged)
+        questionSlider.addTarget(self, action: #selector(commitQuestionDrag), for: [.touchUpInside, .touchUpOutside])
+        questionSlider.addTarget(self, action: #selector(cancelQuestionDrag), for: .touchCancel)
+        questionSlider.translatesAutoresizingMaskIntoConstraints = false
+        panel.contentView.addSubview(questionSlider)
+        NSLayoutConstraint.activate([
+            questionSlider.leadingAnchor.constraint(equalTo: panel.contentView.leadingAnchor, constant: 12),
+            questionSlider.trailingAnchor.constraint(equalTo: panel.contentView.trailingAnchor, constant: -12),
+            questionSlider.topAnchor.constraint(equalTo: panel.contentView.topAnchor),
+            questionSlider.bottomAnchor.constraint(equalTo: panel.contentView.bottomAnchor)
+        ])
+        return panel
+    }()
+    private var questionRevision = -1
+    private var questionNumber = 1
 
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
@@ -82,6 +108,51 @@ final class QuizBridgeViewController: QuizWebViewController {
         )
     }
 
+    private func updateQuestionSlider(_ body: [String: Any]) -> Bool {
+        guard let webView, let revision = body["revision"] as? Int else { return false }
+        guard let number = body["number"] as? Int, let total = body["total"] as? Int,
+              total > 1, (1...total).contains(number),
+              let x = body["x"] as? Double, let y = body["y"] as? Double,
+              let width = body["width"] as? Double, let height = body["height"] as? Double,
+              [x, y, width, height].allSatisfy(\.isFinite), width > 24, height >= 44 else {
+            questionGlass.isHidden = true
+            questionRevision = -1
+            return false
+        }
+        let scrollView = webView.scrollView
+        if questionGlass.superview !== scrollView { scrollView.addSubview(questionGlass) }
+        questionGlass.frame = CGRect(x: x, y: y, width: width, height: height)
+        if questionRevision != revision || !questionSlider.isTracking {
+            questionSlider.minimumValue = 1
+            questionSlider.maximumValue = Float(total)
+            questionSlider.value = Float(number)
+            questionSlider.accessibilityValue = "第 \(number) 题，共 \(total) 题"
+        }
+        questionRevision = revision
+        questionNumber = number
+        questionGlass.isHidden = false
+        return true
+    }
+
+    @objc private func beginQuestionDrag() { sendQuestionPosition("preview") }
+    @objc private func previewQuestionDrag() { sendQuestionPosition(questionSlider.isTracking ? "preview" : "commit") }
+    @objc private func commitQuestionDrag() { sendQuestionPosition("commit") }
+    @objc private func cancelQuestionDrag() {
+        questionSlider.value = Float(questionNumber)
+        sendQuestionPosition("preview")
+    }
+
+    private func sendQuestionPosition(_ action: String) {
+        guard !questionGlass.isHidden else { return }
+        let number = Int(questionSlider.value.rounded())
+        questionSlider.accessibilityValue = "第 \(number) 题，共 \(Int(questionSlider.maximumValue)) 题"
+        webView?.callAsyncJavaScript(
+            "window.QuizNativeUI?.setQuestionPosition(number, action, revision);",
+            arguments: ["number": number, "action": action, "revision": questionRevision],
+            in: nil, in: .page, completionHandler: nil
+        )
+    }
+
     fileprivate func handle(_ message: WKScriptMessage, reply: @escaping (Any?, String?) -> Void) {
         let origin = message.frameInfo.securityOrigin
         guard message.webView === webView, message.frameInfo.isMainFrame,
@@ -101,6 +172,10 @@ final class QuizBridgeViewController: QuizWebViewController {
             reply(true, nil)
             return
         }
+        if kind == "question-position" {
+            reply(updateQuestionSlider(body), nil)
+            return
+        }
         if kind == "theme", let dark = body["dark"] as? Bool {
             let style: UIUserInterfaceStyle = dark ? .dark : .light
             overrideUserInterfaceStyle = style
@@ -115,6 +190,7 @@ final class QuizBridgeViewController: QuizWebViewController {
                 )
                 nativeTabs?.view.tintColor = tint
                 nativeTabs?.tabBar.tintColor = tint
+                questionSlider.minimumTrackTintColor = tint
             }
             reply(true, nil)
             return

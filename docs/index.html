@@ -470,9 +470,6 @@ legend { margin-bottom: 6px; color: var(--muted); font-weight: 650; font-size: .
 #availability, .keys, #where, #storage-status, .review p { color: var(--muted); font-size: .84rem; }
 .quiz-bar, .question-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 #back, #star { border-radius: 999px; }
-#progress { display: block; width: 100%; margin: 12px 0 19px; height: 6px; border: 0; border-radius: 8px; accent-color: var(--accent); }
-#progress::-webkit-progress-bar { background: #e3ece6; border-radius: 8px; }
-#progress::-webkit-progress-value { background: var(--accent); border-radius: 8px; }
 #kind { color: var(--accent); font-size: .88rem; font-weight: 700; }
 .common-question-badge {
   display: inline-block;
@@ -1094,20 +1091,68 @@ a { color: var(--accent); }
   text-align: center;
   overflow-wrap: anywhere;
 }
-.lesson-header #progress {
-  height: 7px;
-  margin: 11px 0 0;
-  background: #dfeae2;
-  overflow: hidden;
+.lesson-header #question-position {
+  --track-fill: linear-gradient(to right,
+    var(--world-action, var(--accent)) var(--question-position, 0%),
+    var(--world-card-alt, #dfeae2) var(--question-position, 0%));
+  --thumb-glass: linear-gradient(150deg, #ffffffeb, #ffffff35 58%, #ffffff70),
+    color-mix(in srgb, var(--world-action, var(--accent)) 63%, var(--world-card-alt, #dfeae2));
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 44px;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: transparent;
+  box-shadow: none;
+  touch-action: none;
+  cursor: grab;
 }
-.lesson-header #progress::-webkit-progress-bar { background: #dfeae2; }
-.lesson-header #progress::-webkit-progress-value { background: linear-gradient(90deg, #167965, #319875); }
-.lesson-header #progress::-moz-progress-bar { border-radius: 8px; background: #167965; }
-.quiz-swipe-hint {
-  margin: 5px 0 0;
+#question-position::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--track-fill);
+}
+#question-position::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--track-fill);
+}
+#question-position::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 22px;
+  margin-top: -7px;
+  border: 1px solid #ffffffa6;
+  border-radius: 999px;
+  background: var(--thumb-glass);
+  box-shadow: 0 2px 8px #0004, inset 0 1px 1px #fffd;
+}
+#question-position::-moz-range-thumb {
+  box-sizing: border-box;
+  width: 28px;
+  height: 22px;
+  border: 1px solid #ffffffa6;
+  border-radius: 999px;
+  background: var(--thumb-glass);
+  box-shadow: 0 2px 8px #0004, inset 0 1px 1px #fffd;
+}
+#question-position:active { cursor: grabbing; }
+#question-position:active::-webkit-slider-thumb { transform: scale(1.13); }
+#question-position:active::-moz-range-thumb { transform: scale(1.13); }
+#question-position:focus-visible {
+  outline: 2px solid var(--world-action, var(--accent));
+  outline-offset: -2px;
+}
+#question-position:disabled { cursor: default; opacity: .55; }
+#question-position[data-native-question-position] { visibility: hidden; }
+.quiz-completion {
+  margin: 0;
   color: var(--muted);
   font-size: .78rem;
-  text-align: center;
+  text-align: end;
 }
 .lesson-card, .lesson-answer, #quiz .study-note, .lesson-related {
   border: 1px solid #fff;
@@ -3305,9 +3350,6 @@ button, select, input:not([type=checkbox]) { background-color: #fffdf8; }
 
 #quiz .lesson-header :is(#back,#star) { background: #fffbf3; }
 #quiz .lesson-header #where { color: #60436d; }
-#quiz .lesson-header #progress, #quiz #progress::-webkit-progress-bar { height: 9px; background: #ecdce9; }
-#quiz #progress::-webkit-progress-value { background: linear-gradient(90deg,#b14b38,#dfa158); }
-#quiz #progress::-moz-progress-bar { background: linear-gradient(90deg,#b14b38,#dfa158); }
 #adventure-streak {
   width: fit-content;
   max-width: 100%;
@@ -4112,9 +4154,6 @@ button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
   color: var(--world-gold);
 }
 #adventure-streak > span[aria-hidden="true"] { color: var(--world-gold); }
-#quiz .lesson-header #progress, #quiz #progress::-webkit-progress-bar { background: var(--world-card-alt); }
-#quiz #progress::-webkit-progress-value { background: var(--world-action); }
-#quiz #progress::-moz-progress-bar { background: var(--world-action); }
 #quiz .lesson-card .option, #quiz .lesson-card .option .letter {
   border-color: var(--world-edge); background: var(--world-card-alt); color: var(--world-ink); box-shadow: none;
 }
@@ -6017,8 +6056,8 @@ button[data-option-note][data-option-holding]::after {
           <span id="where"></span>
           <button id="star" type="button" aria-pressed="false">收藏</button>
         </div>
-        <progress id="progress" aria-label="练习进度"></progress>
-        <p id="quiz-swipe-hint" class="quiz-swipe-hint" hidden>左滑下一题 · 右滑上一题</p>
+        <input id="question-position" type="range" min="1" max="1" value="1" aria-label="跳到题号">
+        <p id="quiz-completion" class="quiz-completion" hidden></p>
         <p id="chapter-test-status" class="chapter-test-status" hidden></p>
         <p id="adventure-streak" hidden><span aria-hidden="true">✦</span> 连中 <strong id="adventure-streak-value"></strong> 题</p>
       </header>
@@ -12318,6 +12357,8 @@ const libraryTabs = {
 const tabDock = $("mobile-tabs");
 const tabButtons = [...tabDock.querySelectorAll("[data-study-tab]")];
 const nativeNavigation = window.webkit?.messageHandlers?.quizNativeUI;
+let nativeQuestionRevision = 0;
+let nativeQuestionFrame = 0;
 const optionNotes = window.QuizOptionNotes;
 optionNotes.useEvidence(renderStudyEvidence);
 const chapterTopics = {
@@ -12411,6 +12452,7 @@ function view(name) {
   document.documentElement.classList.toggle("question-swipe-active", answering);
   if (nativeNavigation && answering !== wasAnswering) {
     nativeNavigation.postMessage({ kind: "question-swipe", enabled: answering }).catch(() => {});
+    syncNativeQuestionPosition();
   }
   $("overview").hidden = name !== "setup";
   desk?.show(name === "desk");
@@ -13379,7 +13421,7 @@ function current() {
   return byId.get(state.session?.ids?.[state.session.index]);
 }
 
-function goToQuestion(index, { swipe = false, direction } = {}) {
+function goToQuestion(index, { swipe = false, direction, focusQuestion = true } = {}) {
   const session = state.session;
   if (!byId.has(session?.ids[index]) || index === session.index) return;
   const travel = direction ?? Math.sign(index - session.index);
@@ -13395,7 +13437,7 @@ function goToQuestion(index, { swipe = false, direction } = {}) {
   saveSession();
   renderQuestion();
   window.scrollTo(0, 0);
-  $("question").focus({ preventScroll: true });
+  if (focusQuestion) $("question").focus({ preventScroll: true });
   animatePage(travel * (swipe ? 36 : 22), 0, swipe ? 210 : 185);
 }
 
@@ -13525,9 +13567,9 @@ function renderDistractorNotes(item, section) {
 function renderRoundProgress(session) {
   const scored = session.ids.filter(requiresAnswer);
   const answered = scored.filter((id) => questionResult(session, id)).length;
-  $("progress").hidden = scored.length === 0;
-  $("progress").max = scored.length || 1;
-  $("progress").value = answered;
+  const completion = $("quiz-completion");
+  completion.hidden = scored.length === 0 || takingChapterTest(session);
+  completion.textContent = `已答 ${answered} / ${scored.length}`;
   const combo = isAdventureSession(session) && streak(session.ids.slice(0, session.index + 1), session).current;
   $("adventure-streak").hidden = combo < 2;
   $("adventure-streak-value").textContent = combo || "";
@@ -13547,6 +13589,16 @@ function renderQuestionActions(session, item, result, { answered, total }) {
   submitButton.parentElement.hidden = submitButton.hidden;
 }
 
+function previewQuestionPosition(session, number) {
+  const total = session.ids.length;
+  const chapter = session.meetingPractice ? "会议专题" : byId.get(session.ids[number - 1])?.chapter;
+  const label = `第 ${number} 题，共 ${total} 题`;
+  const slider = $("question-position");
+  slider.setAttribute("aria-valuetext", label);
+  slider.style.setProperty("--question-position", `${total > 1 ? (number - 1) / (total - 1) * 100 : 100}%`);
+  $("where").textContent = `${takingChapterTest(session) ? "测验 · " : ""}${chapter ?? ""} · ${number} / ${total}`;
+}
+
 function renderQuestion() {
   const item = current();
   if (!item) return;
@@ -13564,10 +13616,14 @@ function renderQuestion() {
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
-  const location = session.meetingPractice ? "会议专题" : item.chapter;
-  $("where").textContent = `${testing ? "测验 · " : ""}${location} · ${session.index + 1} / ${total}`;
+  const slider = $("question-position");
+  slider.disabled = total < 2;
+  slider.max = total;
+  slider.value = session.index + 1;
+  previewQuestionPosition(session, slider.valueAsNumber);
+  nativeQuestionRevision++;
+  syncNativeQuestionPosition();
   const progress = renderRoundProgress(session);
-  $("quiz-swipe-hint").hidden = total < 2;
   const source = bank === "sizheng" || bank === "xuexitong" ? bankLabels[bank] : item.source || bankLabels.sizheng;
   $("kind").textContent = `${item.type}题 · ${source}`;
   $("common-question-badge").hidden = !item.common_question;
@@ -13617,7 +13673,6 @@ function renderQuestion() {
   const tapCheck = checksOnTap(item);
   renderQuestionActions(session, item, result, progress);
   $("chapter-test-status").hidden = !testing;
-  $("progress").setAttribute("aria-label", testing ? "测验作答进度" : "练习进度");
   if (testing) renderChapterTestActions(session);
   $("source").hidden = !showAnswer || !item.source_image;
   $("source").href = item.source_image || "#";
@@ -13681,7 +13736,6 @@ function renderChapterTestActions(session) {
   const last = session.index === session.ids.length - 1;
   const reading = !requiresAnswer(current().id) && !last;
   $("chapter-test-status").textContent = scored.length ? `已答 ${count} / ${scored.length} 道 · 交卷后查看答案` : "";
-  $("progress").value = count;
   $("submit").hidden = !reading && !ready && !last;
   $("submit").disabled = false;
   $("submit").textContent = reading ? "下一题" : !scored.length ? "查看结果" : ready ? "交卷" : "去未答题";
@@ -13907,7 +13961,8 @@ $("option-notes-open").onclick = (event) => {
 };
 document.addEventListener("keydown", (event) => {
   cancelAutoAdvance();
-  if ($("quiz").hidden || document.querySelector("dialog[open]") || event.ctrlKey || event.metaKey || event.altKey ||
+  if (event.target === $("question-position") || $("quiz").hidden || document.querySelector("dialog[open]") ||
+      event.ctrlKey || event.metaKey || event.altKey ||
       event.repeat || event.isComposing) return;
   const key = event.key.toUpperCase();
   const editing = document.activeElement.matches("input, textarea, select, [contenteditable]");
@@ -13934,6 +13989,37 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) cance
 function canSwipeQuestion() {
   return !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
 }
+
+function syncNativeQuestionPosition() {
+  if (!nativeNavigation || nativeQuestionFrame) return;
+  nativeQuestionFrame = requestAnimationFrame(async () => {
+    nativeQuestionFrame = 0;
+    const slider = $("question-position");
+    const revision = nativeQuestionRevision;
+    const show = canSwipeQuestion() && !slider.disabled && (window.visualViewport?.scale ?? 1) === 1;
+    const bounds = slider.getBoundingClientRect();
+    const layout = show ? {
+      x: bounds.left + window.scrollX, y: bounds.top + window.scrollY,
+      width: bounds.width, height: bounds.height,
+      number: state.session.index + 1, total: state.session.ids.length,
+    } : {};
+    const active = await nativeNavigation.postMessage({ kind: "question-position", revision, ...layout }).catch(() => false);
+    if (revision === nativeQuestionRevision) slider.toggleAttribute("data-native-question-position", active === true);
+  });
+}
+
+const questionPositionSlider = $("question-position");
+questionPositionSlider.addEventListener("input", () => {
+  if (canSwipeQuestion()) previewQuestionPosition(state.session, questionPositionSlider.valueAsNumber);
+});
+questionPositionSlider.addEventListener("change", () => {
+  if (canSwipeQuestion()) goToQuestion(questionPositionSlider.valueAsNumber - 1, { focusQuestion: false });
+});
+questionPositionSlider.addEventListener("pointercancel", () => {
+  if (!canSwipeQuestion()) return;
+  questionPositionSlider.value = state.session.index + 1;
+  previewQuestionPosition(state.session, questionPositionSlider.valueAsNumber);
+});
 
 function connectQuestionSwipe() {
   const horizontalRatio = 1.12;
@@ -14249,7 +14335,22 @@ if (nativeNavigation) {
       cancelAutoAdvance();
       moveQuestion(direction, true);
     },
+    setQuestionPosition(number, action, revision) {
+      if (!canSwipeQuestion() || revision !== nativeQuestionRevision ||
+          !Number.isInteger(number) || number < 1 || number > state.session.ids.length) return;
+      cancelAutoAdvance();
+      questionPositionSlider.value = number;
+      previewQuestionPosition(state.session, number);
+      if (action === "commit") goToQuestion(number - 1, { focusQuestion: false });
+    },
   };
+  const positionLayout = new ResizeObserver(syncNativeQuestionPosition);
+  positionLayout.observe(document.querySelector(".lesson-header"));
+  const dialogVisibility = new MutationObserver(syncNativeQuestionPosition);
+  for (const dialog of document.querySelectorAll("dialog")) dialogVisibility.observe(dialog, {
+    attributes: true, attributeFilter: ["open"],
+  });
+  window.visualViewport?.addEventListener("resize", syncNativeQuestionPosition);
 }
 $("library-configure").onclick = () => {
   const scope = profileLibrary || selectedTab;
