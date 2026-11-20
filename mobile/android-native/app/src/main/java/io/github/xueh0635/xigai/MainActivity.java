@@ -50,7 +50,9 @@ public class MainActivity extends BridgeActivity {
             provider.getView().animate().alpha(0f).setDuration(160).withEndAction(provider::remove).start();
         });
         if (getBridge() == null) return;
-        getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
+        WebView webView = getBridge().getWebView();
+        webView.getSettings().setSupportZoom(false);
+        webView.setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
             @Override
             public void onPermissionRequest(PermissionRequest request) {
                 String[] resources = request.getResources();

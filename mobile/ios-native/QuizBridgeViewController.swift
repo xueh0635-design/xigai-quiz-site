@@ -10,6 +10,15 @@ class QuizWebViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         guard let webView else { return }
+        webView.scrollView.pinchGestureRecognizer?.isEnabled = false
+        // WebKit can also magnify on a double-tap or when an input gains focus.
+        webView.configuration.userContentController.addUserScript(WKUserScript(source: """
+            (() => {
+                if (location.protocol !== 'capacitor:' || location.host !== 'localhost') return;
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) viewport.content += ',maximum-scale=1,user-scalable=no';
+            })();
+            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
         let delegate = QuizMediaUIDelegate(forwarding: webView.uiDelegate)
         mediaDelegate = delegate
         webView.uiDelegate = delegate
