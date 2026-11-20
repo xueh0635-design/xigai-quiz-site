@@ -6136,7 +6136,7 @@ button[data-option-note][data-option-holding]::after {
       <div class="lesson-card">
         <div class="question-header">
           <span id="kind"></span>
-          <span id="common-question-badge" class="common-question-badge" title="思政云和学习通均收录" hidden>常考</span>
+          <span id="common-question-badge" class="common-question-badge" hidden></span>
           <span id="option-hint" hidden>选齐后提交</span>
           <button id="wrong-review" type="button" aria-label="留在错题本" aria-pressed="false">加入错题本</button>
         </div>
@@ -12643,6 +12643,7 @@ const storageKey = "xigai-local-quiz-v1";
 const bankStorageKey = "xigai-practice-bank-v1";
 const autoAdvanceStorageKey = "xigai-auto-advance-delay-v1";
 const bankLabels = { all: "全部题库", sizheng: "思政云", xuexitong: "学习通", common: "常考题" };
+const sharedQuestions = indexSharedQuestions(questions);
 const libraryPageSize = 12;
 const libraryTabs = {
   done: { title: "已答题", empty: "提交过作答的题目会出现在这里。" },
@@ -12823,12 +12824,17 @@ function returnFromQuestion() {
 }
 
 function appendCommonQuestionBadge(container, item) {
-  if (!item.common_question) return;
   const badge = document.createElement("span");
   badge.className = "common-question-badge";
-  badge.title = "思政云和学习通均收录";
-  badge.textContent = "常考";
-  container.append(badge);
+  renderCommonQuestionBadge(badge, item);
+  if (!badge.hidden) container.append(badge);
+}
+
+function renderCommonQuestionBadge(badge, item) {
+  const shared = sharedQuestions.has(item.id);
+  badge.hidden = !shared && !item.common_question;
+  badge.title = shared ? "两个题库共用作答进度" : "两库收录相近考点";
+  badge.textContent = shared ? "两库同题" : "常考";
 }
 
 function filterScope(scope) {
@@ -12854,17 +12860,95 @@ function inBank(item, bank) {
   return (item.source || bankLabels.sizheng) === label || item.also_in === label;
 }
 
+function questionTextKey(value) {
+  return value.normalize("NFC").trim().replace(/\s+/gu, " ");
+}
+
+function indexSharedQuestions(pool) {
+  const matches = new Map();
+  const shared = new Map();
+  for (const item of pool) {
+    if (inBank(item, "sizheng") && inBank(item, "xuexitong")) shared.set(item.id, [item.id]);
+    const options = Object.values(item.options).map(questionTextKey);
+    // An option must be identifiable by text even if the other bank reorders the letters.
+    if (new Set(options).size !== options.length) continue;
+    const answers = options.length
+      ? item.answer.map((letter) => item.options[letter] ? questionTextKey(item.options[letter]) : undefined).sort()
+      : (item.blank_answers || item.answer.map((value) => value.split(/[;；]/)))
+        .map((field) => [...new Set(field.map(questionTextKey))].sort());
+    if (answers.includes(undefined) || !answers.length) continue;
+    const key = JSON.stringify([item.chapter, item.type, questionTextKey(item.stem), options.sort(), answers]);
+    if (!matches.has(key)) matches.set(key, []);
+    matches.get(key).push(item);
+  }
+  for (const items of matches.values()) {
+    if (items.length < 2 || !items.some((item) => inBank(item, "sizheng")) ||
+        !items.some((item) => inBank(item, "xuexitong"))) continue;
+    const anchor = items.find((item) => item.common_question_id === item.id) ||
+      items.find((item) => (item.source || bankLabels.sizheng) === bankLabels.sizheng) || items[0];
+    const ids = [anchor.id, ...items.filter((item) => item !== anchor).map((item) => item.id)];
+    for (const id of ids) shared.set(id, ids);
+  }
+  return shared;
+}
+
+function sharedQuestionId(id) {
+  return sharedQuestions.get(id)?.[0] || id;
+}
+
+function translateSelection(selected, from, to) {
+  if (!Array.isArray(selected)) return [];
+  if (from === to || !Object.keys(byId.get(from).options).length) return selected;
+  const options = new Map(Object.entries(byId.get(to).options).map(([letter, text]) => [questionTextKey(text), letter]));
+  const translated = selected.map((letter) => {
+    const text = byId.get(from).options[letter];
+    return text && options.get(questionTextKey(text));
+  });
+  return translated.every(Boolean) ? translated : [];
+}
+
+function historyRecordId(id) {
+  const group = sharedQuestions.get(id);
+  if (!group) return id;
+  let chosen = group[0];
+  for (const candidate of group.slice(1)) {
+    const entry = state.history[candidate];
+    const previous = state.history[chosen];
+    if (entry && (!previous || (typeof entry.wrong === "boolean" &&
+        (typeof previous.wrong !== "boolean" || (Number(entry.last) || 0) > (Number(previous.last) || 0))))) {
+      chosen = candidate;
+    }
+  }
+  return chosen;
+}
+
+function historyEntry(id) {
+  return state.history[historyRecordId(id)];
+}
+
+function isStarred(id) {
+  return (sharedQuestions.get(id) || [id]).some((copy) => state.stars[copy] === true);
+}
+
 function commonQuestionPriority(item) {
-  const entry = state.history[item.id];
-  if (hasAnswered(item.id)) return 2 + (Number.isFinite(entry.last) ? Math.max(0, entry.last) : 0);
-  return Number(Boolean(state.stars[item.id] || entry?.review));
+  const entry = historyEntry(item.id);
+  if (typeof entry?.wrong === "boolean") return 2 + (Number.isFinite(entry.last) ? Math.max(0, entry.last) : 0);
+  return Number(Boolean(isStarred(item.id) || entry?.review));
 }
 
 function bankQuestions(bank, pool = questions, scope = "all") {
-  if (bank !== "common") return pool.filter((item) => inBank(item, bank) && inScope(item, scope));
+  if (bank !== "common") {
+    const seen = new Set();
+    return pool.filter((item) => {
+      const id = sharedQuestionId(item.id);
+      if (seen.has(id) || !inBank(item, bank) || !inScope(item, scope)) return false;
+      seen.add(id);
+      return true;
+    });
+  }
   const shared = new Map();
   for (const item of pool) {
-    const id = item.common_question_id;
+    const id = item.common_question_id || sharedQuestions.get(item.id)?.[0];
     // For 未做过, consider both sources before filtering out answered questions.
     if (!id || (scope !== "new" && !inScope(item, scope))) continue;
     const previous = shared.get(id);
@@ -12894,7 +12978,7 @@ function chapterStudy(chapter, bank) {
     if (inWrongLibrary(item.id)) marked.push(item.id);
     if (!requiresAnswer(item.id)) continue;
     total++;
-    if (hasAnswered(item.id)) latest = Math.max(latest, Number(state.history[item.id].last) || 0);
+    if (hasAnswered(item.id)) latest = Math.max(latest, Number(historyEntry(item.id).last) || 0);
     else remaining.push(item.id);
   }
   const wrong = marked.filter(requiresAnswer);
@@ -12947,7 +13031,7 @@ function setup() {
     $("types").append(label);
   }
   const allowSources = questions.some((item) => inBank(item, "xuexitong"));
-  const allowCommon = questions.some((item) => item.common_question_id);
+  const allowCommon = sharedQuestions.size > 0 || questions.some((item) => item.common_question_id);
   const reviewBanks = allowSources ? ["all", "sizheng", "xuexitong"] : ["all"];
   if (allowCommon) reviewBanks.push("common");
   $("wrong-bank").replaceChildren(...reviewBanks.map((bank) => makeOption(bankLabels[bank], bank)));
@@ -13065,16 +13149,18 @@ function usesChapterHistory(session) {
 
 function questionResult(session, id) {
   const saved = session?.results?.[id];
-  const entry = usesChapterHistory(session) && state.history[id];
+  const useHistory = usesChapterHistory(session) || (session?.reuseSharedHistory && sharedQuestions.has(id));
+  const source = useHistory && historyRecordId(id);
+  const entry = source && state.history[source];
   if (typeof entry?.wrong === "boolean") {
-    const selected = Array.isArray(entry.selected) ? entry.selected : [];
+    const selected = translateSelection(entry.selected, source, id);
     return { selected, correct: !entry.wrong, roundSelection: selected.length ? undefined : saved?.selected };
   }
   return saved;
 }
 
 function sessionQuestionKey(session, id) {
-  return bankForSession(session) === "common" ? byId.get(id)?.common_question_id || id : id;
+  return (bankForSession(session) === "common" && byId.get(id)?.common_question_id) || sharedQuestionId(id);
 }
 
 function canResumeSession(session = state.session) {
@@ -13156,20 +13242,21 @@ function startChapterTest(chapter, bank) {
 }
 
 function hasAnswered(id) {
-  return typeof state.history[id]?.wrong === "boolean";
+  return typeof historyEntry(id)?.wrong === "boolean";
 }
 
 function inWrongLibrary(id) {
-  const entry = state.history[id];
+  const entry = historyEntry(id);
   return entry?.review ?? (entry?.wrong === true);
 }
 
 function setWrongReview(id, review) {
-  const entry = { ...state.history[id] };
+  const key = historyRecordId(id);
+  const entry = { ...state.history[key] };
   if (review === undefined) delete entry.review;
   else entry.review = review;
-  state.history[id] = entry;
-  save([["history", id, entry]]);
+  state.history[key] = entry;
+  save([["history", key, entry]]);
 }
 
 function renderWrongReview(id) {
@@ -13180,7 +13267,7 @@ function renderWrongReview(id) {
 }
 
 function renderQuestionFlags(id) {
-  const starred = Boolean(state.stars[id]);
+  const starred = isStarred(id);
   $("star").setAttribute("aria-pressed", String(starred));
   $("star").textContent = starred ? "已收藏" : "收藏";
   renderWrongReview(id);
@@ -13190,7 +13277,7 @@ function inScope(item, scope) {
   if (scope === "new") return !hasAnswered(item.id);
   if (scope === "done") return hasAnswered(item.id);
   if (scope === "wrong") return inWrongLibrary(item.id);
-  if (scope === "starred") return state.stars[item.id] === true;
+  if (scope === "starred") return isStarred(item.id);
   return true;
 }
 
@@ -13199,7 +13286,9 @@ function matches() {
   const chapter = $("chapter").value;
   const scope = $("scope").value;
   const pool = chapter ? (chapterPools.get(chapter) || []) : questions;
-  return bankQuestions(selectedBank, pool.filter((item) => chosenTypes.has(item.type)), scope);
+  return bankQuestions(selectedBank, pool.filter((item) => chosenTypes.has(item.type)), scope)
+    .filter((item) => scope !== "all" || $("mode").value !== "practice" ||
+      !sharedQuestions.has(item.id) || !hasAnswered(item.id));
 }
 
 function setOpenLibraryRow(row) {
@@ -13244,7 +13333,8 @@ function makeWrongRow(item, questionButton) {
   remove.textContent = "移除";
   remove.inert = true;
   remove.onclick = () => {
-    wrongUndo = { id: item.id, previous: state.history[item.id]?.review, last: state.history[item.id]?.last };
+    const entry = historyEntry(item.id);
+    wrongUndo = { id: item.id, previous: entry?.review, last: entry?.last };
     setWrongReview(item.id, false);
     updateAvailability();
     $("library-undo").focus({ preventScroll: true });
@@ -13338,8 +13428,8 @@ function renderLibrary() {
     renderWrongChapters(list);
     return;
   }
-  const items = plan ? plan.marked.map((id) => byId.get(id)) : questions.filter((item) => inScope(item, scope));
-  if (done) items.sort((first, second) => (state.history[second.id].last || 0) - (state.history[first.id].last || 0));
+  const items = plan ? plan.marked.map((id) => byId.get(id)) : bankQuestions("all", questions, scope);
+  if (done) items.sort((first, second) => (historyEntry(second.id).last || 0) - (historyEntry(first.id).last || 0));
   const focused = list.contains(document.activeElement) ? document.activeElement : null;
   const focusedId = focused?.closest("[data-question-id]")?.dataset.questionId;
   const openId = openLibraryRow?.dataset.questionId;
@@ -13353,7 +13443,7 @@ function renderLibrary() {
     stem.textContent = item.stem;
     const meta = document.createElement("span");
     meta.className = "library-meta";
-    const result = done ? (state.history[item.id].wrong ? " · 答错" : " · 答对") : "";
+    const result = done ? (historyEntry(item.id).wrong ? " · 答错" : " · 答对") : "";
     meta.textContent = `${item.chapter} · ${item.type}题${result}`;
     appendCommonQuestionBadge(meta, item);
     button.append(stem, meta);
@@ -13375,7 +13465,7 @@ function renderLibrary() {
   $("library-configure").disabled = items.length === 0;
   $("library-swipe-hint").hidden = !wrong || items.length === 0;
   if (wrongUndo) {
-    const entry = state.history[wrongUndo.id];
+    const entry = historyEntry(wrongUndo.id);
     if (entry?.review !== false || entry.last !== wrongUndo.last) wrongUndo = null;
   }
   $("library-removal").hidden = !wrong || !wrongUndo;
@@ -13410,11 +13500,13 @@ function historyOptionLabel(item, answer) {
 }
 
 function renderHistoryAnswer(item) {
-  const entry = state.history[item.id] || {};
-  const answered = hasAnswered(item.id);
+  const key = historyRecordId(item.id);
+  const entry = state.history[key] || {};
+  const answered = typeof entry.wrong === "boolean";
+  const selected = translateSelection(entry.selected, key, item.id);
   $("history-question-result").textContent = answered ? entry.wrong ? "上次答错" : "上次答对" : "手动加入，尚未作答";
-  $("history-question-selection").textContent = Array.isArray(entry.selected) && entry.selected.length
-    ? entry.selected.map((answer) => historyOptionLabel(item, answer)).join("\n")
+  $("history-question-selection").textContent = selected.length
+    ? selected.map((answer) => historyOptionLabel(item, answer)).join("\n")
     : answered ? "这条早期记录保存了判分。" : "暂无作答记录。";
 }
 
@@ -13574,9 +13666,9 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   $("adventure-goal").value = answered;
   $("route-map-completion").textContent = `已练完 ${chapters.filter((row) => !row.remaining.length).length} / ${chapters.length} 章`;
   const day = studyDay.format();
-  const practiced = Object.entries(state.history).filter(([id, answer]) => {
-    const last = answer?.last;
-    return byId.has(id) && Number.isFinite(last) && last > 0 && last <= 9999999999999 && studyDay.format(last) === day;
+  const practiced = bankQuestions("all").filter((item) => {
+    const last = historyEntry(item.id)?.last;
+    return Number.isFinite(last) && last > 0 && last <= 9999999999999 && studyDay.format(last) === day;
   }).length;
   $("adventure-today").textContent = ` · 今日已答 ${practiced} 道`;
   renderRouteStops(chapters, currentChapter);
@@ -13623,10 +13715,11 @@ function streak(ids, session) {
 
 function updateAvailability() {
   const length = matches().length;
+  const unique = bankQuestions("all");
   const stats = {
-    done: questions.filter((item) => hasAnswered(item.id)).length,
-    wrong: questions.filter((item) => inWrongLibrary(item.id)).length,
-    starred: Object.values(state.stars).filter(Boolean).length,
+    done: unique.filter((item) => hasAnswered(item.id)).length,
+    wrong: unique.filter((item) => inWrongLibrary(item.id)).length,
+    starred: unique.filter((item) => isStarred(item.id)).length,
   };
   for (const [key, count] of Object.entries(stats)) {
     $(`stat-${key}`).firstElementChild.textContent = count;
@@ -13690,7 +13783,7 @@ function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
   // Older clients can resume these IDs as a regular quiz without expanding them to the full chapter.
   const options = chapterOptions.bankScope === "common"
     ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan,
-      repeatChapter: chapterOptions.repeatChapter } : chapterOptions;
+      repeatChapter: chapterOptions.repeatChapter, reuseSharedHistory: chapterOptions.reuseSharedHistory } : chapterOptions;
   const previous = state.session;
   let study = previous?.chapterStudy;
   const pausedPractice = pauseChapterPractice(previous);
@@ -13926,7 +14019,7 @@ function renderQuestion() {
   const progress = renderRoundProgress(session);
   const source = bank === "sizheng" || bank === "xuexitong" ? bankLabels[bank] : item.source || bankLabels.sizheng;
   $("kind").textContent = `${item.type}题 · ${source}`;
-  $("common-question-badge").hidden = !item.common_question;
+  renderCommonQuestionBadge($("common-question-badge"), item);
   $("option-hint").hidden = item.type !== "多选" || memoryMode || Boolean(result);
   $("option-hint").textContent = testing ? "可选多项" : "选齐后提交";
   $("question").textContent = item.stem;
@@ -14049,9 +14142,10 @@ function recordAnswer(session, item, selected, timestamp) {
   const correct = selected.length > 0 &&
     item.answer.length === selected.length && item.answer.every((letter) => selected.includes(letter));
   session.results[item.id] = { selected, correct };
-  const entry = { wrong: !correct, last: timestamp, selected: [...selected] };
-  state.history[item.id] = entry;
-  return ["history", item.id, entry];
+  const id = sharedQuestionId(item.id);
+  const entry = { wrong: !correct, last: timestamp, selected: [...translateSelection(selected, item.id, id)] };
+  state.history[id] = entry;
+  return ["history", id, entry];
 }
 
 function submitChapterTest(session) {
@@ -14064,7 +14158,11 @@ function submitChapterTest(session) {
   }
   const timestamp = Date.now();
   const scored = session.ids.filter(requiresAnswer);
-  const changes = scored.map((id) => recordAnswer(session, byId.get(id), answers[id], timestamp));
+  const changes = new Map();
+  for (const id of scored) {
+    const change = recordAnswer(session, byId.get(id), answers[id], timestamp);
+    changes.set(change[1], change);
+  }
   if (scored.length) {
     const correct = scored.filter((id) => session.results[id].correct).length;
     const study = session.chapterStudy ??= {};
@@ -14073,7 +14171,7 @@ function submitChapterTest(session) {
   }
   session.testSubmitted = true;
   delete session.drafts;
-  completeRound(changes);
+  completeRound([...changes.values()]);
 }
 
 function submit() {
@@ -14104,8 +14202,11 @@ function submit() {
   }
 }
 
-function questionDestination(session, direction) {
-  const adjacent = session.index + direction;
+function questionDestination(session, direction, skipShared = false) {
+  let adjacent = session.index + direction;
+  while (skipShared && sharedQuestions.has(session.ids[adjacent]) && questionResult(session, session.ids[adjacent])) {
+    adjacent += direction;
+  }
   if (byId.has(session.ids[adjacent])) return adjacent;
   const id = session.ids[session.index];
   if (direction < 0 || takingChapterTest(session) || (requiresAnswer(id) && !questionResult(session, id))) return null;
@@ -14113,10 +14214,10 @@ function questionDestination(session, direction) {
   return pending < 0 ? session.ids.length : pending;
 }
 
-function moveQuestion(direction, swipe = false) {
+function moveQuestion(direction, swipe = false, skipShared = false) {
   if (!current()) return;
   const session = state.session;
-  const destination = questionDestination(session, direction);
+  const destination = questionDestination(session, direction, skipShared);
   if (destination === null) return;
   if (destination === session.ids.length) completeRound();
   else goToQuestion(destination, { swipe, direction });
@@ -14133,7 +14234,7 @@ function scheduleAutoAdvance(session, delay) {
     autoAdvanceTimer = undefined;
     if (state.session !== session || session.index !== index || document.hidden || $("quiz").hidden ||
         document.querySelector("dialog[open]")) return;
-    moveQuestion(1);
+    moveQuestion(1, false, true);
   }, delay);
 }
 
@@ -14202,7 +14303,9 @@ $("setup-form").addEventListener("submit", (event) => {
   let pool = matches();
   if ($("order").value === "random") pool = shuffled(pool);
   const ids = pool.slice(0, $("count").valueAsNumber).map((item) => item.id);
-  if (ids.length) start(ids, $("mode").value, { bankScope: selectedBank });
+  const mode = $("mode").value;
+  const reuseSharedHistory = mode === "practice" && ["all", "new"].includes($("scope").value);
+  if (ids.length) start(ids, mode, { bankScope: selectedBank, reuseSharedHistory });
 });
 $("resume").onclick = resumeQuestion;
 $("adventure-chapter-long").onclick = () => openChapter($("chapter").value, { whole: true });
@@ -14244,8 +14347,11 @@ for (const button of document.querySelectorAll("[data-profile-library]")) {
 }
 $("star").onclick = () => {
   const item = current();
-  state.stars[item.id] = !state.stars[item.id];
-  save([["star", item.id, state.stars[item.id]]]);
+  const starred = !isStarred(item.id);
+  const ids = starred ? [sharedQuestionId(item.id)] : (sharedQuestions.get(item.id) || [item.id])
+    .filter((id) => state.stars[id] === true);
+  for (const id of ids) state.stars[id] = starred;
+  save(ids.map((id) => ["star", id, starred]));
   renderQuestion();
 };
 $("wrong-review").onclick = () => {
@@ -14784,7 +14890,8 @@ sync = window.QuizAccount?.connect({
   },
   receive(remote, reset) {
     const active = !reset && (!$("quiz").hidden || !$("result").hidden) ? state.session : null;
-    const item = usesChapterHistory(active) && !$("quiz").hidden ? current() : null;
+    const open = active && !$("quiz").hidden && current();
+    const item = open && (usesChapterHistory(active) || sharedQuestions.has(open.id)) ? open : null;
     const previous = item && questionResult(active, item.id);
     const session = Array.isArray(remote.session?.ids) && remote.session.ids.every((id) => byId.has(id))
       ? remote.session : null;
@@ -14806,7 +14913,10 @@ sync = window.QuizAccount?.connect({
             JSON.stringify(previous?.roundSelection) !== JSON.stringify(result?.roundSelection)) {
           renderQuestion();
         } else {
-          renderQuestionActions(active, item, result, renderRoundProgress(active));
+          renderQuestionFlags(item.id);
+          const progress = renderRoundProgress(active);
+          if (takingChapterTest(active)) renderChapterTestActions(active);
+          else renderQuestionActions(active, item, result, progress);
         }
       }
     }
