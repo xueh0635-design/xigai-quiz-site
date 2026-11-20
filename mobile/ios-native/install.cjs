@@ -38,6 +38,8 @@ info.UILaunchScreen = { UIColorName: "LaunchBackground", UIImageName: "Splash", 
 writeFileSync(infoFile, plist.build(info));
 
 const catalog = join(appDirectory, "App", "Assets.xcassets");
+copyFileSync(join(__dirname, "..", "art", "app-icon.png"),
+  join(catalog, "AppIcon.appiconset", "AppIcon-512@2x.png"));
 const splash = join(catalog, "Splash.imageset");
 for (const name of ["splash-2732x2732.png", "splash-2732x2732-1.png", "splash-2732x2732-2.png"]) {
   rmSync(join(splash, name), { force: true });

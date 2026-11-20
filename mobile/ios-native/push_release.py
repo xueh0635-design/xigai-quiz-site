@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 import plistlib
 import re
-from shutil import copyfile, rmtree
+from shutil import rmtree
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -119,9 +119,6 @@ def prepare_mobile(working, source_ref, apk, log):
     shell("npx", "--no-install", "cap", "add", "ios", cwd=mobile, log=log)
     shell("node", "ios-native/install.cjs", cwd=mobile, log=log)
     project = mobile / "ios/App"
-    icon = project / "App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
-    if icon.is_file():
-        copyfile(mobile / "art/app-icon.png", icon)
     return project / "App.xcodeproj", html
 
 

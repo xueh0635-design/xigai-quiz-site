@@ -37,7 +37,7 @@ jobs:
           python3 tests/inject-smoke.py www/index.html
           npx --no-install cap add ios
           node ios-native/install.cjs
-          cp art/app-icon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+          cmp art/app-icon.png ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
       - name: Select and build for iPhone
         run: |
           xcodebuild -version
