@@ -6108,6 +6108,90 @@ button[data-option-note][data-option-holding]::after {
 }
 #development-brief { min-height: 4.5rem; resize: vertical; }
 #development-receipts a { display: inline-block; margin-top: 5px; }
+
+#development-requests form[hidden], #development-requests [hidden],
+#development-picker [hidden] { display: none; }
+#development-requests > .tutor-scroll { flex: 1 1 9rem; }
+#development-request-form { min-height: 0; overflow: auto; }
+#development-request-form #development-mark { justify-self: start; }
+.development-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.development-actions button, #development-mark { min-height: 44px; }
+#development-marks { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+#development-marks li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--world-card-alt);
+}
+#development-marks p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .8rem; }
+#development-marks textarea, #development-note {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+}
+#development-marks button { min-height: 44px; }
+#development-picker {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  overflow: hidden;
+}
+#development-picker::backdrop { background: transparent; }
+#development-target { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+#development-box {
+  position: absolute;
+  border: 2px solid #f7b66d;
+  border-radius: 6px;
+  background: rgb(247 182 109 / 14%);
+  box-shadow: 0 0 0 100vmax rgb(12 23 30 / 24%);
+  pointer-events: none;
+}
+.development-picker-bar, #development-note-form {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(36rem, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 24%);
+}
+.development-picker-bar {
+  top: max(8px, var(--top-inset));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: .9rem;
+}
+.development-picker-bar button { flex: none; min-height: 44px; }
+#development-note-form {
+  bottom: calc(max(8px, var(--bottom-inset)) + var(--development-keyboard, 0px));
+  display: grid;
+  gap: 7px;
+}
+#development-note-form[data-above] { top: calc(max(8px, var(--top-inset)) + 74px); bottom: auto; }
+#development-note-target { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: .82rem; }
 </style>
 </head>
 <body>
@@ -6523,14 +6607,36 @@ button[data-option-note][data-option-holding]::after {
         <button type="submit" class="primary">绑定</button>
       </form>
       <form id="development-request-form" hidden>
-        <label for="development-brief">想让题库改什么？</label>
-        <textarea id="development-brief" rows="3" maxlength="2000" required></textarea>
-        <button type="submit" class="primary">发给 Codex</button>
+        <button id="development-mark" type="button">框选页面</button>
+        <ol id="development-marks" aria-label="待发送的批注" hidden></ol>
+        <label for="development-brief">还有什么要补充？</label>
+        <textarea id="development-brief" rows="2" maxlength="2000"></textarea>
+        <div class="development-actions">
+          <button id="development-local" type="submit" value="local" hidden>用 Mac 本地改文案</button>
+          <button id="development-send" type="submit" value="codex" class="primary">发给 Codex</button>
+        </div>
       </form>
       <p id="development-status" role="status"></p>
       <div class="tutor-scroll">
         <ul id="development-receipts" class="tutor-log" aria-label="开发请求"></ul>
       </div>
+    </dialog>
+    <dialog id="development-picker" aria-label="框选页面并添加批注">
+      <div id="development-target" aria-hidden="true"></div>
+      <div id="development-box" aria-hidden="true" hidden></div>
+      <div class="development-picker-bar">
+        <span id="development-picker-hint" role="status">拖动手指框出要改的位置</span>
+        <button id="development-picker-done" type="button" autofocus>返回</button>
+      </div>
+      <form id="development-note-form" hidden>
+        <label for="development-note">选区批注</label>
+        <p id="development-note-target"></p>
+        <textarea id="development-note" rows="2" maxlength="240" placeholder="这里希望怎么改？" required></textarea>
+        <div class="development-actions">
+          <button id="development-redraw" type="button">重画</button>
+          <button type="submit" class="primary">添加批注</button>
+        </div>
+      </form>
     </dialog>
     <dialog id="meeting-dialog" class="account-dialog glass quiz-sheet meeting-dialog" aria-labelledby="meeting-title">
       <div class="account-dialog-header" data-sheet-handle>
@@ -12843,11 +12949,74 @@ window.QuizMeetingData = {
   const pairCode = byId("development-pair-code");
   const requestForm = byId("development-request-form");
   const brief = byId("development-brief");
+  const send = byId("development-send");
+  const local = byId("development-local");
+  const mark = byId("development-mark");
+  const marks = byId("development-marks");
+  const picker = byId("development-picker");
+  const target = byId("development-target");
+  const box = byId("development-box");
+  const noteForm = byId("development-note-form");
+  const note = byId("development-note");
   const receipts = byId("development-receipts");
   const status = byId("development-status");
   const mac = byId("development-mac");
   const shortcuts = document.querySelectorAll("[data-development-shortcut]");
   const states = { queued: "等待 Mac", running: "开发中", ready: "草稿已就绪", failed: "需要查看" };
+  const envelope = "[[xigai-development-v1]]\n";
+  const maxMarks = 6;
+
+  function compact(value, limit) {
+    return value.replace(/\s+/g, " ").replace(/[\w.+-]+@[\w.-]+\.[\w-]+/g, "[邮箱] ").trim().slice(0, limit);
+  }
+
+  function describeArea(rect, bounds, surface) {
+    const candidates = [];
+    const elements = surface.querySelectorAll("button, label, h1, h2, h3, p, span, li, img, canvas, [role=img]");
+    for (const element of elements) {
+      if (element.closest("#development-picker, #development-requests, [hidden], [aria-hidden=true], dialog:not([open])")) continue;
+      const area = element.getBoundingClientRect();
+      const width = Math.min(area.right, rect.right) - Math.max(area.left, rect.left);
+      const height = Math.min(area.bottom, rect.bottom) - Math.max(area.top, rect.top);
+      if (width <= 0 || height <= 0 || getComputedStyle(element).visibility !== "visible") continue;
+      const text = compact(element.innerText || element.getAttribute("alt") || element.getAttribute("aria-label") || "", 84);
+      if (!text && !element.id) continue;
+      candidates.push({ element, text, score: width * height / Math.max(1, area.width * area.height) });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    const targets = [];
+    for (const { element, text } of candidates) {
+      if (targets.some((item) => item[2] === text)) continue;
+      targets.push([element.localName, element.id || "", text]);
+      if (targets.length === 2) break;
+    }
+    const section = surface === document.body
+      ? candidates[0]?.element.closest("main > section") || document.querySelector("main > section:not([hidden])") : surface;
+    const heading = section?.querySelector("h1, h2");
+    const position = section?.id === "quiz" ? byId("where").textContent : "";
+    const percent = (part, total) => Math.round(100 * part / total);
+    return {
+      page: [section?.id || "page", compact(position || heading?.textContent || "", 70)],
+      ...(section?.dataset.questionId ? { question: section.dataset.questionId } : {}),
+      viewport: [Math.round(bounds.width), Math.round(bounds.height)],
+      box: [percent(rect.left, bounds.width), percent(rect.top, bounds.height),
+        percent(rect.right, bounds.width), percent(rect.bottom, bounds.height)],
+      targets,
+    };
+  }
+
+  function visibleTarget(area) {
+    return area.targets.map(([tag, id, text]) => text || (id ? `#${id}` : tag)).join(" · ") || area.page[1] || "页面选区";
+  }
+
+  function trackKeyboard() {
+    if (!picker.open || !window.visualViewport) return;
+    const visual = window.visualViewport;
+    const covered = Math.max(0, window.innerHeight - visual.height - visual.offsetTop);
+    picker.style.setProperty("--development-keyboard", `${Math.round(covered)}px`);
+  }
+  window.visualViewport?.addEventListener("resize", trackKeyboard);
+  window.visualViewport?.addEventListener("scroll", trackKeyboard);
 
   function requestId() {
     const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -12866,6 +13035,117 @@ window.QuizMeetingData = {
     let busy = false;
     let retry = null;
     let timer;
+    let annotations = [];
+    let surface = document.body;
+    let drag = null;
+    let pending = null;
+
+    function updateActions() {
+      mark.disabled = busy || annotations.length >= maxMarks;
+      send.disabled = busy;
+      local.disabled = busy;
+      local.hidden = annotations.length !== 1 || !annotations[0].targets.some((item) => item[2]);
+    }
+
+    function renderMarks() {
+      marks.hidden = !annotations.length;
+      marks.replaceChildren(...annotations.map((annotation, index) => {
+        const item = document.createElement("li");
+        const context = document.createElement("p");
+        context.textContent = `批注 ${index + 1} · ${visibleTarget(annotation)}`;
+        const value = document.createElement("textarea");
+        value.rows = 1;
+        value.maxLength = 240;
+        value.required = true;
+        value.value = annotation.note;
+        value.setAttribute("aria-label", `批注 ${index + 1}`);
+        value.addEventListener("input", () => { annotation.note = value.value; });
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.textContent = "移除";
+        remove.setAttribute("aria-label", `移除批注 ${index + 1}`);
+        remove.onclick = () => {
+          annotations.splice(index, 1);
+          renderMarks();
+          mark.focus({ preventScroll: true });
+        };
+        item.append(context, value, remove);
+        return item;
+      }));
+      updateActions();
+    }
+
+    function resetPicker() {
+      drag = pending = null;
+      box.hidden = noteForm.hidden = true;
+      note.value = "";
+      byId("development-picker-hint").textContent = "拖动手指框出要改的位置";
+    }
+
+    function startPicker() {
+      if (!data?.available || mark.disabled) return;
+      surface = [...document.querySelectorAll("dialog[open]")].findLast((element) => element !== dialog) || document.body;
+      resetPicker();
+      dialog.close();
+      picker.showModal();
+      trackKeyboard();
+    }
+
+    function updateBox(event) {
+      const x = Math.max(0, Math.min(drag.bounds.width, event.clientX - drag.bounds.left));
+      const y = Math.max(0, Math.min(drag.bounds.height, event.clientY - drag.bounds.top));
+      const rect = { left: Math.min(x, drag.x), top: Math.min(y, drag.y), right: Math.max(x, drag.x), bottom: Math.max(y, drag.y) };
+      Object.assign(box.style, {
+        left: `${rect.left}px`, top: `${rect.top}px`,
+        width: `${rect.right - rect.left}px`, height: `${rect.bottom - rect.top}px`,
+      });
+      box.hidden = false;
+      return rect;
+    }
+
+    target.onpointerdown = (event) => {
+      if (event.button !== 0 || !event.isPrimary || pending || drag) return;
+      const bounds = target.getBoundingClientRect();
+      drag = { id: event.pointerId, bounds, x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+      target.setPointerCapture(event.pointerId);
+      updateBox(event);
+    };
+    target.onpointermove = (event) => {
+      if (drag?.id === event.pointerId) updateBox(event);
+    };
+    target.onpointerup = (event) => {
+      if (drag?.id !== event.pointerId) return;
+      const rect = updateBox(event);
+      const { bounds } = drag;
+      drag = null;
+      if (rect.right - rect.left < 12 || rect.bottom - rect.top < 12) {
+        box.hidden = true;
+        byId("development-picker-hint").textContent = "请拖出一个稍大的区域";
+        return;
+      }
+      pending = describeArea(rect, bounds, surface);
+      byId("development-picker-hint").textContent = "选区已框出";
+      byId("development-note-target").textContent = visibleTarget(pending);
+      noteForm.toggleAttribute("data-above", rect.top > bounds.height / 2);
+      noteForm.hidden = false;
+      if (event.pointerType === "mouse") note.focus({ preventScroll: true });
+    };
+    target.onpointercancel = () => { if (drag) resetPicker(); };
+    byId("development-picker-done").onclick = () => picker.close();
+    byId("development-redraw").onclick = resetPicker;
+    mark.onclick = startPicker;
+    picker.addEventListener("close", () => {
+      resetPicker();
+      surface = document.body;
+      if (open()) mark.focus({ preventScroll: true });
+    });
+    noteForm.onsubmit = (event) => {
+      event.preventDefault();
+      if (!pending || !note.value.trim()) return;
+      annotations.push({ ...pending, note: note.value.trim() });
+      renderMarks();
+      picker.close();
+    };
 
     function render() {
       const available = data?.available === true;
@@ -12887,7 +13167,18 @@ window.QuizMeetingData = {
         const state = document.createElement("strong");
         state.textContent = states[request.status] || states.failed;
         const text = document.createElement("p");
-        text.textContent = request.brief;
+        let submitted;
+        if (request.brief?.startsWith(envelope)) {
+          try {
+            const parsed = JSON.parse(request.brief.slice(envelope.length));
+            if (Array.isArray(parsed?.annotations) && parsed.annotations.every((item) =>
+              Array.isArray(item?.targets) && item.targets.every((target) => Array.isArray(target)) && Array.isArray(item.page))) submitted = parsed;
+          } catch { /* Leave the stored request readable. */ }
+        }
+        text.textContent = submitted
+          ? [submitted.brief, ...submitted.annotations.map((annotation) => `${visibleTarget(annotation)}\n${annotation.note}`)].filter(Boolean).join("\n\n")
+          : request.brief;
+        if (submitted?.route === "local") state.textContent += " · Mac 本地文案";
         row.append(state, text);
         if (request.result) {
           const result = document.createElement("p");
@@ -12907,12 +13198,12 @@ window.QuizMeetingData = {
     }
 
     async function request(action, payload = {}) {
-      if (!account || busy) return;
+      if (!account || busy || (action === "list" && picker.open)) return;
       const stamp = revision;
+      const snapshot = JSON.stringify([brief.value, annotations]);
       busy = true;
-      const form = action === "pair" ? pairForm : requestForm;
-      const button = form.querySelector("button");
-      button.disabled = true;
+      if (action === "pair") pairForm.querySelector("button").disabled = true;
+      if (action !== "list") updateActions();
       try {
         const result = await call(action, payload);
         if (stamp !== revision) return;
@@ -12926,7 +13217,11 @@ window.QuizMeetingData = {
         else if (!result.available || result.error) status.textContent = "需求未发送，请重新打开助手。";
         else {
           if (action === "pair") pairCode.value = "";
-          if (action === "submit" && brief.value.trim() === payload.brief) brief.value = "";
+          if (action === "submit" && JSON.stringify([brief.value, annotations]) === snapshot) {
+            brief.value = "";
+            annotations = [];
+            renderMarks();
+          }
           retry = null;
           status.textContent = action === "pair" ? "Mac 已绑定。" : "已发送。";
         }
@@ -12934,20 +13229,22 @@ window.QuizMeetingData = {
         if (action !== "list" && stamp === revision) status.textContent = "连接失败，请重试。";
       } finally {
         if (stamp === revision) {
-          button.disabled = false;
           busy = false;
+          pairForm.querySelector("button").disabled = false;
+          updateActions();
         }
       }
     }
 
     function open() {
-      if (!data || (!data.available && !data.pairing) || dialog.open) return;
+      if (!data || (!data.available && !data.pairing) || dialog.open || picker.open) return false;
       status.textContent = "";
       dialog.showModal();
       void request("list");
       timer = setInterval(() => {
         if (!document.hidden) void request("list");
       }, 8000);
+      return true;
     }
 
     byId("development-close").onclick = sheet.close;
@@ -12963,8 +13260,19 @@ window.QuizMeetingData = {
     };
     requestForm.onsubmit = (event) => {
       event.preventDefault();
-      const text = brief.value.trim();
-      if (!text || !data?.available || busy) return;
+      const route = event.submitter === local && !local.hidden ? "local" : "codex";
+      const general = brief.value.trim();
+      if ((!general && !annotations.length) || !data?.available || busy) return;
+      if (annotations.some((annotation) => !annotation.note.trim())) {
+        status.textContent = "请填写每条批注，或移除空白批注。";
+        return;
+      }
+      const text = annotations.length || general.startsWith(envelope.trim())
+        ? envelope + JSON.stringify({ route, brief: general, annotations }) : general;
+      if ([...text].length > 2000) {
+        status.textContent = "这批批注较长。请缩短文字，或分两次发送。";
+        return;
+      }
       retry = retry?.brief === text ? retry : { id: requestId(), brief: text };
       void request("submit", retry);
     };
@@ -12975,9 +13283,11 @@ window.QuizMeetingData = {
       account = id;
       data = retry = null;
       brief.value = pairCode.value = "";
+      annotations = [];
       busy = false;
       pairForm.querySelector("button").disabled = false;
-      requestForm.querySelector("button").disabled = false;
+      renderMarks();
+      if (picker.open) picker.close();
       if (dialog.open) dialog.close();
       render();
       void request("list");
@@ -14474,6 +14784,7 @@ function previewQuestionPosition(session, number) {
 
 function renderQuestion() {
   const item = current();
+  if (item) $("quiz").dataset.questionId = item.id;
   if (!item) return;
   const session = state.session;
   const adventure = isAdventureSession(session);
@@ -15239,6 +15550,7 @@ if (nativeNavigation) {
   document.documentElement.setAttribute("data-native-tabs", "");
   window.QuizNativeUI = {
     selectTab(tab, animate = true) {
+      if (document.getElementById("development-picker")?.open) return;
       if (tabButtons.some((button) => button.dataset.studyTab === tab)) showTab(tab, animate, true);
     },
     swipeQuestion(direction) {
