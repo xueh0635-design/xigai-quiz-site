@@ -6658,6 +6658,24 @@ button[data-option-note][data-option-holding]::after {
         <h3>山谷时刻</h3>
         <button id="theme-profile" type="button" aria-haspopup="dialog" aria-controls="theme-dialog">切换昼夜场景</button>
       </div>
+      <div class="profile-account">
+        <h3>刷题设置</h3>
+        <div class="picker-field">
+          <label id="auto-advance-delay-label" for="auto-advance-delay">答对后等待时间</label>
+          <select id="auto-advance-delay">
+            <option value="400">0.4 秒</option>
+            <option value="800" selected>0.8 秒（默认）</option>
+            <option value="1500">1.5 秒</option>
+            <option value="2000">2 秒</option>
+            <option value="3000">3 秒</option>
+            <option value="5000">5 秒</option>
+            <option value="0">不自动跳转</option>
+          </select>
+          <button id="auto-advance-delay-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="auto-advance-delay-label auto-advance-delay-value" hidden>
+            <span id="auto-advance-delay-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
       <section id="android-updates" class="profile-account" aria-labelledby="update-heading" hidden>
         <div>
           <h3 id="update-heading">应用更新</h3>
@@ -12295,6 +12313,7 @@ const byId = new Map(questions.map((item) => [item.id, item]));
 const $ = (id) => document.getElementById(id);
 const storageKey = "xigai-local-quiz-v1";
 const bankStorageKey = "xigai-practice-bank-v1";
+const autoAdvanceStorageKey = "xigai-auto-advance-delay-v1";
 const bankLabels = { all: "全部题库", sizheng: "思政云", xuexitong: "学习通", common: "常考题" };
 const libraryPageSize = 12;
 const libraryTabs = {
@@ -12566,6 +12585,7 @@ function selectBank(bank) {
 }
 
 function setup() {
+  setupAutoAdvanceDelay();
   $("stat-done").onclick = () => filterScope("done");
   $("stat-wrong").onclick = () => showTab("wrong", true);
   $("stat-starred").onclick = () => showTab("starred", true);
@@ -12620,6 +12640,23 @@ function setup() {
   }
   const hasSavedBank = allowSources && Object.hasOwn(bankLabels, savedBank) && (savedBank !== "common" || allowCommon);
   selectBank(hasSavedBank ? savedBank : "all");
+}
+
+function setupAutoAdvanceDelay() {
+  const field = $("auto-advance-delay");
+  try {
+    const saved = localStorage.getItem(autoAdvanceStorageKey);
+    if ([...field.options].some((option) => option.value === saved)) field.value = saved;
+  } catch {
+    // The initial option remains available when device storage cannot be read.
+  }
+  field.addEventListener("change", () => {
+    try {
+      localStorage.setItem(autoAdvanceStorageKey, field.value);
+    } catch {
+      $("storage-status").textContent = "无法保存等待时间，本次仍可使用所选时长。";
+    }
+  });
 }
 
 function makeChapterCard(chapter, total) {
@@ -13703,9 +13740,10 @@ function submit() {
   if (!session.selected.length) return;
   saveSession([recordAnswer(session, item, session.selected, Date.now())]);
   renderQuestion();
-  if (session.results[item.id].correct) {
+  const delay = Number($("auto-advance-delay").value);
+  if (session.results[item.id].correct && delay > 0) {
     answerMotion = window.QuizWorldMotion?.answer($("answer-summary"), true);
-    scheduleAutoAdvance(session);
+    scheduleAutoAdvance(session, delay);
   } else {
     focusAnswer(true);
   }
@@ -13733,14 +13771,14 @@ function cancelAutoAdvance() {
   autoAdvanceTimer = undefined;
 }
 
-function scheduleAutoAdvance(session) {
+function scheduleAutoAdvance(session, delay) {
   const index = session.index;
   autoAdvanceTimer = window.setTimeout(() => {
     autoAdvanceTimer = undefined;
     if (state.session !== session || session.index !== index || document.hidden || $("quiz").hidden ||
         document.querySelector("dialog[open]")) return;
     moveQuestion(1);
-  }, 800);
+  }, delay);
 }
 
 function completeRound(changes = []) {
