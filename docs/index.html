@@ -1629,6 +1629,7 @@ a { color: var(--accent); }
 .desk-status { margin: 0 2px 10px; color: var(--muted); font-size: .88rem; }
 .desk-status:empty { margin: 0; }
 .desk-paired { display: grid; gap: var(--desk-gap); }
+.desk-page > .desk-compare { margin-bottom: var(--desk-gap); }
 
 .desk-surface {
   min-width: 0;
@@ -6715,7 +6716,7 @@ button[data-option-note][data-option-holding]::after {
             <div class="live-question-actions"><button id="live-finish" class="primary live-primary" type="button">返回课桌</button></div>
           </section>
         </section>
-        <section class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
+        <section id="desk-progress-comparison" class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
           <div class="desk-section-heading">
             <h3 id="desk-compare-heading">学习进度</h3>
           </div>
@@ -6808,7 +6809,7 @@ button[data-option-note][data-option-holding]::after {
             <button id="desk-progress-history" type="button">回看我的作答</button>
           </div>
         </dialog>
-        <section class="desk-surface desk-records" aria-labelledby="desk-records-heading">
+        <section id="desk-records" class="desk-surface desk-records" aria-labelledby="desk-records-heading">
           <h3 id="desk-records-heading">对局记录与收藏</h3>
           <details id="arena-history" class="battle-history" hidden>
             <summary>双塔战绩</summary>
@@ -6831,7 +6832,7 @@ button[data-option-note][data-option-holding]::after {
           <summary>同桌设置</summary>
           <button id="desk-unpair" type="button">解除同桌</button>
           <div id="desk-unpair-confirm" class="desk-unpair-confirm" hidden>
-            <p>解除后，你们将无法查看彼此的学习进度和擂台记录。</p>
+            <p id="desk-unpair-note">解除后，你将无法查看同桌的学习进度和擂台记录。</p>
             <div>
               <button id="desk-unpair-yes" type="button">确认解除</button>
               <button id="desk-unpair-cancel" type="button">取消</button>
@@ -10435,7 +10436,6 @@ void main() {
   const number = new Intl.NumberFormat("zh-CN");
   const scopeNames = { all: "全部题库", sizheng: "思政云", xuexitong: "学习通", common: "常考题" };
   const typeNames = ["单选", "多选", "判断", "填空", "未分类"];
-  const titles = { mine: "我的学习进度", peer: "同桌的学习进度" };
   const percent = (done, total) => total ? `${Math.round(1000 * done / total) / 10}%` : "—";
 
   function node(element, value, className) {
@@ -10549,7 +10549,7 @@ void main() {
     const cards = [...document.querySelectorAll("[data-desk-progress-owner]")];
     const views = [...dialog.querySelectorAll("[data-progress-view]")];
     const chapterOrder = [...new Set([...questions.values()].map((item) => item.chapter))];
-    let available = false;
+    let access = null;
     let opener = null;
     let pending = null;
     let tests = [];
@@ -10592,7 +10592,7 @@ void main() {
     }
 
     async function load() {
-      if (!available || !dialog.open || !opener || pending) return;
+      if (!access || !dialog.open || !opener || pending) return;
       const owner = opener.dataset.deskProgressOwner;
       const request = {};
       pending = request;
@@ -10600,9 +10600,11 @@ void main() {
       get("retry").hidden = true;
       get("status").textContent = "正在加载学习进度…";
       try {
-        const { data, error } = await rpc("quiz_pk_progress_details");
+        const admin = access === "admin";
+        const { data, error } = await rpc(admin ? "quiz_pk_admin_progress" : "quiz_pk_progress_details");
         if (pending !== request || !dialog.open) return;
-        if (error || !data?.paired || data.days?.length !== 7 || !Array.isArray(data.chapters) ||
+        const allowed = admin ? data?.access === "admin" : data?.paired;
+        if (error || !allowed || data.days?.length !== 7 || !Array.isArray(data.chapters) ||
             !Array.isArray(data.types) || !Array.isArray(data.tests?.[owner])) {
           throw error || new Error("progress_unavailable");
         }
@@ -10619,10 +10621,11 @@ void main() {
 
     for (const card of cards) {
       card.onclick = () => {
-        if (!available || dialog.open) return;
+        if (!access || dialog.open) return;
         pending = null;
         opener = card;
-        get("title").textContent = titles[card.dataset.deskProgressOwner];
+        const name = card.dataset.deskProgressOwner === "mine" ? "我" : access === "admin" ? "学友" : "同桌";
+        get("title").textContent = `${name}的学习进度`;
         showView("trend");
         card.focus({ preventScroll: true });
         dialog.showModal();
@@ -10649,9 +10652,9 @@ void main() {
     });
 
     return {
-      setAvailable(hasPartner) {
-        available = hasPartner;
-        if (hasPartner) return;
+      setAccess(next) {
+        if (access === next) return;
+        access = next;
         pending = null;
         if (dialog.open) dialog.close();
       },
@@ -10693,6 +10696,9 @@ void main() {
 
   function connect({ byId: questions, chapters, rpc, subscribeArena, avatar, login, openOwnHistory }) {
     if (!document.getElementById("desk")) return null;
+    const comparison = byId("progress-comparison");
+    const detailDialog = byId("progress-dialog");
+    const paired = byId("paired");
     let account = null;
     let dashboard = null;
     let active = false;
@@ -10730,6 +10736,13 @@ void main() {
       text(kind + "-completion", `${completion}%`);
       text(kind + "-today", `${stats.today} 道`);
       byId(kind + "-bar").value = completion;
+    }
+
+    function clearStats() {
+      for (const kind of ["mine", "peer"]) {
+        for (const stat of ["answered", "accuracy", "completion", "today"]) text(kind + "-" + stat, "—");
+        byId(kind + "-bar").value = 0;
+      }
     }
 
     function renderReview(game) {
@@ -10827,27 +10840,44 @@ void main() {
       byId("invite").hidden = !dashboard.invite;
       text("invite-code", dashboard.invite?.code || "");
       renderArchive();
-      if (!dashboard.partner) return;
+      const peer = dashboard.progressPeer || dashboard.partner;
+      if (!peer) return clearStats();
+      const peerName = dashboard.progressPeer ? "学友" : "同桌";
+      text("peer-name", peerName);
+      comparison.querySelector('[data-desk-progress-owner="peer"]').setAttribute("aria-label", `查看${peerName}的学习进度`);
+      byId("peer-bar").setAttribute("aria-label", `${peerName}的题库完成度`);
       renderStats("mine", dashboard.me, dashboard.total);
-      renderStats("peer", dashboard.partner, dashboard.total);
+      renderStats("peer", peer, dashboard.total);
     }
 
     function render() {
+      const hasPartner = Boolean(dashboard?.partner);
+      const adminProgress = Boolean(dashboard?.progressPeer);
+      const showUnpairedProgress = adminProgress && !hasPartner;
+      const progressAnchor = showUnpairedProgress ? byId("cover") : byId("records");
+      if (comparison.parentElement !== progressAnchor.parentElement) {
+        if (detailDialog.open) detailDialog.close();
+        progressAnchor.before(comparison, detailDialog);
+      }
       byId("guest").hidden = Boolean(account);
       byId("cover").hidden = Boolean(account && !dashboard);
-      byId("companions").hidden = !dashboard?.partner;
-      byId("unpaired").hidden = !dashboard || Boolean(dashboard.partner);
-      byId("paired").hidden = !dashboard?.partner;
-      progress?.setAvailable(active && Boolean(dashboard?.partner));
+      byId("companions").hidden = !hasPartner;
+      byId("unpaired").hidden = !dashboard || hasPartner;
+      paired.hidden = !hasPartner;
+      const progressAccess = adminProgress ? "admin" : hasPartner ? "paired" : null;
+      progress?.setAccess(active ? progressAccess : null);
       byId("refresh").hidden = !account;
       avatars?.show(Boolean(account && dashboard));
       byId("unpair-confirm").hidden = !confirmUnpair;
       byId("unpair").hidden = confirmUnpair;
+      text("unpair-note", adminProgress
+        ? "解除后，共学和擂台需重新配对。"
+        : "解除后，你将无法查看同桌的学习进度和擂台记录。");
       renderDashboard();
       setBusy();
-      live?.setContext(account, Boolean(dashboard?.partner), active);
-      social?.setContext(account, Boolean(dashboard?.partner), active);
-      arena?.setContext(account, Boolean(dashboard?.partner), active);
+      live?.setContext(account, hasPartner, active);
+      social?.setContext(account, hasPartner, active);
+      arena?.setContext(account, hasPartner, active);
     }
 
     async function request(name, params, { silent = false, after } = {}) {
@@ -10863,7 +10893,7 @@ void main() {
         if (error) throw error;
         if (!data) throw new Error("pk_empty");
         dashboard = data;
-        if (!silent || byId("status").textContent === "正在同步同桌进度…") setStatus("");
+        if (!silent || byId("status").textContent === "正在同步学习进度…") setStatus("");
         after?.(data);
       } catch (error) {
         if (activeRequest !== token) return;
@@ -10938,11 +10968,11 @@ void main() {
         if (visible === active) return;
         active = visible;
         if (active) {
-          if (account && !dashboard && !byId("status").textContent) setStatus("正在同步同桌进度…");
+          if (account && !dashboard && !byId("status").textContent) setStatus("正在同步学习进度…");
           render();
           refresh();
         } else {
-          progress?.setAvailable(false);
+          progress?.setAccess(null);
           live?.setContext(account, Boolean(dashboard?.partner), false);
           social?.setContext(account, Boolean(dashboard?.partner), false);
           arena?.setContext(account, Boolean(dashboard?.partner), false);
@@ -10962,10 +10992,11 @@ void main() {
         confirmUnpair = false;
         renderedDashboard = null;
         selectedPaper = null;
+        clearStats();
         renderArchive();
         byId("join-code").value = "";
         text("invite-code", "");
-        text("status", account && active ? "正在同步同桌进度…" : "");
+        text("status", account && active ? "正在同步学习进度…" : "");
         render();
         refresh();
       },
