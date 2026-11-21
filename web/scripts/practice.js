@@ -2045,7 +2045,9 @@ document.addEventListener("visibilitychange", () => {
 });
 
 function canSwipeQuestion() {
-  return !accountSwitching && !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
+  // Leave one-finger pans to the browser while a reader magnifies the page.
+  return (window.visualViewport?.scale ?? 1) <= 1 && !accountSwitching &&
+    !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
 }
 
 function syncNativeQuestionPosition() {
@@ -2089,6 +2091,15 @@ function connectQuestionSwipe() {
     lessonCard.style.removeProperty("translate");
     return start;
   }
+
+  function syncZoomGestures() {
+    const magnified = (window.visualViewport?.scale ?? 1) > 1;
+    // The normal swipe surface permits only vertical browser panning.
+    document.documentElement.style.touchAction = magnified ? "manipulation" : "";
+    if (magnified && gesture) clearGesture();
+  }
+  window.visualViewport?.addEventListener("resize", syncZoomGestures);
+  syncZoomGestures();
 
   function settle(offset) {
     if (reducedMotion.matches || !offset || !lessonCard.animate) return;

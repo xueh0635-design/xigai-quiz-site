@@ -4,11 +4,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { createQuizStore } from '../../mobile/quiz-store.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const require = createRequire(path.join(root, 'mobile/package.json'));
 const { PGlite } = require('@electric-sql/pglite');
+const { IDBFactory } = require('fake-indexeddb');
 const { canonicalRows } = require('../web/scripts/question-catalog.js');
 const { renderCatalog } = require('../backend/tools/catalog-sql.cjs');
 const content = await fs.readFile(path.join(root,'content/questions.json'));
@@ -111,6 +113,7 @@ test('cold migrations, authorization, incremental sync and append-only attempts'
     assert.equal(first.ack.changes.length,3);
     assert.deepEqual(first.ack.attempts,[a.event_id]);
     assert.equal(first.attemptRows.length,1);
+    assert.equal(first.attemptRows[0].source,'v2');
     assert.equal(first.attemptRows[0].correct,true);
     assert.equal(first.rows.length,3);
     assert.equal(first.has_more,false);
@@ -148,6 +151,54 @@ test('cold migrations, authorization, incremental sync and append-only attempts'
     assert.equal((await db.query('select * from public.quiz_state')).rows.length,0);
     await assert.rejects(db.query(`insert into public.quiz_state(account_id,kind,record_key,revision,change_id,payload)
       values($1,'star','other',1,gen_random_uuid(),'true')`,[one]),/row-level security/);
+    await actor(one);
+  });
+  await t.test('upgraded legacy pending histories retain activity before deferred v2 evidence arrives', async t => {
+    const learner='10000000-0000-4000-8000-000000000007';
+    await db.exec('reset role');
+    await db.query("insert into auth.users(id,raw_app_meta_data) values($1,'{\"quiz_enrollment\":\"direct-email-v1\"}')",[learner]);
+    await actor(learner);
+    const snapshots=[
+      change('history','新增（必刷）-1',{wrong:false,last:now,selected:['A']},401),
+      change('history','新增（必刷）-2',{wrong:false,last:now,selected:['C']},402),
+    ];
+    const records=Object.fromEntries(snapshots.map(row=>[row.kind+':'+row.record_key,row]));
+    const store=await createQuizStore({scope:'account:'+learner,legacyKey:'legacy-upgrade',
+      indexedDB:new IDBFactory(),randomId:randomUUID,
+      legacyStorage:{getItem:()=>JSON.stringify({records,pending:records})}});
+    t.after(()=>store.close());
+    const imported=await store.read();
+    assert.equal(Object.keys(imported.pending).length,2);
+    assert.deepEqual(await store.pendingAttempts(),[]);
+    const saved=await rpc({account:learner,changes:Object.values(imported.pending)});
+    assert.equal(saved.attemptRows.length,2);
+    assert.ok(saved.attemptRows.every(row=>row.source==='legacy_sync'));
+    await store.accept({rows:saved.rows,attempts:saved.attemptRows,ackChanges:saved.ack.changes,
+      ackAttempts:saved.ack.attempts,cursor:saved.next_cursor});
+    assert.deepEqual((await store.read()).pending,{});
+    let dashboard=(await scalar('select public.quiz_pk_dashboard() as result')).result;
+    assert.equal(dashboard.me.today,2);
+    assert.equal(dashboard.me.answered,2);
+    assert.equal(dashboard.me.correct,2);
+    assert.equal((await scalar('select public.quiz_leaderboard_today() as result')).result.me.answered,2);
+
+    const duplicate=await rpc({account:learner,changes:snapshots,cursor:saved.next_cursor});
+    assert.deepEqual(duplicate.attemptRows,[]);
+    const evidence=attempt(401,'新增（必刷）-1',['A']);
+    const verified=await rpc({account:learner,attempts:[evidence],cursor:duplicate.next_cursor});
+    assert.equal(verified.attemptRows.length,1);
+    assert.equal(verified.attemptRows[0].source,'v2');
+    assert.equal(verified.attemptRows[0].correct,false);
+    dashboard=(await scalar('select public.quiz_pk_dashboard() as result')).result;
+    assert.equal(dashboard.me.today,2);
+    assert.equal(dashboard.me.correct,1);
+    await db.exec('reset role');
+    const activity=(await scalar('select quiz_pk_private.progress_rollups($1,$2) as result',[learner,two])).result;
+    assert.equal(activity.days[0].mine,2);
+    assert.equal(activity.days[0].mineCorrect,1);
+    assert.equal((await scalar('select count(*)::int as count from quiz_sync_private.attempts where account_id=$1',[learner])).count,3);
+    await actor(learner);
+    assert.deepEqual((await rpc({account:learner,attempts:[evidence],cursor:verified.next_cursor})).attemptRows,[]);
     await actor(one);
   });
   await t.test('rolled-back writes do not leave an uncommitted low cursor to skip', async () => {
@@ -265,11 +316,9 @@ test('cold migrations, authorization, incremental sync and append-only attempts'
     const complete='10000000-0000-4000-8000-000000000005';
     await db.exec('reset role');
     await db.query("insert into auth.users(id,raw_app_meta_data) values($1,'{\"quiz_enrollment\":\"direct-email-v1\"}')",[complete]);
-    await db.exec("select set_config('quiz.sync_v2','on',false)");
     await db.query(`insert into public.quiz_state(account_id,kind,record_key,revision,change_id,payload)
       select $1,'history',question_id,$2,gen_random_uuid(),jsonb_build_object('wrong',false,'last',$2::bigint,'selected',practice_correct_options)
       from quiz_pk_private.questions where answerable and question_id=canonical_question_id`,[complete,now]);
-    await db.exec("select set_config('quiz.sync_v2','',false)");
     let summary=(await scalar('select quiz_pk_private.study_stats($1,1685) as result',[complete])).result;
     assert.equal(summary.answered,1585);assert.equal(summary.completion,100);
     const rows=(await scalar('select quiz_pk_private.progress_rollups($1,$2) as result',[complete,two])).result;

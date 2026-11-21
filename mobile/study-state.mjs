@@ -19,7 +19,36 @@ export function plainSession(session) {
   if (!session || typeof session.sid !== "string" || !Array.isArray(session.ids)) return null;
   const copy = structuredClone(session);
   delete copy.chapterStudy;
+  delete copy._resumeSource;
   return copy;
+}
+
+export function sessionDrafts(row, records = {}) {
+  if (row?.kind !== "session" || !row.payload) return [];
+  const result = [];
+  for (const [index, candidate] of [row.payload, row.payload.chapterStudy?.pausedPractice].entries()) {
+    const draft = plainSession(candidate);
+    if (!draft) continue;
+    const previous = records["draft:" + draft.sid];
+    const updatedAt = Number(draft.updatedAt) || 0;
+    // Legacy clients advance the resume revision without updating (or adding)
+    // updatedAt. A paused child is different: changes to the active resume do
+    // not establish that its embedded paused copy was edited again.
+    let revision = Math.max(1, index && updatedAt ? updatedAt : Number(row.revision) || 0);
+    const source = { revision: Number(row.revision) || 0, change_id: String(row.change_id || "") };
+    const previousSource = !index && !previous?.deleted && previous?.payload?._resumeSource;
+    if (previousSource) {
+      if (!isNewer(source, previousSource)) continue;
+      // Two legacy devices may share a timestamp. Preserve their full source
+      // ordering, while giving the independently synced child a newer revision
+      // so a fresh random change ID cannot lose to its prior server version.
+      revision = Math.max(revision, previous.revision + 1);
+    } else if (previous && (previous.revision >= revision || (index && !updatedAt))) continue;
+    const complete = draft.testSubmitted || draft.index >= draft.ids.length;
+    result.push({ kind: "draft", record_key: draft.sid,
+      payload: complete ? null : { ...draft, updatedAt: revision, ...(!index ? { _resumeSource: source } : {}) }, revision });
+  }
+  return result;
 }
 
 export function mergeRecord(row, previous) {
@@ -68,19 +97,15 @@ export function guestCache(value) {
 export function stateFromCache(cache) {
   const result = { history: {}, stars: {}, notes: {}, session: null, drafts: {}, chapterTests: {} };
   let latest;
-  const removedDrafts = new Set();
   for (const row of Object.values(cache.records)) {
-    if (row.deleted) {
-      if (row.kind === "draft") removedDrafts.add(row.record_key);
-      continue;
-    }
+    if (row.deleted) continue;
     if (row.kind === "history") result.history[row.record_key] = row.payload;
     if (row.kind === "star") result.stars[row.record_key] = row.payload;
     if (row.kind === "note" && typeof row.payload === "string" && row.payload) result.notes[row.record_key] = row.payload;
     if (row.kind === "session" && row.payload && isNewer(row, latest)) latest = row;
     if (row.kind === "draft") {
-      if (row.payload) result.drafts[row.record_key] = row.payload;
-      else removedDrafts.add(row.record_key);
+      const draft = plainSession(row.payload);
+      if (draft) result.drafts[row.record_key] = draft;
     }
     if (row.kind === "test" && row.payload?.chapter && row.payload?.bank) {
       const key = row.payload.bank + ":" + row.payload.chapter;
@@ -89,11 +114,21 @@ export function stateFromCache(cache) {
   }
   result.session = latest?.payload || null;
   result.chapterTests = mergeChapterTests(result.session?.chapterStudy?.tests, result.chapterTests);
-  for (const candidate of [result.session, result.session?.chapterStudy?.pausedPractice]) {
-    const draft = plainSession(candidate);
-    if (!draft || removedDrafts.has(draft.sid) || draft.testSubmitted || draft.index >= draft.ids.length) continue;
-    if (!result.drafts[draft.sid] || Number(draft.updatedAt || 0) > Number(result.drafts[draft.sid].updatedAt || 0)) {
-      result.drafts[draft.sid] = draft;
+  let currentDraft = result.session && cache.records["draft:" + result.session.sid];
+  for (const draft of sessionDrafts(latest, cache.records)) {
+    if (draft.payload) result.drafts[draft.record_key] = plainSession(draft.payload);
+    else delete result.drafts[draft.record_key];
+    if (draft.record_key === result.session?.sid) currentDraft = draft;
+  }
+  if (currentDraft && currentDraft.revision >= latest.revision) {
+    if (!currentDraft.deleted && currentDraft.payload) {
+      result.session = { ...plainSession(currentDraft.payload),
+        chapterStudy: { ...result.session.chapterStudy, tests: result.chapterTests } };
+    } else if (!result.session.testSubmitted && result.session.index < result.session.ids?.length) {
+      // The resume pointer may arrive on a different sync page from its draft.
+      // A newer completed/deleted draft must also stop the UI resuming that
+      // older incomplete pointer. Submitted result snapshots can still display.
+      result.session = null;
     }
   }
   return result;

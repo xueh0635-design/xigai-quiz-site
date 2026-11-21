@@ -1875,7 +1875,7 @@ create function quiz_sync_private.capture_legacy_attempt()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare question quiz_pk_private.questions;
 begin
-  if new.kind <> 'history' or current_setting('quiz.sync_v2', true) = 'on' then return new; end if;
+  if new.kind <> 'history' then return new; end if;
   if tg_op = 'UPDATE' and (new.payload->'last', new.payload->'selected', new.payload->'wrong') is not distinct from
     (old.payload->'last', old.payload->'selected', old.payload->'wrong') then return new; end if;
   if jsonb_typeof(new.payload->'wrong') is distinct from 'boolean' or
@@ -1883,6 +1883,15 @@ begin
   if (new.payload->>'last')::bigint < 1 then return new; end if;
   select * into question from quiz_pk_private.questions where question_id = new.record_key and answerable;
   if not found then return new; end if;
+  -- Upgraded clients may upload a pending pre-v2 snapshot with no event. Keep
+  -- that observation unless an authoritative event already covers the answer.
+  -- A later event still supersedes it in effective_attempts without deleting
+  -- either immutable record.
+  if exists (
+    select 1 from quiz_sync_private.attempts a
+    where a.account_id = new.account_id and a.canonical_question_id = question.canonical_question_id
+      and a.occurred_at = (new.payload->>'last')::bigint and a.source = 'v2'
+  ) then return new; end if;
   insert into quiz_sync_private.attempts
     (account_id,event_id,question_id,canonical_question_id,selected,correct,occurred_at,mode,catalog_version,source,sync_cursor)
   values (new.account_id,new.change_id,new.record_key,question.canonical_question_id,
@@ -1954,7 +1963,6 @@ declare
   previous quiz_sync_private.attempts;
   picks text[];
   version text;
-  old_flag text := current_setting('quiz.sync_v2', true);
   watermark bigint;
   response jsonb;
 begin
@@ -1972,7 +1980,6 @@ begin
   perform quiz_sync_private.lock_account(actor);
   select coalesce((select last_cursor from quiz_sync_private.clocks where account_id=actor),0) into watermark;
   if cursor > watermark then raise exception 'quiz_cursor_ahead' using errcode='22023'; end if;
-  perform set_config('quiz.sync_v2','on',true);
 
   for event in select * from jsonb_to_recordset(attempts) as input(
     event_id uuid, question_id text, selected jsonb, occurred_at bigint, mode text, catalog_version text
@@ -2005,7 +2012,6 @@ begin
     end if;
   end loop;
   perform public.merge_account_quiz_state(actor,changes);
-  perform set_config('quiz.sync_v2',coalesce(old_flag,''),true);
   select coalesce((select last_cursor from quiz_sync_private.clocks where account_id=actor),0) into watermark;
 
   with candidates as (

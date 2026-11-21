@@ -94,6 +94,45 @@ test("two original questions sharing history still retain two distinct exam answ
   assert.notEqual(answers[0][3].event_id, answers[1][3].event_id);
 });
 
+test("chapter resume uses the authoritative draft instead of a stale same-session pointer", async () => {
+  const { emptyCache, stateFromCache } = await import("../study-state.mjs");
+  for (const kind of ["live", "null", "deleted"]) {
+    const { context: app } = model();
+    const sid = randomUUID();
+    const stale = { sid, ids: ["qA"], index: 0, mode: "chapter-test", selected: ["A"], results: {},
+      bankScope: "all", routePlan: { chapter: "A", kind: "test" }, updatedAt: 999,
+      chapterStudy: { tests: { "all:B": { correct: 1, total: 1, completedAt: 100 } } } };
+    const latest = { ...stale, selected: ["B"], updatedAt: 1 };
+    delete latest.chapterStudy;
+    const cache = emptyCache();
+    cache.records["session:resume"] = { kind: "session", record_key: "resume", payload: stale, revision: 200, change_id: randomUUID() };
+    cache.records["draft:" + sid] = { kind: "draft", record_key: sid, payload: kind === "live" ? latest : null,
+      ...(kind === "deleted" ? { deleted: true } : {}), revision: 300, change_id: randomUUID() };
+    app.state = stateFromCache(cache);
+    const resumed = app.chapterRoundDraft("A", "all", "test");
+    assert.equal(app.state.chapterTests["all:B"].correct, 1);
+    if (kind === "live") {
+      assert.deepEqual([...resumed.selected], ["B"]);
+      app.startChapterTest("A", "all");
+      assert.equal(app.state.session.sid, sid);
+      assert.deepEqual([...app.state.session.selected], ["B"]);
+      assert.equal(app.state.session.chapterStudy.tests["all:B"].correct, 1);
+    } else {
+      assert.equal(resumed, undefined);
+      assert.equal(app.state.session, null);
+      app.startChapterTest("A", "all");
+      assert.notEqual(app.state.session.sid, sid);
+      assert.deepEqual([...app.state.session.selected], []);
+    }
+    cache.records["session:resume"].payload = { ...stale, index: 1, testSubmitted: true };
+    if (kind !== "live") {
+      app.state = stateFromCache(cache);
+      assert.equal(app.state.session.testSubmitted, true);
+      assert.equal(app.chapterRoundDraft("A", "all", "test"), undefined);
+    }
+  }
+});
+
 test("slow guest restoration keeps study inert and prevents account answers entering the guest store", async () => {
   const { context: app } = model();
   runInNewContext(source("save"), app);

@@ -104,6 +104,32 @@ test("an unfinished exam survives other chapters and a page reload", async (t) =
   assert.deepEqual(errors, []);
 });
 
+test("the reloaded resume entry respects newer drafts and completed-draft tombstones", async (t) => {
+  for (const deleted of [false, true]) {
+    const ctx = await context(t); const page = await ctx.newPage();
+    await page.goto(origin + "/docs/index.html"); await ready(page);
+    const saved = await page.evaluate(async (closed) => {
+      const pool = questions.filter((question) => question.chapter === "导论" && question.type === "单选").slice(0, 2);
+      const sid = crypto.randomUUID();
+      const session = { sid, ids: pool.map((question) => question.id), index: 0, mode: "chapter-test",
+        bankScope: "all", routePlan: { chapter: "导论", kind: "test" }, selected: [], results: {}, drafts: {}, updatedAt: 999 };
+      const selected = [pool[1].answer[0]];
+      await guestStore.accept({ rows: [
+        { kind: "draft", record_key: sid, revision: 300, change_id: crypto.randomUUID(),
+          payload: closed ? null : { ...session, index: 1, selected, updatedAt: 1 } },
+        { kind: "session", record_key: "resume", revision: 200, change_id: crypto.randomUUID(), payload: session },
+      ] });
+      return { sid, questionId: pool[1].id, selected };
+    }, deleted);
+    await page.reload(); await ready(page);
+    await page.evaluate(() => startChapterTest("导论", "all"));
+    const resumed = await page.evaluate(() => ({ sid: state.session.sid, questionId: current().id,
+      selected: state.session.selected.slice() }));
+    if (deleted) assert.notEqual(resumed.sid, saved.sid, "a closed draft must not reappear through the old resume record");
+    else assert.deepEqual(resumed, saved);
+  }
+});
+
 test("a submitted exam appends one event per answer and retains its result independently", async (t) => {
   const ctx = await context(t); const page = await ctx.newPage();
   await page.goto(origin + "/docs/index.html"); await ready(page);

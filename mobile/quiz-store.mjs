@@ -1,4 +1,4 @@
-import { emptyCache, guestCache, mergeRecord, normalizeCache, plainSession, recordKey } from "./study-state.mjs";
+import { emptyCache, guestCache, mergeRecord, normalizeCache, recordKey, sessionDrafts } from "./study-state.mjs";
 
 const databaseName = "xigai-study-v2";
 const stateStore = "state";
@@ -131,11 +131,8 @@ export async function createQuizStore({ scope, legacyKey, guest = false, legacyS
   }
   function preserveSessionChildren(cache, row) {
     if (row?.kind !== "session" || !row.payload) return;
-    for (const candidate of [row.payload, row.payload.chapterStudy?.pausedPractice]) {
-      const draft = plainSession(candidate);
-      if (!draft || draft.testSubmitted || draft.index >= draft.ids.length || cache.records["draft:" + draft.sid]) continue;
-      const child = { kind: "draft", record_key: draft.sid, payload: draft,
-        revision: Number(draft.updatedAt || row.revision) || 1, change_id: randomId() };
+    for (const draft of sessionDrafts(row, cache.records)) {
+      const child = { ...draft, change_id: randomId() };
       cache.records[recordKey(child)] = child;
       if (!guest) cache.pending[recordKey(child)] = child;
     }
@@ -144,7 +141,7 @@ export async function createQuizStore({ scope, legacyKey, guest = false, legacyS
       if (split < 1 || !test || typeof test !== "object") continue;
       const record_key = test.sessionId || "legacy:" + key;
       const previous = cache.records["test:" + record_key];
-      if (previous && previous.payload.correct === test.correct && previous.payload.total === test.total) continue;
+      if (previous?.deleted || (previous?.payload?.correct === test.correct && previous?.payload?.total === test.total)) continue;
       const child = { kind: "test", record_key, payload: { ...test, bank: key.slice(0, split), chapter: key.slice(split + 1),
         completedAt: Number(test.completedAt || row.revision) || 0 },
         revision: Number(test.completedAt || row.revision) || 1, change_id: randomId() };
@@ -192,6 +189,9 @@ export async function createQuizStore({ scope, legacyKey, guest = false, legacyS
           preserveSessionChildren(cache, previous);
           const row = { kind, record_key, payload: clone(payload),
             revision: Math.max(Date.now(), (previous?.revision || 0) + 1), change_id: randomId() };
+          // Source provenance belongs only to compatibility-derived drafts.
+          // A learner's explicit edit becomes authoritative on its own.
+          if (kind === "draft" && row.payload) delete row.payload._resumeSource;
           const merged = mergeRecord(row, previous);
           cache.records[tag] = merged;
           if (!guest) cache.pending[tag] = merged;
