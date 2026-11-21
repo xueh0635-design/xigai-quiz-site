@@ -12,8 +12,8 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
     private let studyTabs = [
         StudyTab(name: "practice", title: "路线", symbol: "map", selectedSymbol: "map.fill"),
         StudyTab(name: "wrong", title: "错题", symbol: "xmark.circle", selectedSymbol: "xmark.circle.fill"),
+        StudyTab(name: "knowledge", title: "知识", symbol: "point.3.connected.trianglepath.dotted", selectedSymbol: "point.3.connected.trianglepath.dotted"),
         StudyTab(name: "desk", title: "一起学", symbol: "", selectedSymbol: ""),
-        StudyTab(name: "starred", title: "收藏", symbol: "star", selectedSymbol: "star.fill"),
         StudyTab(name: "profile", title: "我的", symbol: "person.crop.circle", selectedSymbol: "person.crop.circle.fill")
     ]
 
@@ -43,6 +43,7 @@ final class QuizNativeTabBarController: UITabBarController, UITabBarControllerDe
             let sharedStudy = tab.name == "desk"
             let image = sharedStudy ? makeSharedStudyIcon(false) : UIImage(systemName: tab.symbol)
             let item = UITabBarItem(title: tab.title, image: image, tag: index)
+            item.accessibilityIdentifier = "quiz-tab-\(tab.name)"
             item.selectedImage = sharedStudy ? makeSharedStudyIcon(true) : UIImage(systemName: tab.selectedSymbol)
             host.tabBarItem = item
             return host

@@ -86,6 +86,7 @@ let autoAdvanceTimer;
 let sync = null;
 let desk = null;
 let meetingTimeline = null;
+let knowledge = null;
 let deferredResume = null;
 let state = guestState();
 let guestStore = null;
@@ -189,6 +190,7 @@ function setAccountSwitching(value) {
   pageContent.inert = value;
   tabDock.inert = value;
   if (value) cancelAutoAdvance();
+  else knowledge?.accountReady();
 }
 
 function draftSnapshot(session) {
@@ -244,7 +246,7 @@ function view(name) {
   answerMotion = null;
   const wasAnswering = !$("quiz").hidden;
   const answering = name === "quiz";
-  for (const id of ["setup", "quiz", "result", "library", "desk", "profile"]) $(id).hidden = id !== name;
+  for (const id of ["setup", "quiz", "result", "library", "desk", "knowledge", "profile"]) $(id).hidden = id !== name;
   document.documentElement.classList.toggle("question-swipe-active", answering);
   if (nativeNavigation && answering !== wasAnswering) {
     nativeNavigation.postMessage({ kind: "question-swipe", enabled: answering }).catch(() => {});
@@ -252,6 +254,7 @@ function view(name) {
   }
   $("overview").hidden = name !== "setup";
   desk?.show(name === "desk");
+  knowledge?.show(name === "knowledge");
 }
 
 function animatePage(horizontal, vertical, duration = 210) {
@@ -269,6 +272,12 @@ reducedMotion.addEventListener("change", () => {
 });
 
 function showTab(tab, animate = false, fromNative = false) {
+  // Collections remain reachable from home and profile without a sixth native tab.
+  if (tab === "starred") {
+    showTab("profile", animate, fromNative);
+    openProfileLibrary("starred");
+    return;
+  }
   const previousIndex = tabButtons.findIndex((button) => button.dataset.studyTab === selectedTab);
   if (nativeNavigation && !fromNative && selectedTab !== tab) {
     nativeNavigation.postMessage({ kind: "tab", tab, animate: animate && !reducedMotion.matches }).catch(() => {});
@@ -289,9 +298,9 @@ function showTab(tab, animate = false, fromNative = false) {
   tabDock.style.setProperty("--tab-index", String(index));
   moveTabLens(index, animate);
   const library = libraryTabs[tab];
-  const destination = library ? "library" : { desk: "desk", profile: "profile" }[tab] || "setup";
+  const destination = library ? "library" : { desk: "desk", knowledge: "knowledge", profile: "profile" }[tab] || "setup";
   const changed = index !== previousIndex || $(destination).hidden;
-  $("back").textContent = library ? `返回${library.title}` : "返回路线";
+  $("back").textContent = tab === "knowledge" ? "返回知识" : library ? `返回${library.title}` : "返回路线";
   view(destination);
   updateAvailability();
   window.scrollTo(0, 0);
@@ -316,7 +325,10 @@ function openProfileLibrary(scope) {
 
 function returnFromQuestion() {
   const session = state.session;
-  if (session?.wrongBookReview && session.routePlan?.chapter) {
+  if (session?.knowledgePractice) {
+    showTab("knowledge", true);
+    knowledge?.selectConcept(session.knowledgeConcept);
+  } else if (session?.wrongBookReview && session.routePlan?.chapter) {
     openChapterReview(session.routePlan.chapter, bankForSession(session));
   } else if (session?.meetingPractice && meetingTimeline) {
     showTab("practice", true);
@@ -1592,7 +1604,7 @@ function updateAvailability() {
     if (row === routeChapter) card.setAttribute("aria-current", "step");
     else card.removeAttribute("aria-current");
   }
-  const resume = !routeResume && (state.session?.meetingPractice || selectedBank !== "common" ||
+  const resume = !routeResume && (state.session?.knowledgePractice || state.session?.meetingPractice || selectedBank !== "common" ||
     bankForSession(state.session) === "common") && canResumeSession();
   $("resume").hidden = !resume;
   if (resume) {
@@ -1603,13 +1615,14 @@ function updateAvailability() {
     const label = kind === "test" ? " · 整章测验" : kind === "review" ? " · 错题复练" : "";
     $("resume-detail").textContent = chapter
       ? `${chapter} · ${bankLabels[bank]}${label}`
-      : `${session.meetingPractice ? "会议专题" : current().chapter} · ${session.index + 1} / ${session.ids.length}`;
+      : `${session.knowledgePractice ? "知识 · " + (session.knowledgeTitle || "关联练习") : session.meetingPractice ? "会议专题" : current().chapter} · ${session.index + 1} / ${session.ids.length}`;
   }
   if (!$("library").hidden) renderLibrary();
   if (!$("quiz").hidden && current()) renderQuestionFlags(current().id);
   const historyDialog = $("history-question");
   if (historyDialog.open) renderHistoryAnswer(byId.get(historyDialog.dataset.questionId));
   window.QuizChapterPicker?.refresh();
+  knowledge?.refresh();
 }
 
 function randomId() {
@@ -1681,7 +1694,7 @@ function goToQuestion(index, { swipe = false, direction, focusQuestion = true } 
 
 function checksOnTap(item) {
   const session = state.session;
-  return session.mode === "practice" && (session.quickChapter || session.meetingPractice || session.wrongBookReview ||
+  return session.mode === "practice" && (session.knowledgePractice || session.quickChapter || session.meetingPractice || session.wrongBookReview ||
     isAdventureSession(session) || session.routePlan?.kind === "review") &&
     (item.type === "单选" || item.type === "判断");
 }
@@ -1843,7 +1856,8 @@ function renderQuestionActions(session, item, result, { answered, total }) {
 
 function previewQuestionPosition(session, number) {
   const total = session.ids.length;
-  const chapter = session.meetingPractice ? "会议专题" : byId.get(session.ids[number - 1])?.chapter;
+  const chapter = session.knowledgePractice ? "知识 · " + (session.knowledgeTitle || "关联练习")
+    : session.meetingPractice ? "会议专题" : byId.get(session.ids[number - 1])?.chapter;
   const label = `第 ${number} 题，共 ${total} 题`;
   const slider = $("question-position");
   slider.setAttribute("aria-valuetext", label);
@@ -1869,6 +1883,7 @@ function renderQuestion() {
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
+  if (session.knowledgePractice) $("back").textContent = "返回知识";
   if (session.wrongBookReview) $("back").textContent = "返回本章错题";
   const slider = $("question-position");
   slider.disabled = total < 2;
@@ -1944,7 +1959,7 @@ function renderQuestion() {
     $("memory").parentElement.hidden = !study.memory;
     renderStudyEvidence(study);
   }
-  renderRelated(showAnswer && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
+  renderRelated(showAnswer && !session.knowledgePractice && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = fill ? "方向键翻题"
     : testing ? "方向键翻题，可回到前面修改答案"
     : memoryMode
@@ -2159,7 +2174,8 @@ function completeRound(changes = []) {
   retry.disabled = !retryCount;
   retry.textContent = wrongBook ? reviewNextRoundLabel(session, retryCount) : route ? `复练 ${retryCount} 道错题` : "重练本次错题";
   retry.onclick = wrongBook ? () => startWrongBookReview(chapter, bank) : route ? () => startWrongChapter(chapter, bank)
-    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice });
+    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice,
+      knowledgePractice: session.knowledgePractice, knowledgeConcept: session.knowledgeConcept, knowledgeTitle: session.knowledgeTitle });
   const review = $("result-chapter-review");
   review.hidden = !route || wrongBook;
   review.textContent = retryCount ? "查看本章错题" : "查看本章进度";
@@ -2186,7 +2202,7 @@ function completeRound(changes = []) {
   $("review-round").textContent = wrongBook ? "回看本轮" : testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
   const library = libraryTabs[profileLibrary || selectedTab];
   $("again").textContent = wrongBook ? "返回本章错题"
-    : session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
+    : session.knowledgePractice ? "返回知识" : session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
   $("again").onclick = returnFromQuestion;
   view("result");
   window.scrollTo(0, 0);
@@ -2864,6 +2880,21 @@ meetingTimeline = optionalFeature("meeting timeline", () => window.QuizMeetingTi
     start(shuffled(ids), "practice", { meetingPractice: true });
   },
 }), null);
+knowledge = optionalFeature("knowledge graph", () => window.QuizKnowledge?.connect({
+  questions,
+  historyEntry,
+  inWrongLibrary,
+  accountScope: () => activeAccountId || "guest",
+  practiceQuestions(ids, concept) {
+    if (accountSwitching) return;
+    const unique = [...new Set(ids.filter((id) => byId.has(id) && requiresAnswer(id)).map(sharedQuestionId))];
+    if (!unique.length) return;
+    showTab("knowledge");
+    start(shuffled(unique), "practice", { bankScope: "all", knowledgePractice: true,
+      knowledgeConcept: concept.id, knowledgeTitle: concept.title });
+  },
+}), null);
+if (!knowledge) $("knowledge-count").textContent = "知识图谱暂时未能加载，其他练习功能仍可使用。";
 desk = optionalFeature("study desk", () => window.QuizDesk?.connect({
   byId,
   chapters: [...chapterPools].filter(([, pool]) => pool.filter((item) => item.type !== "填空").length >= 10).map(([chapter]) => chapter),
@@ -2883,6 +2914,7 @@ sync = optionalFeature("account", () => window.QuizAccount?.connect({
   accountChanged(account) {
     accountScopeRevision++;
     activeAccountId = account;
+    knowledge?.reset();
     $("wrong-share-dialog").close();
     $("wrong-share-code").value = "";
     setAccountSwitching(true);
