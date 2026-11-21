@@ -144,6 +144,20 @@ export function createTutor(env: Environment, fetcher = fetch) {
   const serviceKey = env.get("SUPABASE_SERVICE_ROLE_KEY");
   const openaiKey = env.get("OPENAI_API_KEY")?.trim();
   const allowed = new Set((env.get("QUIZ_TUTOR_USER_IDS") || "").split(",").map((id) => id.trim().toLowerCase()).filter(Boolean));
+  const owners = [...allowed].filter((id) => /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(id));
+
+  async function peerAllowed(userId: string) {
+    if (!userId || !owners.length) return false;
+    const result = await fetcher(`${projectUrl}/rest/v1/rpc/quiz_tutor_peer_allowed`, {
+      method: "POST",
+      headers: { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ tutor_user: userId, tutor_owners: owners }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!result.ok) throw new Error("Could not check tutor access");
+    return await result.json() === true;
+  }
+
   async function usage(userId: string, cost?: number) {
     try {
       const result = await fetcher(`${projectUrl}/rest/v1/rpc/quiz_tutor_usage`, {
@@ -175,7 +189,7 @@ export function createTutor(env: Environment, fetcher = fetch) {
       if (auth.status === 401 || auth.status === 403) return reply({ code: "sign_in" }, 401);
       if (!auth.ok) return reply({ code: "unavailable" }, 503);
       const userId = clipped(fields(await auth.json()).id, 36).toLowerCase();
-      if (!allowed.has(userId)) return status ? reply({ available: false }) : reply({ code: "not_allowed" }, 403);
+      if (!allowed.has(userId) && !await peerAllowed(userId)) return status ? reply({ available: false }) : reply({ code: "not_allowed" }, 403);
       if (status) return reply({
         available: true, webSearch: true, models: models.map(({ id, label }) => ({ id, label })),
         defaultModel, usage: await usage(userId),
