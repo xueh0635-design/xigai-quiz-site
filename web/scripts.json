@@ -134,6 +134,22 @@
     "source": "web/scripts/development-requests.js"
   },
   {
+    "id": "knowledge-concepts",
+    "kind": "data",
+    "source": "content/knowledge-concepts.json",
+    "global": "QuizKnowledgeCatalog"
+  },
+  {
+    "id": "knowledge-model",
+    "kind": "script",
+    "source": "web/scripts/knowledge-model.js"
+  },
+  {
+    "id": "knowledge",
+    "kind": "script",
+    "source": "web/scripts/knowledge.js"
+  },
+  {
     "id": "practice",
     "kind": "script",
     "source": "web/scripts/practice.js"
