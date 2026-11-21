@@ -3,6 +3,79 @@
 
   const sheets = new WeakMap();
   const reduceMotion = window.QuizWorldMotion?.preference || matchMedia("(prefers-reduced-motion: reduce)");
+  let inlinePanel = null;
+
+  function clearInlineAnimation(panel) {
+    panel?.animation?.cancel();
+    panel?.dialog.removeAttribute("data-inline-closing");
+  }
+
+  function restoreInline(panel) {
+    clearInlineAnimation(panel);
+    panel.trigger?.setAttribute("aria-expanded", "false");
+    panel.closeButton.textContent = panel.closeLabel;
+    panel.dialog.removeAttribute("data-inline");
+    panel.marker.replaceWith(panel.dialog);
+    if (inlinePanel === panel) inlinePanel = null;
+    panel.host.hidden = true;
+  }
+
+  function openInline(dialog, trigger, layout) {
+    const inlineHost = document.getElementById(trigger?.getAttribute("aria-controls"));
+    if (!inlineHost?.classList.contains("question-inline-panel") || dialog.open) return false;
+    const marker = document.createComment(`${dialog.id}-home`);
+    dialog.replaceWith(marker);
+    inlineHost.append(dialog);
+    const closeButton = dialog.querySelector("[data-sheet-handle] > button");
+    const panel = {
+      dialog, trigger, marker, closeButton, host: inlineHost,
+      closeLabel: closeButton.textContent,
+      animation: null,
+    };
+    inlinePanel = panel;
+    inlineHost.hidden = false;
+    dialog.dataset.inline = "";
+    closeButton.textContent = "收起";
+    trigger.setAttribute("aria-expanded", "true");
+    dialog.addEventListener("close", () => { if (inlinePanel === panel && !dialog.open) restoreInline(panel); }, { once: true });
+    dialog.setAttribute("open", "");
+    layout?.();
+    if (!reduceMotion.matches && typeof dialog.animate === "function") {
+      const height = dialog.getBoundingClientRect().height;
+      panel.animation = dialog.animate([
+        { height: "0px", opacity: .35, transform: "translateY(-8px)", overflow: "hidden" },
+        { height: `${height}px`, opacity: 1, transform: "translateY(0)", overflow: "hidden" },
+      ], { duration: 260, easing: "cubic-bezier(.2,.78,.24,1)" });
+      panel.animation.finished.then(() => {
+        if (inlinePanel === panel) panel.animation = null;
+      }, () => {});
+    }
+    requestAnimationFrame(() => inlineHost.scrollIntoView({
+      block: "nearest", behavior: reduceMotion.matches ? "instant" : "smooth",
+    }));
+    return true;
+  }
+
+  function closeInline(dialog, immediately = false) {
+    const panel = inlinePanel;
+    if (!panel || panel.dialog !== dialog || !dialog.open) return false;
+    clearInlineAnimation(panel);
+    if (immediately || reduceMotion.matches || typeof dialog.animate !== "function") {
+      dialog.close();
+      restoreInline(panel);
+      return true;
+    }
+    dialog.dataset.inlineClosing = "";
+    const height = dialog.getBoundingClientRect().height;
+    panel.animation = dialog.animate([
+      { height: `${height}px`, opacity: 1, transform: "translateY(0)", overflow: "hidden" },
+      { height: "0px", opacity: 0, transform: "translateY(-6px)", overflow: "hidden" },
+    ], { duration: 170, easing: "cubic-bezier(.4,0,.8,.35)", fill: "forwards" });
+    panel.animation.finished.then(() => {
+      if (dialog.open) dialog.close();
+    }, () => {});
+    return true;
+  }
 
   function attach(dialog) {
     if (sheets.has(dialog)) return sheets.get(dialog);
@@ -67,6 +140,7 @@
 
     function close() {
       if (!dialog.open || dialog.hasAttribute("data-sheet-closing")) return;
+      if (closeInline(dialog)) return;
       stopAtCurrentPosition();
       releasePointer();
       const edge = dialog.getBoundingClientRect().top - offset;
@@ -89,7 +163,7 @@
 
     dialog.addEventListener("pointerdown", (event) => {
       if (!event.isPrimary || event.button !== 0 || drag || !dialog.open ||
-          dialog.hasAttribute("data-sheet-closing")) return;
+          dialog.hasAttribute("data-sheet-closing") || dialog.hasAttribute("data-inline")) return;
       const handle = event.target.closest("[data-sheet-handle]");
       if (!handle || event.target.closest("button, input, textarea, select, a, [contenteditable]")) return;
       drag = {
@@ -167,4 +241,9 @@
   }
 
   window.QuizSheetMotion = { attach };
+  window.QuizInlinePanel = {
+    open: openInline,
+    close: closeInline,
+    closeCurrent: (immediately = false) => inlinePanel ? closeInline(inlinePanel.dialog, immediately) : false,
+  };
 })();

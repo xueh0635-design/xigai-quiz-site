@@ -148,6 +148,34 @@
     let retryTimer;
     let chat = null;
     let pending = null;
+    const keepConversation = window.Capacitor?.getPlatform?.() === "ios";
+
+    function conversationKey(question) {
+      return `xigai-tutor-chat-v1:${JSON.stringify([account, question.id, question.answerVisible])}`;
+    }
+
+    function restoreChat(question) {
+      let saved;
+      try {
+        if (keepConversation && account) saved = JSON.parse(localStorage.getItem(conversationKey(question)));
+      } catch { /* An unreadable conversation can start fresh. */ }
+      return {
+        question,
+        turns: Array.isArray(saved?.turns) ? saved.turns : [],
+        draft: typeof saved?.draft === "string" ? saved.draft : "",
+      };
+    }
+
+    function saveChat(draft = chat?.draft) {
+      if (!keepConversation || !account || !chat) return;
+      const turns = pending && chat.turns.at(-1)?.role === "user"
+        ? chat.turns.slice(0, -1) : chat.turns;
+      try {
+        localStorage.setItem(conversationKey(chat.question), JSON.stringify({ turns, draft }));
+      } catch {
+        status.textContent = "本机存储不可用，这次对话可能无法恢复。";
+      }
+    }
 
     function renderUsage(receipt) {
       totals = receipt;
@@ -212,7 +240,7 @@
         const meta = [usedModel, searched && (sources.length ? "已联网查证" : "已联网 · 未取得可引用来源")].filter(Boolean);
         if (meta.length) row.append(element("p", meta.join(" · "), "tutor-answer-meta"));
         row.append(isReply ? replyContent(text, sources) : element("p", text));
-        if (isReply) {
+        if (isReply && !keepConversation) {
           const button = element("button", "填入本题笔记", "tutor-note-action");
           button.type = "button";
           button.setAttribute("aria-haspopup", "dialog");
@@ -224,6 +252,21 @@
         }
         return row;
       }));
+      const replies = chat.turns.filter(({ role }) => role === "assistant").map(({ text, sources = [] }) =>
+        sources.length ? [text, "网络来源", ...sources.map((source, index) =>
+          `〔${index + 1}〕${source.title} ${source.url}`)].join("\n") : text);
+      if (keepConversation && replies.length) {
+        const footer = element("li", "", "tutor-turn");
+        const button = element("button", "填入本题笔记", "tutor-note-action");
+        button.type = "button";
+        button.setAttribute("aria-controls", "question-note-dialog");
+        button.onclick = () => {
+          dialog.close();
+          fillNote(questionId, replies);
+        };
+        footer.append(button);
+        log.append(footer);
+      }
       scroll.scrollTop = toEnd ? scroll.scrollHeight : 0;
     }
 
@@ -247,6 +290,7 @@
       pending = controller;
       active.turns.push({ role: "user", text });
       active.draft = "";
+      saveChat(text);
       field.value = "";
       status.textContent = "";
       renderComposer();
@@ -280,6 +324,7 @@
       } finally {
         if (pending === controller) {
           pending = null;
+          saveChat();
           renderComposer();
           renderTurns(active.turns.length > 0);
         }
@@ -289,7 +334,7 @@
     function open(question) {
       if (!available || dialog.open) return;
       if (chat?.question.id !== question.id || chat.question.answerVisible !== question.answerVisible) {
-        chat = { question, turns: [], draft: "" };
+        chat = restoreChat(question);
       }
       else chat.question = question;
       context.open = false;
@@ -349,6 +394,7 @@
       pending.abort();
       pending = null;
       if (chat?.turns.at(-1)?.role === "user") chat.draft = chat.turns.pop().text;
+      saveChat();
       renderComposer();
     }
 
@@ -370,7 +416,10 @@
       void ask(field.value.trim());
     };
     field.addEventListener("input", () => {
-      if (chat) chat.draft = field.value;
+      if (chat) {
+        chat.draft = field.value;
+        saveChat();
+      }
       renderComposer();
     });
     byId("quiz-tutor-close").onclick = sheet.close;

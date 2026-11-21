@@ -21,6 +21,8 @@ function app(scale = 1) {
     document: { documentElement: { style: {} }, querySelector: () => null,
       addEventListener: (name, handler) => handlers.set(name, handler) },
     accountSwitching: false,
+    questionNoteText: {},
+    questionNoteDialog: { hasAttribute: () => false },
     $: () => ({ hidden: false }),
     current: () => ({ id: session.ids[session.index] }),
     state: { session },

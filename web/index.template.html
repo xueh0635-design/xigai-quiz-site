@@ -277,8 +277,9 @@
           <div id="option-note-tools" class="option-note-tools" hidden>
             <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button" title="也可长按任一选项打开">选项详解</button>
           </div>
-          <button id="quiz-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button" hidden>本题笔记</button>
+          <button id="quiz-note-open" class="quiz-tutor-entry" aria-expanded="false" aria-controls="question-inline-panel" type="button" hidden>本题笔记</button>
         </div>
+      <div id="question-inline-panel" class="question-inline-panel" hidden></div>
       </div>
       <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
         <p id="feedback" role="status" tabindex="-1"></p>
@@ -432,8 +433,9 @@
           <span class="tutor-mark" aria-hidden="true"></span>
           <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>追问解析</small></span>
         </button>
-        <button id="history-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button">本题笔记</button>
+        <button id="history-note-open" class="quiz-tutor-entry" aria-expanded="false" aria-controls="history-inline-panel" type="button">本题笔记</button>
       </div>
+      <div id="history-inline-panel" class="question-inline-panel" hidden></div>
       <button id="history-question-practice" type="button" class="primary" hidden>复练此题</button>
     </dialog>
     <dialog id="option-notes-dialog" class="account-dialog glass quiz-sheet option-notes-sheet" aria-labelledby="option-notes-heading">

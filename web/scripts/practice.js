@@ -103,6 +103,16 @@ const questionNoteText = $("question-note-text");
 const questionNoteStatus = $("question-note-status");
 const questionNoteSheet = optionalFeature("note sheet", () => window.QuizSheetMotion.attach(questionNoteDialog), { close: () => questionNoteDialog.close() });
 let editingNote = null;
+const inlineQuestionNotes = window.Capacitor?.getPlatform?.() === "ios";
+if (!inlineQuestionNotes) {
+  for (const id of ["quiz-note-open", "history-note-open"]) {
+    const button = $(id);
+    button?.removeAttribute("aria-expanded");
+    button?.setAttribute("aria-haspopup", "dialog");
+    button?.setAttribute("aria-controls", "question-note-dialog");
+  }
+}
+const questionNoteDrafts = new Map();
 
 function guestState() {
   try {
@@ -114,20 +124,58 @@ function guestState() {
   }
 }
 
-function openQuestionNote(id, answer = "") {
+function fitQuestionNote() {
+  if (!inlineQuestionNotes || !questionNoteDialog.open) return;
+  questionNoteText.style.height = "auto";
+  const border = questionNoteText.offsetHeight - questionNoteText.clientHeight;
+  questionNoteText.style.height = `${questionNoteText.scrollHeight + border}px`;
+}
+
+questionNoteText.addEventListener("input", fitQuestionNote);
+window.addEventListener("resize", fitQuestionNote);
+
+function appendQuestionReplies(answer) {
+  const answers = Array.isArray(answer) ? answer : [answer];
+  for (const reply of new Set(answers.filter(Boolean))) {
+    if (!questionNoteText.value.includes(reply)) {
+      const appended = [questionNoteText.value, reply].filter(Boolean).join("\n\n");
+      if (!inlineQuestionNotes && appended.length > questionNoteText.maxLength) {
+        questionNoteStatus.textContent = "这份回答放不进当前笔记。可以先缩短笔记，再填入回答。";
+        continue;
+      }
+      questionNoteText.value = appended;
+    }
+  }
+  if (questionNoteText.value.length > questionNoteText.maxLength) {
+    questionNoteStatus.textContent = `已填入全部回答，保存前请缩短到 ${questionNoteText.maxLength} 字以内。`;
+  }
+}
+
+function openQuestionNote(id, answer = "", trigger = null) {
   const item = byId.get(id);
-  if (!item || questionNoteDialog.open) return;
-  const original = state.notes[id] || "";
+  if (!item) return;
+  if (questionNoteDialog.open) {
+    if (answer && editingNote?.id === id) {
+      appendQuestionReplies(answer);
+      fitQuestionNote();
+    } else if (trigger && !answer) questionNoteSheet.close();
+    return;
+  }
+  if (!trigger && answer) {
+    trigger = $("history-question")?.open ? $("history-note-open") : !$("quiz").hidden ? $("quiz-note-open") : null;
+  }
+  const draft = questionNoteDrafts.get(id);
+  const original = draft?.original ?? (state.notes[id] || "");
+  questionNoteDrafts.delete(id);
   editingNote = { id, original };
   $("question-note-stem").textContent = item.stem;
   questionNoteStatus.textContent = "";
-  questionNoteText.value = original;
-  if (answer && !original.includes(answer)) {
-    const appended = [original, answer].filter(Boolean).join("\n\n");
-    if (appended.length <= questionNoteText.maxLength) questionNoteText.value = appended;
-    else questionNoteStatus.textContent = "这份回答放不进当前笔记。可以先缩短笔记，再填入回答。";
+  questionNoteText.value = draft?.text ?? original;
+  appendQuestionReplies(answer);
+  if (!window.QuizInlinePanel?.open(questionNoteDialog, trigger, fitQuestionNote)) {
+    questionNoteDialog.showModal();
+    fitQuestionNote();
   }
-  questionNoteDialog.showModal();
 }
 
 $("question-note-close").onclick = questionNoteSheet.close;
@@ -135,12 +183,17 @@ questionNoteDialog.addEventListener("close", () => {
   if (questionNoteDialog.open) return;
   editingNote = null;
   questionNoteText.value = "";
+  questionNoteText.style.removeProperty("height");
 });
 $("question-note-form").onsubmit = (event) => {
   event.preventDefault();
   if (!editingNote || questionNoteDialog.hasAttribute("data-sheet-closing")) return;
   const { id, original } = editingNote;
   const value = questionNoteText.value.trim();
+  if (value.length > questionNoteText.maxLength) {
+    questionNoteStatus.textContent = `请缩短到 ${questionNoteText.maxLength} 字以内再保存。`;
+    return;
+  }
   const latest = state.notes[id] || "";
   if (value !== original && value !== latest) {
     if (latest !== original) {
@@ -276,6 +329,7 @@ reducedMotion.addEventListener("change", () => {
 });
 
 function showTab(tab, animate = false, fromNative = false) {
+  window.QuizInlinePanel?.closeCurrent(true);
   // Collections remain reachable from home and profile without a sixth native tab.
   if (tab === "starred") {
     showTab("profile", animate, fromNative);
@@ -329,6 +383,7 @@ function openProfileLibrary(scope) {
 }
 
 function returnFromQuestion() {
+  window.QuizInlinePanel?.closeCurrent(true);
   const session = state.session;
   if (session?.knowledgePractice) {
     showTab("knowledge", true);
@@ -1581,7 +1636,10 @@ function renderHistoryAnswer(item) {
   renderDistractorNotes(item, $("history-distractor-notes"), selected);
 }
 
+$("history-question").addEventListener("close", () => window.QuizInlinePanel?.closeCurrent(true));
+
 function showHistoryQuestion(item, practice = false, readOnly = false) {
+  window.QuizInlinePanel?.closeCurrent(true);
   const dialog = $("history-question");
   $("history-question-redo").hidden = readOnly;
   dialog.dataset.questionId = item.id;
@@ -1608,7 +1666,7 @@ function showHistoryQuestion(item, practice = false, readOnly = false) {
   quizTutor.bind($("history-tutor-open"), tutorContext(item, {
     revealed: true, selected: state.history[item.id]?.selected || [],
   }));
-  $("history-note-open").onclick = () => openQuestionNote(item.id);
+  $("history-note-open").onclick = () => openQuestionNote(item.id, "", $("history-note-open"));
   renderStudyEvidence(study, "history-question-");
   meetingTimeline?.link($("meeting-from-history"), item.id);
   const retry = $("history-question-practice");
@@ -1890,10 +1948,19 @@ function current() {
   return byId.get(state.session?.ids?.[state.session.index]);
 }
 
+function keepQuestionNoteDraft() {
+  if (editingNote && questionNoteDialog.open && questionNoteDialog.hasAttribute("data-inline") &&
+      questionNoteText.value !== editingNote.original) {
+    questionNoteDrafts.set(editingNote.id, { original: editingNote.original, text: questionNoteText.value });
+  }
+}
+
 function goToQuestion(index, { swipe = false, direction, focusQuestion = true } = {}) {
   if (accountSwitching) return;
   const session = state.session;
   if (!byId.has(session?.ids[index]) || index === session.index) return;
+  keepQuestionNoteDraft();
+  window.QuizInlinePanel?.closeCurrent(true);
   const travel = direction ?? Math.sign(index - session.index);
   const item = current();
   const drafts = session.drafts ??= {};
@@ -2176,7 +2243,7 @@ function renderQuestion() {
   }));
   const noteButton = $("quiz-note-open");
   noteButton.hidden = testing;
-  noteButton.onclick = testing ? null : () => openQuestionNote(item.id);
+  noteButton.onclick = testing ? null : () => openQuestionNote(item.id, "", noteButton);
   $("study-note").hidden = !study;
   if (study) {
     $("explanation").textContent = study.explanation;
@@ -2350,8 +2417,11 @@ function moveQuestion(direction, swipe = false, skipShared = false) {
   const destination = direction > 0 && session.wrongBookReview && wrongBookFinished(session)
     ? session.ids.length : questionDestination(session, direction, skipShared);
   if (destination === null) return;
-  if (destination === session.ids.length) completeRound();
-  else goToQuestion(destination, { swipe, direction });
+  if (destination === session.ids.length) {
+    keepQuestionNoteDraft();
+    window.QuizInlinePanel?.closeCurrent(true);
+    completeRound();
+  } else goToQuestion(destination, { swipe, direction });
 }
 
 function cancelAutoAdvance() {
@@ -2563,7 +2633,7 @@ document.addEventListener("visibilitychange", () => {
 function canSwipeQuestion() {
   // Leave one-finger pans to the browser while a reader magnifies the page.
   return (window.visualViewport?.scale ?? 1) <= 1 && !accountSwitching &&
-    !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
+    !$("quiz").hidden && current() && !document.querySelector("dialog[open]:not([data-inline])");
 }
 
 function syncNativeQuestionPosition() {
@@ -2628,8 +2698,11 @@ function connectQuestionSwipe() {
 
   document.addEventListener("touchstart", (event) => {
     if (gesture) clearGesture();
+    const field = event.target.closest?.("input, textarea, select, [contenteditable]");
+    const readingNote = field === questionNoteText && questionNoteDialog.hasAttribute("data-inline") &&
+      document.activeElement !== questionNoteText;
     if (!canSwipeQuestion() || event.touches.length !== 1 ||
-        event.target.closest?.("input, textarea, select, [contenteditable]") ||
+        (field && !readingNote) ||
         window.getSelection()?.toString()) return;
     const touch = event.touches[0];
     const session = state.session;
@@ -3153,6 +3226,7 @@ sync = optionalFeature("account", () => window.QuizAccount?.connect({
   accountChanged(account) {
     accountScopeRevision++;
     activeAccountId = account;
+    questionNoteDrafts.clear();
     knowledge?.reset();
     $("wrong-share-dialog").close();
     $("wrong-share-code").value = "";
