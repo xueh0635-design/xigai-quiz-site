@@ -146,6 +146,19 @@
       const chapterData = new Map(data.chapters.map((entry) => [entry.chapter, entry]));
       const typeData = new Map(data.types.map((entry) => [entry.type, entry]));
       showMetrics(data.chapters, owner);
+      const chapters = chapterOrder.map((name) => chapterData.get(name)).filter(Boolean);
+      const remaining = chapters
+        .map((entry) => ({ chapter: entry.chapter, count: entry.total - stats(entry, owner).answered }))
+        .filter(({ count }) => count > 0);
+      const count = remaining.reduce((total, entry) => total + entry.count, 0);
+      get("remaining-summary").textContent = count
+        ? `还有 ${remaining.length} 个章节，共 ${number.format(count)} 道未答`
+        : "所有章节的可作答题都已完成。";
+      get("remaining-chapters").replaceChildren(...remaining.map(({ chapter, count }) => {
+        const row = node("li", "", "desk-chart-row-label");
+        row.append(node("strong", chapter), node("span", `剩 ${number.format(count)} 道`));
+        return row;
+      }));
       showTrend(data.days, owner);
       get("chapter-bars").replaceChildren(...chapterOrder.filter((name) => chapterData.has(name))
         .map((name) => activityBar(name, chapterData.get(name), owner)));

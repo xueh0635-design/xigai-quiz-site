@@ -1134,6 +1134,11 @@
               <button type="button" data-progress-view="types" aria-pressed="false" aria-controls="desk-progress-types">题型</button>
               <button type="button" data-progress-view="tests" aria-pressed="false" aria-controls="desk-progress-tests">测验</button>
             </div>
+            <section class="desk-chart-panel" aria-labelledby="desk-progress-remaining-title">
+              <h3 id="desk-progress-remaining-title">剩余章节</h3>
+              <p id="desk-progress-remaining-summary" class="desk-progress-note"></p>
+              <ul id="desk-progress-remaining-chapters" class="desk-chart-bars"></ul>
+            </section>
             <section id="desk-progress-trend" class="desk-chart-panel" aria-labelledby="desk-progress-week">
               <h3 id="desk-progress-week">近 7 天作答</h3>
               <p id="desk-progress-week-summary" class="desk-progress-note"></p>
@@ -5010,6 +5015,19 @@ void main() {
       const chapterData = new Map(data.chapters.map((entry) => [entry.chapter, entry]));
       const typeData = new Map(data.types.map((entry) => [entry.type, entry]));
       showMetrics(data.chapters, owner);
+      const chapters = chapterOrder.map((name) => chapterData.get(name)).filter(Boolean);
+      const remaining = chapters
+        .map((entry) => ({ chapter: entry.chapter, count: entry.total - stats(entry, owner).answered }))
+        .filter(({ count }) => count > 0);
+      const count = remaining.reduce((total, entry) => total + entry.count, 0);
+      get("remaining-summary").textContent = count
+        ? `还有 ${remaining.length} 个章节，共 ${number.format(count)} 道未答`
+        : "所有章节的可作答题都已完成。";
+      get("remaining-chapters").replaceChildren(...remaining.map(({ chapter, count }) => {
+        const row = node("li", "", "desk-chart-row-label");
+        row.append(node("strong", chapter), node("span", `剩 ${number.format(count)} 道`));
+        return row;
+      }));
       showTrend(data.days, owner);
       get("chapter-bars").replaceChildren(...chapterOrder.filter((name) => chapterData.has(name))
         .map((name) => activityBar(name, chapterData.get(name), owner)));
