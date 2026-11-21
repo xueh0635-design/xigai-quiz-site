@@ -34,8 +34,8 @@
     let scopeKey = null;
     let ratings = {};
     let state;
-    const freshState = () => ({ view: "graph", scope: "wrong", chapter: "", search: "", selected: "",
-      neighbors: matchMedia("(max-width: 600px)").matches, list: false, revealed: false, questionLimit: 6 });
+    const freshState = () => ({ view: "graph", scope: "all", chapter: "", search: "", selected: "",
+      neighbors: false, list: false, revealed: false, questionLimit: 6 });
     state = freshState();
     const graph = new KnowledgeCanvas(field("canvas"), (id) => chooseConcept(id));
 
@@ -188,6 +188,9 @@
       const visible = state.neighbors && state.selected ? snapshot.nodes.filter((node) => ids.has(node.id)) : nodes;
       const visibleIds = new Set(visible.map((node) => node.id));
       const edges = snapshot.edges.filter((edge) => visibleIds.has(edge.source) && visibleIds.has(edge.target));
+      if (state.neighbors && !state.list && visible.length) {
+        field("filter-count").textContent = `关联图 · ${visible.length} 个知识节点`;
+      }
       field("neighbors").setAttribute("aria-pressed", String(state.neighbors));
       field("neighbors").textContent = state.neighbors ? "查看全图" : "只看关联";
       field("list-toggle").setAttribute("aria-pressed", String(state.list));
@@ -196,7 +199,9 @@
       field("map").hidden = state.list;
       field("list").hidden = !state.list;
       for (const id of ["zoom-in", "zoom-out", "fit", "neighbors"]) field(id).disabled = state.list;
-      field("map-hint").textContent = state.neighbors ? "局部图谱含相邻考点 · 拖动 / 双指缩放" : "拖动节点 · 双指缩放 · 点击查看";
+      field("map-hint").textContent = state.neighbors ? "当前考点及相邻节点 · 双指缩放"
+        : "点击节点看考点 · 拖动画布 / 双指缩放";
+      field("fit").textContent = state.neighbors ? "适应关联图" : "适应全图";
       graph.setData(visible, edges, state.selected);
       graph.resize();
     }
@@ -380,6 +385,7 @@
       state.scope = field("scope").value;
       state.chapter = field("chapter").value;
       state.search = field("search").value.trim();
+      state.neighbors = false;
       state.revealed = false;
       state.questionLimit = 6;
       message(""); render();
@@ -390,7 +396,7 @@
       state.view = control.dataset.knowledgeView; render();
     });
     field("reset-filters").addEventListener("click", () => {
-      state.scope = "all"; state.chapter = ""; state.search = ""; state.revealed = false; render();
+      state.scope = "all"; state.chapter = ""; state.search = ""; state.neighbors = false; state.revealed = false; render();
     });
     field("neighbors").addEventListener("click", () => { state.neighbors = !state.neighbors; render(); });
     field("list-toggle").addEventListener("click", () => { state.list = !state.list; render(); });
@@ -412,7 +418,7 @@
         for (const id of ["wrong", "points", "retained"]) field(id).textContent = "0";
         field("count").textContent = "正在切换学习记录…";
         field("filter-count").textContent = "";
-        field("search").value = ""; field("chapter").value = ""; field("scope").value = "wrong";
+        field("search").value = ""; field("chapter").value = ""; field("scope").value = state.scope;
         message("");
       },
     };
@@ -424,7 +430,7 @@
     constructor(canvas, onSelect) {
       this.canvas = canvas; this.onSelect = onSelect;
       try { this.context = canvas.getContext("2d"); } catch { this.context = null; }
-      this.nodes = []; this.edges = []; this.positions = new Map(); this.pointers = new Map();
+      this.nodes = []; this.groups = []; this.edges = []; this.positions = new Map(); this.pointers = new Map();
       this.transform = { x: 0, y: 0, scale: 1 }; this.active = false; this.frame = 0; this.steps = 0;
       this.selected = ""; this.layoutKey = ""; this.width = 1; this.height = 1; this.movedView = false;
       this.motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -468,9 +474,24 @@
       this.edges = edges;
       if (key !== this.layoutKey) {
         this.layoutKey = key;
-        const chapters = [...new Set(nodes.map((node) => node.chapter))];
+        const chapters = [...new Set(nodes.map((node) => node.chapter))]
+          .sort((a, b) => chapterOrder.indexOf(a) - chapterOrder.indexOf(b));
+        const overview = nodes.length > 28 && chapters.length > 1;
+        const columns = Math.ceil(Math.sqrt(chapters.length * .72));
+        this.groups = overview ? chapters.map((name, index) => ({
+          name, x: (index % columns) * 190, y: Math.floor(index / columns) * 156,
+        })) : [];
+        const groupedCount = new Map();
         this.nodes = nodes.map((value, index) => {
           const chapter = chapters.indexOf(value.chapter);
+          if (overview) {
+            const group = this.groups[chapter];
+            const number = groupedCount.get(chapter) || 0;
+            groupedCount.set(chapter, number + 1);
+            const theta = number * 2.399963, radius = 16 * Math.sqrt(number);
+            return { id: value.id, value, x: group.x + Math.cos(theta) * radius,
+              y: group.y + Math.sin(theta) * radius };
+          }
           const angle = chapter / Math.max(1, chapters.length) * Math.PI * 2 - Math.PI / 2;
           const spread = chapters.length > 1 ? Math.min(240, chapters.length * 45) : 0;
           const anchorX = 400 + Math.cos(angle) * spread;
@@ -481,10 +502,10 @@
             anchorX, anchorY, vx: 0, vy: 0 };
         });
         this.positions = new Map(this.nodes.map((node) => [node.id, node]));
-        this.steps = this.motion.matches ? 0 : 110;
+        this.steps = overview || this.motion.matches ? 0 : 110;
         this.movedView = false;
-        if (this.motion.matches) for (let i = 0; i < 80; i++) this.tick();
-        this.fit(false); this.animate();
+        if (!overview && this.motion.matches) for (let i = 0; i < 80; i++) this.tick();
+        this.fit(); this.animate();
       } else for (const node of this.nodes) node.value = nodes.find((value) => value.id === node.id) || node.value;
       const active = nodes.find((node) => node.id === selected);
       this.canvas.setAttribute("aria-label", `知识图谱，${nodes.length} 个节点。${active ? `当前：${active.title}，${active.wrongCount} 道错题。` : ""}方向键选择考点，加减键缩放；也可切换列表。`);
@@ -497,7 +518,7 @@
         this.frame = 0;
         if (!this.active || document.hidden) return;
         for (let i = 0; i < 2 && this.steps > 0; i++, this.steps--) this.tick();
-        if (!this.movedView && this.steps % 12 === 0) this.fit(false);
+        if (!this.movedView && this.steps % 12 === 0) this.fit();
         this.draw(); this.animate();
       });
     }
@@ -536,32 +557,51 @@
         this.canvas.width = width; this.canvas.height = height;
       }
       this.context?.setTransform(ratio, 0, 0, ratio, 0, 0);
-      if (changed) this.fit(false);
+      if (changed) this.fit();
       this.draw();
     }
-    fit(manual = true) {
+    fit() {
       if (!this.nodes.length) { this.draw(); return; }
       const xs = this.nodes.map((node) => node.x), ys = this.nodes.map((node) => node.y);
-      const minX = Math.min(...xs) - 65, maxX = Math.max(...xs) + 65;
-      const minY = Math.min(...ys) - 55, maxY = Math.max(...ys) + 70;
-      const scale = Math.max(.15, Math.min(1.4, (this.width - 30) / (maxX - minX), (this.height - 60) / (maxY - minY)));
+      for (const group of this.groups) {
+        xs.push(group.x - 62, group.x + 62);
+        ys.push(group.y + 57);
+      }
+      const padding = this.groups.length ? 14 : 60;
+      const minX = Math.min(...xs) - padding, maxX = Math.max(...xs) + padding;
+      const minY = Math.min(...ys) - padding, maxY = Math.max(...ys) + padding;
+      const scale = Math.min(1.4, Math.max(1, this.width - 32) / (maxX - minX),
+        Math.max(1, this.height - 56) / (maxY - minY));
       this.transform = { scale, x: this.width / 2 - (minX + maxX) / 2 * scale,
-        y: this.height / 2 - (minY + maxY) / 2 * scale - 8 };
-      if (manual) this.movedView = true;
+        y: (this.height - 16) / 2 - (minY + maxY) / 2 * scale };
+      this.minimumScale = Math.min(.15, scale);
+      this.movedView = false;
       this.draw();
     }
     zoom(factor, point = { x: this.width / 2, y: this.height / 2 }) {
-      const t = this.transform, scale = Math.max(.15, Math.min(3.5, t.scale * factor));
+      const t = this.transform, scale = Math.max(this.minimumScale ?? .15, Math.min(3.5, t.scale * factor));
       this.transform = { x: point.x - (point.x - t.x) * scale / t.scale,
         y: point.y - (point.y - t.y) * scale / t.scale, scale };
       this.movedView = true; this.draw();
     }
     local(event) { const rect = this.canvas.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; }
     radius(node) { return 5.5 + Math.min(11, Math.sqrt(node.value.reviewCount || 0) * 1.9); }
+    displayRadius(node) {
+      const scale = this.transform.scale;
+      return this.groups.length ? Math.max(2.2, this.radius(node) * Math.min(1, scale))
+        : Math.max(4.5, this.radius(node) * Math.sqrt(scale));
+    }
     hit(point) {
       const t = this.transform;
-      return [...this.nodes].reverse().find((node) => Math.hypot(node.x * t.scale + t.x - point.x,
-        node.y * t.scale + t.y - point.y) < Math.max(17, this.radius(node) * t.scale + 9));
+      let chosen, nearest = Infinity;
+      for (const node of this.nodes) {
+        const distance = Math.hypot(node.x * t.scale + t.x - point.x, node.y * t.scale + t.y - point.y);
+        if (distance < nearest && distance < Math.max(this.groups.length ? 11 : 17, this.displayRadius(node) + 6)) {
+          chosen = node;
+          nearest = distance;
+        }
+      }
+      return chosen;
     }
     pointerDown(event) {
       if (!this.active || (event.pointerType === "mouse" && event.button !== 0)) return;
@@ -572,7 +612,7 @@
         this.drag = { pinch: true, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)),
           center: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, transform: { ...this.transform }, moved: true };
       } else if (this.pointers.size === 1) this.drag = { id: event.pointerId, start: point, last: point,
-        node: this.hit(point), moved: false };
+          node: this.hit(point), moved: false };
       this.movedView = true;
     }
     pointerMove(event) {
@@ -581,13 +621,13 @@
       if (this.drag?.pinch && this.pointers.size >= 2) {
         const [a, b] = [...this.pointers.values()], previous = this.drag.transform;
         const distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
-        const scale = Math.max(.15, Math.min(3.5, previous.scale * distance / this.drag.distance));
+        const scale = Math.max(this.minimumScale ?? .15, Math.min(3.5, previous.scale * distance / this.drag.distance));
         this.transform = { scale, x: (a.x + b.x) / 2 - (this.drag.center.x - previous.x) * scale / previous.scale,
           y: (a.y + b.y) / 2 - (this.drag.center.y - previous.y) * scale / previous.scale };
       } else if (this.drag?.id === event.pointerId) {
         if (Math.hypot(point.x - this.drag.start.x, point.y - this.drag.start.y) > 5) this.drag.moved = true;
         if (this.drag.moved) {
-          if (this.drag.node) {
+          if (this.drag.node && !this.groups.length) {
             this.drag.node.x += (point.x - this.drag.last.x) / this.transform.scale;
             this.drag.node.y += (point.y - this.drag.last.y) / this.transform.scale;
           } else {
@@ -629,37 +669,64 @@
         const a = this.positions.get(edge.source), b = this.positions.get(edge.target);
         if (!a || !b) continue;
         const active = a.id === this.selected || b.id === this.selected;
-        ctx.globalAlpha = active ? .65 : .4; ctx.strokeStyle = active ? accent : edgeColor; ctx.lineWidth = active ? 1.4 : .9;
+        const bridge = this.groups.length && a.value.chapter !== b.value.chapter;
+        ctx.globalAlpha = active ? .65 : bridge ? .14 : .4;
+        ctx.strokeStyle = active ? accent : edgeColor; ctx.lineWidth = active ? 1.4 : .9;
         ctx.beginPath(); ctx.moveTo(a.x * t.scale + t.x, a.y * t.scale + t.y);
         ctx.lineTo(b.x * t.scale + t.x, b.y * t.scale + t.y); ctx.stroke();
       }
       ctx.globalAlpha = 1;
       for (const node of this.nodes) {
-        const x = node.x * t.scale + t.x, y = node.y * t.scale + t.y, radius = Math.max(4.5, this.radius(node) * Math.sqrt(t.scale));
+        const x = node.x * t.scale + t.x, y = node.y * t.scale + t.y, radius = this.displayRadius(node);
         const color = colorFor(node.value.chapter);
-        ctx.fillStyle = color; ctx.globalAlpha = node.value.reviewCount ? 1 : .6;
+        ctx.fillStyle = color; ctx.globalAlpha = node.value.reviewCount ? 1 : .8;
         ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
         if (node.id === this.selected) {
           ctx.strokeStyle = accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, radius + 5, 0, Math.PI * 2); ctx.stroke();
         }
+      }
+      ctx.textAlign = "center";
+      if (this.groups.length && t.scale < .68) {
+        ctx.font = "650 11px system-ui, sans-serif";
+        ctx.fillStyle = muted;
+        for (const group of this.groups) {
+          const x = group.x * t.scale + t.x, y = (group.y + 57) * t.scale + t.y + 4;
+          if (y >= 14 && y < this.height - 28) ctx.fillText(group.name, x, y);
+        }
+        return;
       }
       const boxes = [];
       const sorted = [...this.nodes].sort((a, b) => Number(b.id === this.selected) - Number(a.id === this.selected) ||
         Number(neighbors.has(b.id)) - Number(neighbors.has(a.id)) || b.value.reviewCount - a.value.reviewCount);
       for (const node of sorted) {
         const active = node.id === this.selected, near = neighbors.has(node.id);
+        const cx = node.x * t.scale + t.x, cy = node.y * t.scale + t.y;
+        if (cx < 0 || cx > this.width || cy < 0 || cy > this.height - 20) continue;
         if (this.nodes.length > 28 && !active && !near && t.scale < .85) continue;
-        const label = node.value.title.length > (active ? 23 : 13) ? node.value.title.slice(0, active ? 23 : 13) + "…" : node.value.title;
         const font = active ? 13 : 11;
         ctx.font = `${active ? 650 : 500} ${font}px system-ui, sans-serif`;
-        const width = ctx.measureText(label).width;
-        const x = Math.max(width / 2 + 8, Math.min(this.width - width / 2 - 8, node.x * t.scale + t.x));
-        const y = node.y * t.scale + t.y + Math.max(4.5, this.radius(node) * Math.sqrt(t.scale)) + 19;
-        const box = { x: x - width / 2 - 4, y: y - font - 2, width: width + 8, height: font + 7 };
+        const limit = Math.min(this.width - 24, active ? 218 : 120);
+        const lines = [];
+        let line = "";
+        for (const char of node.value.title) {
+          if (line && ctx.measureText(line + char).width > limit) {
+            lines.push(line);
+            line = "";
+          }
+          line += char;
+        }
+        lines.push(line);
+        const width = Math.max(...lines.map((text) => ctx.measureText(text).width));
+        const x = Math.max(width / 2 + 8, Math.min(this.width - width / 2 - 8, cx));
+        const height = (font + 3) * lines.length;
+        const below = cy + this.displayRadius(node) + 5;
+        const top = below + height < this.height - 29 ? below : Math.max(4, cy - this.displayRadius(node) - height - 5);
+        const box = { x: x - width / 2 - 4, y: top, width: width + 8, height: height + 2 };
         if (!active && boxes.some((value) => box.x < value.x + value.width && box.x + box.width > value.x && box.y < value.y + value.height && box.y + box.height > value.y)) continue;
         boxes.push(box);
         if (active) { ctx.fillStyle = paper; ctx.fillRect(box.x, box.y, box.width, box.height); }
-        ctx.fillStyle = active ? ink : muted; ctx.textAlign = "center"; ctx.fillText(label, x, y);
+        ctx.fillStyle = active ? ink : muted;
+        lines.forEach((text, index) => ctx.fillText(text, x, top + font + index * (font + 3)));
       }
     }
   }

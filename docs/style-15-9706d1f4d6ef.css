@@ -127,7 +127,7 @@
   #knowledge-count { margin: 8px 0 12px; }
   .knowledge-filters { margin-top: 12px; }
   #knowledge-filter-count { margin-block: 7px; }
-  .knowledge-map { height: 330px; }
+  .knowledge-map { height: clamp(320px, 49svh, 430px); }
 }
 @media (max-width: 350px) {
   #knowledge { padding: 13px; }

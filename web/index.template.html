@@ -1038,7 +1038,7 @@
       </div>
       <div class="knowledge-filters">
         <label class="knowledge-search-label"><span class="knowledge-sr-only">搜索知识点或题干</span><input id="knowledge-search" type="search" placeholder="搜索知识点或题干" maxlength="120" autocomplete="off"></label>
-        <label><span class="knowledge-sr-only">知识范围</span><select id="knowledge-scope"><option value="wrong">我的错题</option><option value="all">全部考点</option></select></label>
+        <label><span class="knowledge-sr-only">知识范围</span><select id="knowledge-scope"><option value="all">全部考点</option><option value="wrong">我的错题</option></select></label>
         <label><span class="knowledge-sr-only">知识章节</span><select id="knowledge-chapter"><option value="">全部章节</option></select></label>
       </div>
       <p id="knowledge-filter-count" class="knowledge-caption"></p>
@@ -1050,13 +1050,13 @@
       <div id="knowledge-graph-view">
         <div class="knowledge-graph-tools">
           <div role="group" aria-label="图谱范围"><button id="knowledge-neighbors" type="button" aria-pressed="false">只看关联</button><button id="knowledge-list-toggle" type="button" aria-pressed="false">列表</button></div>
-          <div role="group" aria-label="图谱缩放"><button id="knowledge-zoom-out" type="button" aria-label="缩小图谱">−</button><button id="knowledge-zoom-in" type="button" aria-label="放大图谱">＋</button><button id="knowledge-fit" type="button">居中</button></div>
+          <div role="group" aria-label="图谱缩放"><button id="knowledge-zoom-out" type="button" aria-label="缩小图谱">−</button><button id="knowledge-zoom-in" type="button" aria-label="放大图谱">＋</button><button id="knowledge-fit" type="button">适应全图</button></div>
         </div>
         <div class="knowledge-workspace">
           <div class="knowledge-map-column">
             <div id="knowledge-map" class="knowledge-map">
               <canvas id="knowledge-canvas" tabindex="0" role="img" aria-label="可交互的知识图谱。方向键选择考点，加减键缩放；也可切换列表浏览。"></canvas>
-              <p id="knowledge-map-hint" class="knowledge-map-hint" aria-hidden="true">拖动节点 · 双指缩放 · 点击查看</p>
+              <p id="knowledge-map-hint" class="knowledge-map-hint" aria-hidden="true">点击节点看考点 · 拖动画布 / 双指缩放</p>
             </div>
             <div id="knowledge-list" class="knowledge-list" aria-label="知识点列表" hidden></div>
             <p class="knowledge-caption">节点越大，关联错题越多；连线表示知识之间的联系。同一题可能关联多个考点。</p>

@@ -156,6 +156,65 @@ test("a missing canvas context falls back to an accessible list and keeps knowle
   assert.deepEqual(errors, []);
 });
 
+test("the mobile overview draws every point and chapter label inside the canvas", async (t) => {
+  const { page, errors } = await open(t);
+  await enterKnowledge(page);
+  const expected = await page.evaluate(() => {
+    const model = window.QuizKnowledgeModel.create({ questions: window.QuizData, catalog: window.QuizKnowledgeCatalog });
+    const { nodes } = model.snapshot();
+    const canvas = document.getElementById("knowledge-canvas");
+    const context = canvas.getContext("2d");
+    const clear = context.clearRect.bind(context);
+    const arc = context.arc.bind(context);
+    const text = context.fillText.bind(context);
+    window.knowledgeFrame = { circles: [], labels: [] };
+    context.clearRect = (...args) => {
+      window.knowledgeFrame = { circles: [], labels: [] };
+      return clear(...args);
+    };
+    context.arc = (x, y, radius, ...args) => {
+      if (radius >= 2) window.knowledgeFrame.circles.push({ x, y, radius });
+      return arc(x, y, radius, ...args);
+    };
+    context.fillText = (label, x, y) => {
+      window.knowledgeFrame.labels.push({ label, x, y });
+      return text(label, x, y);
+    };
+    return { nodes: nodes.length, chapters: [...new Set(nodes.map(({ chapter }) => chapter))].sort() };
+  });
+  assert.equal(await page.locator("#knowledge-scope").inputValue(), "all");
+  const fit = page.locator("#knowledge-fit");
+  const related = page.locator("#knowledge-neighbors");
+  const canvas = page.locator("#knowledge-canvas");
+  const inspectFit = async () => {
+    await fit.click();
+    const image = await page.evaluate(() => {
+      const { width, height } = document.getElementById("knowledge-canvas").getBoundingClientRect();
+      const frame = window.knowledgeFrame;
+      return { width, height, labels: frame.labels, circles: frame.circles };
+    });
+    assert.equal(new Set(image.circles.map(({ x, y }) => `${x},${y}`)).size, expected.nodes);
+    assert.ok(image.circles.every(({ x, y, radius }) =>
+      x >= radius && y >= radius && x + radius <= image.width && y + radius <= image.height));
+    assert.deepEqual(image.labels.map(({ label }) => label).sort(), expected.chapters);
+    assert.ok(image.labels.every(({ x, y }) => x > 12 && y > 12 && x < image.width - 12 && y < image.height - 26));
+  };
+  await inspectFit();
+  await related.click();
+  assert.match(await page.locator("#knowledge-filter-count").textContent(), /^关联图 · \d+ 个知识节点$/);
+  assert.equal(await related.textContent(), "查看全图");
+  assert.ok(!(await canvas.getAttribute("aria-label")).includes(`${expected.nodes} 个节点`));
+  await related.click();
+  assert.equal(await related.textContent(), "只看关联");
+  await page.locator("#knowledge-zoom-in").click();
+  await page.setViewportSize({ width: 320, height: 740 });
+  await inspectFit();
+  await related.click();
+  await page.locator("#knowledge-chapter").selectOption(expected.chapters[0]);
+  assert.equal(await related.textContent(), "只看关联", "changing a filter starts from the complete matching graph");
+  assert.deepEqual(errors, []);
+});
+
 test("concept practice uses the existing account store, clears answered wrongs and preserves an unfinished exam", async (t) => {
   const { page, errors } = await open(t);
   const fixture = await page.evaluate(async () => {
