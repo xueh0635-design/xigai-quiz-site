@@ -27,7 +27,7 @@ async function fixture(t, rpc, options = {}) {
       async signInWithPassword() { return { data: { user: { id: "fixture", email: "fixture@example.test" } }, error: null }; } },
     from() { return { select() { return this; }, eq() { return this; }, order() { return this; },
       async maybeSingle() { return { data: { account_id: "fixture" }, error: null }; },
-      async range() { return { data: [], error: null }; } }; },
+      async range(from, to) { return { data: options.cloudRows?.().slice(from, to + 1) || [], error: null }; } }; },
     async rpc(name, payload) { requests.push({ name, payload: structuredClone(payload) }); return rpc(name, payload); },
   };
   runInNewContext(accountSource(), { window, document: { getElementById: field, addEventListener() {}, visibilityState: "visible" },
@@ -61,6 +61,34 @@ test("old server fallback uploads compatible state while preserving attempts and
   assert.equal(cache.pending["history:q1"], undefined);
   assert.ok(cache.pending["draft:" + sid]);
   assert.match(app.field("account-label").textContent, /等待服务升级/);
+});
+
+test("legacy server sync restores archived and unfinished wrong reviews to an empty device", async (t) => {
+  const cloud = new Map();
+  let lostReply = true;
+  const rpc = async (name, input) => {
+    if (name === "quiz_sync_v2") return { error: { code: "PGRST202" } };
+    for (const row of input.changes) cloud.set(row.kind + ":" + row.record_key, row);
+    if (lostReply) { lostReply = false; return { error: { message: "reply lost" } }; }
+    return { error: null };
+  };
+  const options = { cloudRows: () => [...cloud.values()] };
+  const original = await fixture(t, rpc, options);
+  const archived = { sid: "wrong-book:all:第一章", ids: ["q2"], index: 1, results: { q2: { correct: true } },
+    wrongBookReview: true, wrongBookRound: 2, wrongBookOriginalIds: ["q1", "q2"], wrongBookRoundCounts: [1, 0],
+    wrongBookClearedAt: { q1: 1, q2: 2 }, routePlan: { chapter: "第一章", kind: "review" } };
+  const unfinished = { ...archived, sid: archived.sid + ":replay", wrongBookRound: 1, wrongBookRoundCounts: [],
+    wrongBookClearedAt: {}, ids: ["q1", "q2"], results: { q1: { correct: false } }, selected: ["B"] };
+  await original.inspection.commit([["draft", archived.sid, archived], ["draft", unfinished.sid, unfinished]]);
+  await original.refresh();
+  assert.ok((await original.inspection.read()).pending["draft:" + archived.sid]);
+  await original.refresh();
+  assert.equal(Object.keys((await original.inspection.read()).pending).length, 0);
+  const reinstalled = await fixture(t, rpc, options);
+  assert.deepEqual((await reinstalled.inspection.read()).records, {});
+  await reinstalled.refresh();
+  assert.deepEqual(structuredClone(reinstalled.received.at(-1).drafts), { [archived.sid]: archived, [unfinished.sid]: unfinished });
+  assert.equal(reinstalled.received.at(-1).session, null, "a downloaded review does not replace the global resume pointer");
 });
 
 test("lost acknowledgement retries the same event id and clears outbox only after an explicit acknowledgement", async (t) => {

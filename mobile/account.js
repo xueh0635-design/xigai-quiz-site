@@ -9,6 +9,8 @@ const byId = (id) => document.getElementById(id);
 const accountLabel = () => byId("account-label");
 const accountKey = (id) => "xigai-account-v1:" + id;
 const legacyKinds = new Set(["history", "star", "note", "session"]);
+const wrongReviewDraft = (row) => row.kind === "draft" && row.payload?.wrongBookReview === true &&
+  row.payload.sid === row.record_key && Array.isArray(row.payload.ids);
 
 function attachRecovery(dialog, loginForm, canStart, restoreLogin) {
   const form = byId("account-recovery-form");
@@ -270,7 +272,10 @@ function connect(callbacks) {
       }
       let uploadFailed = false;
       try {
-        for (const batch of pendingBatches(Object.values(cache.pending).filter((row) => legacyKinds.has(row.kind)))) {
+        const pending = Object.values(cache.pending);
+        const general = pendingBatches(pending.filter((row) => legacyKinds.has(row.kind)));
+        const reviews = pendingBatches(pending.filter(wrongReviewDraft));
+        for (const batch of [...general, ...reviews]) {
           const response = await client.rpc("merge_account_quiz_state", { expected_account: profile.id, changes: batch });
           if (!sameAccount()) return;
           if (response.error) throw response.error;
@@ -301,10 +306,11 @@ function connect(callbacks) {
       giveState(false);
       const pendingEvents = await target.pendingAttempts();
       accountLabel().textContent = !target.durable || storageFailed ? "云端连接已恢复 · 本机保存不可用，请保持页面打开"
-        : uploadFailed ? "已读取云端记录 · 本机更改待上传"
-        : pendingEvents.length || Object.keys(cache.pending).some((tag) => !legacyKinds.has(cache.pending[tag].kind))
+        : uploadFailed || Object.values(cache.pending).some((row) => legacyKinds.has(row.kind) || wrongReviewDraft(row))
+          ? "已读取云端记录 · 本机更改待上传"
+        : pendingEvents.length || Object.keys(cache.pending).length
           ? "进度已同步 · 新版学习记录已保存在本机，等待服务升级"
-          : Object.keys(cache.pending).length ? "有更改待同步" : "进度已同步";
+          : "进度已同步";
     } catch (error) {
       if (sameAccount()) accountLabel().textContent = storageFailed || !scopeReady || unsaved.get(profile.id)?.size
         ? "同步未完成，本机仍有未保存更改，请保持页面打开并重试"

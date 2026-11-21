@@ -16,7 +16,7 @@ const { renderCatalog } = require('../backend/tools/catalog-sql.cjs');
 const content = await fs.readFile(path.join(root,'content/questions.json'));
 const version = createHash('sha256').update(content).digest('hex');
 
-export async function database() {
+export async function database(onlyMigrations) {
   const db = new PGlite();
   await db.exec(`
     create publication supabase_realtime;
@@ -40,11 +40,42 @@ export async function database() {
   `);
   const directory = path.join(root, 'backend/supabase/migrations');
   for (const name of (await fs.readdir(directory)).filter(name => name.endsWith('.sql')).sort()) {
+    if (onlyMigrations && !onlyMigrations.includes(name)) continue;
     try { await db.exec(await fs.readFile(path.join(directory,name),'utf8')); }
     catch (error) { await db.close(); throw new Error(`Migration ${name}: ${error.message}`); }
   }
   return db;
 }
+
+test('the deployed legacy API accepts review drafts and enforces account ownership', async t => {
+  const db = await database([
+    '20261117194920_quiz_accounts_and_progress.sql',
+    '20261117195650_quiz_bind_outbox_to_account.sql',
+    '20261120195728_quiz_question_notes.sql',
+    '20261121191857_sync_wrong_review_drafts.sql',
+  ]);
+  t.after(() => db.close());
+  const own = randomUUID();
+  const other = randomUUID();
+  await db.query('insert into auth.users(id) values ($1), ($2)', [own, other]);
+  await db.query('insert into public.quiz_members(account_id) values ($1), ($2)', [own, other]);
+  await db.exec('set role authenticated');
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [own]);
+  const sid = 'wrong-book:all:第一章';
+  const archive = { sid, ids: ['q2'], wrongBookReview: true, index: 1, wrongBookRound: 2,
+    wrongBookOriginalIds: ['q1', 'q2'], wrongBookRoundCounts: [1, 0] };
+  const draft = { ...archive, sid: sid + ':next', index: 0, wrongBookRound: 1, selected: ['B'], wrongBookRoundCounts: [] };
+  const row = (payload, revision) => ({ kind: 'draft', record_key: payload.sid, payload, change_id: randomUUID(), revision });
+  const merge = (account, ...rows) => db.query('select public.merge_account_quiz_state($1::uuid,$2::jsonb)', [account, JSON.stringify(rows)]);
+  await merge(own, row(archive, 100), row(draft, 100));
+  await merge(own, row({ ...archive, wrongBookRoundCounts: [] }, 99));
+  assert.deepEqual((await db.query("select payload from public.quiz_state where kind='draft' order by record_key")).rows,
+    [{ payload: archive }, { payload: draft }]);
+  await assert.rejects(merge(own, row({ ...draft, wrongBookReview: undefined }, 101)), /check constraint/);
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [other]);
+  assert.deepEqual((await db.query("select record_key from public.quiz_state where kind='draft'")).rows, []);
+  await assert.rejects(merge(own, row(draft, 101)), /account not enrolled/);
+});
 
 test('cold migrations, authorization, incremental sync and append-only attempts', async t => {
   const db = await database();
