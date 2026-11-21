@@ -316,7 +316,8 @@ function returnFromQuestion() {
   if (state.session?.meetingPractice && meetingTimeline) {
     showTab("practice", true);
     meetingTimeline.open({ resume: true });
-  } else if (profileLibrary) openProfileLibrary(profileLibrary);
+  } else if (state.session?.wrongBookReview && !profileLibrary) showTab("wrong", true);
+  else if (profileLibrary) openProfileLibrary(profileLibrary);
   else showTab(selectedTab, true);
 }
 
@@ -997,6 +998,102 @@ function renderChapterStudy(plan) {
   for (const button of [$("library-start"), next, test]) button.classList.toggle("primary", button === primary);
 }
 
+
+function shareableWrongQuestions() {
+  const marked = questions.filter(({ id }) => requiresAnswer(id) && inWrongLibrary(id));
+  return [...new Map(marked.map((item) => [sharedQuestionId(item.id), item])).values()];
+}
+
+function showWrongShare(ids, link = "") {
+  const outgoing = Boolean(link);
+  $("wrong-share-title").textContent = outgoing ? "分享错题本" : "收到的错题本";
+  $("wrong-share-summary").textContent = outgoing
+    ? `分享 ${ids.length} 道题。链接只包含题目列表。`
+    : ids.length ? `可练习 ${ids.length} 道题。答题记录存到你自己的账号或本机。`
+      : "当前题库无法打开这条链接里的题目。";
+  $("wrong-share-field").hidden = $("wrong-share-copy").hidden = !outgoing;
+  $("wrong-share-url").value = link;
+  $("wrong-share-status").textContent = "";
+  $("wrong-share-start").hidden = outgoing || !ids.length;
+  $("wrong-share-start").onclick = () => {
+    if (accountSwitching) {
+      $("wrong-share-status").textContent = "正在载入学习记录，请稍后再试。";
+      return;
+    }
+    $("wrong-share-dialog").close();
+    start(ids, "practice");
+  };
+  $("wrong-share-dialog").showModal();
+}
+
+$("wrong-share").onclick = async () => {
+  const ids = shareableWrongQuestions().map(({ id }) => id);
+  if (!ids.length) return;
+  const groups = new Map();
+  for (const id of ids) {
+    const match = /^(.*-)([0-9]+)$/.exec(id);
+    const prefix = match?.[1] ?? "";
+    if (!groups.has(prefix)) groups.set(prefix, []);
+    groups.get(prefix).push(match?.[2] ?? id);
+  }
+  const url = new URL("https://xueh0635-design.github.io/xigai-quiz-site/");
+  url.hash = new URLSearchParams({ wrong: JSON.stringify([...groups]) }).toString();
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "习概题库 · 错题本", url: url.href });
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+  }
+  showWrongShare(ids, url.href);
+};
+
+$("wrong-share-copy").onclick = async () => {
+  const input = $("wrong-share-url");
+  try {
+    await navigator.clipboard.writeText(input.value);
+    $("wrong-share-status").textContent = "链接已复制";
+  } catch {
+    input.select();
+    $("wrong-share-status").textContent = "请复制选中的链接";
+  }
+};
+
+function receiveWrongShare() {
+  const payload = new URLSearchParams(location.hash.slice(1)).get("wrong");
+  if (payload === null || $("wrong-share-dialog").open) return;
+  const ids = new Set();
+  try {
+    if (payload.length <= 100000) {
+      for (const [prefix, suffixes] of JSON.parse(payload)) {
+        if (typeof prefix !== "string" || !Array.isArray(suffixes)) continue;
+        for (const suffix of suffixes) {
+          if (typeof suffix === "string" && byId.has(prefix + suffix)) ids.add(prefix + suffix);
+        }
+      }
+    }
+  } catch {
+    ids.clear();
+  }
+  showWrongShare([...ids]);
+}
+
+function wrongBookDraft() {
+  return matchingDraft((session) => session.wrongBookReview && session.index < session.ids.length &&
+    canResumeSession(session));
+}
+
+$("wrong-book-review").onclick = () => {
+  const draft = wrongBookDraft();
+  if (draft) {
+    if (draft !== state.session) activateDraft(draft);
+    resumeQuestion();
+    return;
+  }
+  start(shareableWrongQuestions().map(({ id }) => id), "practice", { wrongBookReview: true });
+};
+
 function renderLibrary() {
   const scope = profileLibrary || selectedTab;
   const { title, empty } = libraryTabs[scope];
@@ -1005,6 +1102,11 @@ function renderLibrary() {
   const plan = wrong && wrongChapter ? chapterStudy(wrongChapter, wrongBank) : null;
   const list = $("library-list");
   $("library-title").textContent = plan ? `${plan.chapter} · 错题复练` : wrong ? "错题本" : title;
+  const wrongCount = wrong && !plan ? shareableWrongQuestions().length : 0;
+  const wrongDraft = wrong && !plan && wrongBookDraft();
+  $("wrong-share").hidden = !wrongCount;
+  $("wrong-book-review").hidden = !wrongCount && !wrongDraft;
+  $("wrong-book-review").textContent = wrongDraft ? "继续重刷错题" : `重刷全部错题（${wrongCount}）`;
   $("library-back").hidden = !profileLibrary && !plan;
   $("library-back").textContent = plan ? "返回错题本" : "返回我的旅程";
   $("wrong-bank-field").hidden = !wrong || Boolean(plan) || $("wrong-bank").options.length < 2;
@@ -1432,7 +1534,7 @@ function goToQuestion(index, { swipe = false, direction, focusQuestion = true } 
 
 function checksOnTap(item) {
   const session = state.session;
-  return session.mode === "practice" && (session.quickChapter || session.meetingPractice ||
+  return session.mode === "practice" && (session.quickChapter || session.meetingPractice || session.wrongBookReview ||
     isAdventureSession(session) || session.routePlan?.kind === "review") &&
     (item.type === "单选" || item.type === "判断");
 }
@@ -1619,6 +1721,7 @@ function renderQuestion() {
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
+  if (session.wrongBookReview) $("back").textContent = "返回错题本";
   const slider = $("question-position");
   slider.disabled = total < 2;
   slider.max = total;
@@ -1762,7 +1865,7 @@ function recordAnswer(session, item, selected, timestamp) {
   state.history[id] = entry;
   const attempt = {
     event_id: randomId(), question_id: item.id, selected: [...selected].sort(), occurred_at: timestamp,
-    mode: session.mode === "chapter-test" ? "chapter-test" : session.routePlan?.kind === "review" ? "review" : "practice",
+    mode: session.mode === "chapter-test" ? "chapter-test" : (session.wrongBookReview || session.routePlan?.kind === "review") ? "review" : "practice",
     catalog_version: window.QuizCatalog?.version || "legacy-inline",
   };
   return ["history", id, entry, attempt];
@@ -1885,7 +1988,7 @@ function completeRound(changes = []) {
   const wrong = round.filter((id) => !questionResult(session, id)?.correct);
   const bank = bankForSession(session);
   const chapter = chapterForSession(session);
-  const reviewing = session.routePlan?.kind === "review";
+  const reviewing = session.wrongBookReview || session.routePlan?.kind === "review";
   const adventure = isAdventureSession(session);
   const route = chapter ? chapterStudy(chapter, bank) : null;
   $("result-title").textContent = !round.length ? "填空题查看完成" : testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
@@ -1900,7 +2003,7 @@ function completeRound(changes = []) {
   retry.disabled = !retryCount;
   retry.textContent = route ? `复练 ${retryCount} 道错题` : "重练本次错题";
   retry.onclick = route ? () => startWrongChapter(chapter, bank)
-    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice });
+    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice, wrongBookReview: session.wrongBookReview });
   const review = $("result-chapter-review");
   review.hidden = !route;
   review.textContent = retryCount ? "查看本章错题" : "查看本章进度";
@@ -2648,6 +2751,8 @@ $("profile-account").hidden = $("account-button").hidden;
   tabDock.inert = accountSwitching;
   document.documentElement.dataset.studyReady = "true";
   window.dispatchEvent(new Event("quiz-study-ready"));
+  receiveWrongShare();
+  window.addEventListener("hashchange", receiveWrongShare);
 }
 initializeStudy().catch((error) => {
   pageContent.inert = accountSwitching;

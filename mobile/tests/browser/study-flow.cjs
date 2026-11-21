@@ -160,3 +160,30 @@ test("optional assistant and feedback initialization failures do not prevent off
   assert.equal(await page.locator("#quiz-tutor-open").isVisible(), false);
   assert.deepEqual(errors, []);
 });
+
+test("wrong-book review and shared links use only the sender's marked questions", async (t) => {
+  const sender = await (await context(t)).newPage();
+  await sender.addInitScript(() => Object.defineProperty(navigator, "share", { value: undefined }));
+  await sender.goto(origin + "/docs/index.html");
+  await ready(sender);
+  const ids = await sender.evaluate(() => {
+    const items = questions.filter((item) => requiresAnswer(item.id) && sharedQuestionId(item.id) === item.id).slice(0, 2);
+    state.history[items[0].id] = { wrong: true };
+    state.history[items[1].id] = { wrong: false };
+    showTab("wrong");
+    return items.map((item) => item.id);
+  });
+  await sender.locator("#wrong-share").click();
+  const url = new URL(await sender.locator("#wrong-share-url").inputValue());
+  await sender.locator("#wrong-share-dialog button").last().click();
+  await sender.locator("#wrong-book-review").click();
+  assert.deepEqual(await sender.evaluate(() => state.session.ids), [ids[0]]);
+  assert.equal(await sender.evaluate(() => state.session.wrongBookReview), true);
+
+  const recipient = await (await context(t)).newPage();
+  await recipient.goto(origin + "/docs/index.html" + url.hash);
+  await ready(recipient);
+  await recipient.locator("#wrong-share-start").click();
+  assert.deepEqual(await recipient.evaluate(() => state.session.ids), [ids[0]]);
+  assert.deepEqual(await recipient.evaluate(() => Object.keys(state.history)), []);
+});

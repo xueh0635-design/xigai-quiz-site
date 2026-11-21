@@ -332,11 +332,26 @@
         <button id="again" type="button" class="primary">返回路线</button>
       </div>
     </section>
+    <dialog id="wrong-share-dialog" aria-labelledby="wrong-share-title">
+      <form method="dialog">
+        <h2 id="wrong-share-title">错题本分享</h2>
+        <p id="wrong-share-summary"></p>
+        <label id="wrong-share-field" hidden>分享链接 <input id="wrong-share-url" readonly></label>
+        <p id="wrong-share-status" role="status"></p>
+        <div class="actions">
+          <button id="wrong-share-copy" type="button" hidden>复制链接</button>
+          <button id="wrong-share-start" type="button" class="primary" hidden>开始练习</button>
+          <button>关闭</button>
+        </div>
+      </form>
+    </dialog>
     <section id="library" class="panel tab-page" hidden aria-labelledby="library-title">
       <div class="tab-page-heading">
         <button id="library-back" type="button" hidden>返回我的旅程</button>
         <h2 id="library-title" tabindex="-1"></h2>
         <p id="library-count" role="status"></p>
+        <button id="wrong-book-review" class="primary" type="button" hidden>重刷全部错题</button>
+        <button id="wrong-share" type="button" hidden>分享错题本</button>
       </div>
       <div id="wrong-bank-field" class="wrong-bank-field" hidden>
         <label for="wrong-bank">题库</label>
