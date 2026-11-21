@@ -1,6 +1,7 @@
 type Environment = { get(name: string): string | undefined };
 type Fields = Record<string, unknown>;
 const models = [
+  { id: "gpt-6-luna", label: "GPT-6 Luna", rates: [100, 10, 500] },
   { id: "gpt-5-mini", label: "GPT-5 mini", rates: [250, 25, 2000] },
   { id: "gpt-5.4-nano", label: "GPT-5.4 nano", rates: [200, 20, 1250] },
   { id: "gpt-5.4-mini", label: "GPT-5.4 mini", rates: [750, 75, 4500] },
@@ -226,7 +227,7 @@ export function createTutor(env: Environment, fetcher = fetch) {
           model,
           instructions: searching ? searchInstructions : instructions,
           input: JSON.stringify(input),
-          reasoning: { effort: searching ? "low" : model === defaultModel ? "minimal" : "none" },
+          reasoning: { effort: searching ? "low" : model === "gpt-5-mini" ? "minimal" : "none" },
           max_output_tokens: searching ? 1600 : 900,
           ...(searching ? {
             tools: [{ type: "web_search", external_web_access: true, search_context_size: "low" }],
