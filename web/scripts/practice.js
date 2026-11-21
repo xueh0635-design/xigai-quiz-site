@@ -279,6 +279,7 @@ function showTab(tab, animate = false, fromNative = false) {
     wrongBank = selectedBank;
   }
   profileLibrary = null;
+  $("wrong-round-questions").close();
   $("history-question").close();
   selectedTab = tab;
   const index = tabButtons.findIndex((button) => button.dataset.studyTab === tab);
@@ -1223,7 +1224,7 @@ function chapterReviewPlan(plan, archive = originalWrongBookDraft()) {
   const recoveredIds = pool.filter(({ id }) => requiresAnswer(id) && archived.has(sharedQuestionId(id))).map(({ id }) => id);
   const restoredTotal = recoveredIds.length;
   if (draft?.wrongBookOriginalIds || !restoredTotal) {
-    const originalIds = draft?.wrongBookOriginalIds || (draft && wrongBookRoundNumber(draft) === 1 ? draft.ids : wrong);
+    const originalIds = draft?.wrongBookOriginalIds || (draft ? (wrongBookRoundNumber(draft) === 1 ? draft.ids : []) : wrong);
     return { draft, originalIds, restoredTotal, startIds: wrong };
   }
   if (draft && wrongBookRoundNumber(draft) > 1) {
@@ -1270,6 +1271,18 @@ function wrongBookRoundCounts(session) {
   return counts;
 }
 
+function wrongBookClearedAt(session, originalIds) {
+  const cleared = { ...session?.wrongBookClearedAt };
+  if (!session || !originalIds.length) return cleared;
+  const round = wrongBookRoundNumber(session);
+  const currentIds = new Set(session.ids);
+  for (const id of originalIds) {
+    if (round > 1 && !currentIds.has(id)) cleared[id] ??= round - 1;
+    else if (session.results?.[id]?.correct === true) cleared[id] ??= round;
+  }
+  return cleared;
+}
+
 function startWrongBookRound(chapter, bank, ids, originalIds = ids, previous = null) {
   start(ids, "practice", {
     bankScope: bank,
@@ -1278,6 +1291,7 @@ function startWrongBookRound(chapter, bank, ids, originalIds = ids, previous = n
     wrongBookRound: previous ? wrongBookRoundNumber(previous) + 1 : 1,
     wrongBookOriginalIds: originalIds,
     wrongBookRoundCounts: wrongBookRoundCounts(previous),
+    wrongBookClearedAt: wrongBookClearedAt(previous, originalIds),
   });
 }
 
@@ -1311,15 +1325,51 @@ function wrongBookReviewLabel({ draft, startIds }) {
   return startIds.length ? `开始第 1 轮（${startIds.length} 道）` : "";
 }
 
-function renderWrongBookHistory(section, originalCount, draft) {
-  const rows = originalCount ? [`原始错题 ${originalCount} 道`] : [];
+function openWrongRoundQuestions(label, ids) {
+  const dialog = $("wrong-round-questions");
+  $("wrong-round-questions-title").textContent = label;
+  const items = (ids || []).map((id) => byId.get(id)).filter(Boolean);
+  const empty = $("wrong-round-questions-empty");
+  empty.hidden = items.length > 0;
+  empty.textContent = ids ? "这一轮的错题已清空。" : "这轮保存了错题数量，题目名单未保存。";
+  $("wrong-round-questions-list").replaceChildren(...items.map((item) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "library-item";
+    button.dataset.questionId = item.id;
+    const stem = document.createElement("span");
+    stem.className = "library-stem";
+    stem.textContent = item.stem;
+    const type = document.createElement("small");
+    type.className = "library-meta";
+    type.textContent = `${item.type}题`;
+    button.append(stem, type);
+    button.onclick = () => showHistoryQuestion(item, false, true);
+    return button;
+  }));
+  dialog.showModal();
+}
+
+function renderWrongBookHistory(section, originalIds, draft) {
+  const rows = originalIds.length ? [{ label: `原始错题 ${originalIds.length} 道`, ids: originalIds }] : [];
+  const cleared = wrongBookClearedAt(draft, originalIds);
   for (const [index, remaining] of wrongBookRoundCounts(draft).entries()) {
-    if (remaining != null) rows.push(`第 ${index + 1} 轮后剩 ${remaining} 道`);
+    if (remaining == null) continue;
+    const round = index + 1;
+    const currentRound = wrongBookRoundNumber(draft);
+    const available = round === currentRound ? wrongBookRemaining(draft) : round === currentRound - 1 ? draft.ids
+      : originalIds.filter((id) => !cleared[id] || cleared[id] > round);
+    rows.push({ label: `第 ${round} 轮后剩 ${remaining} 道`, ids: remaining === 0 ? [] : available.length === remaining ? available : null });
   }
   section.hidden = !rows.length;
-  section.querySelector("ol").replaceChildren(...rows.map((label) => {
+  section.querySelector("ol").replaceChildren(...rows.map(({ label, ids }) => {
     const row = document.createElement("li");
-    row.textContent = label;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.setAttribute("aria-haspopup", "dialog");
+    button.onclick = () => openWrongRoundQuestions(label, ids);
+    row.append(button);
     return row;
   }));
 }
@@ -1343,7 +1393,6 @@ function renderLibrary() {
   $("wrong-continue").hidden = true;
   $("wrong-test").hidden = true;
   $("chapter-wrong-history").hidden = true;
-  $("wrong-restart-original").hidden = true;
   $("library-start").classList.add("primary");
   if (wrong && !plan) {
     for (const id of ["library-start", "library-configure", "library-swipe-hint", "library-removal", "library-more"]) $(id).hidden = true;
@@ -1383,12 +1432,7 @@ function renderLibrary() {
     startButton.disabled = false;
     startButton.textContent = label;
     startButton.onclick = () => startWrongBookReview(plan.chapter, plan.bank);
-    renderWrongBookHistory($("chapter-wrong-history"), review.originalIds.length, review.draft);
-    const restart = $("wrong-restart-original");
-    const hasProgress = review.draft && (wrongBookRoundNumber(review.draft) > 1 || Object.keys(review.draft.results || {}).length);
-    restart.hidden = !review.originalIds.length || !hasProgress;
-    restart.textContent = `从原始 ${review.originalIds.length} 道错题重刷本章`;
-    restart.onclick = () => startWrongBookRound(plan.chapter, plan.bank, review.originalIds);
+    renderWrongBookHistory($("chapter-wrong-history"), review.originalIds, review.draft);
     renderChapterStudy(plan);
   } else {
     startButton.hidden = done;
@@ -1451,8 +1495,9 @@ function renderHistoryAnswer(item) {
   renderDistractorNotes(item, $("history-distractor-notes"), selected);
 }
 
-function showHistoryQuestion(item, practice = false) {
+function showHistoryQuestion(item, practice = false, readOnly = false) {
   const dialog = $("history-question");
+  $("history-question-redo").hidden = readOnly;
   dialog.dataset.questionId = item.id;
   dialog.dataset.practice = String(practice);
   $("history-question-meta").textContent = `${item.chapter} · ${item.type}题`;
@@ -1728,7 +1773,8 @@ function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
     ? { commonOnly: true, commonChapter: chapterOptions.quickChapter, routePlan: chapterOptions.routePlan,
       repeatChapter: chapterOptions.repeatChapter, reuseSharedHistory: chapterOptions.reuseSharedHistory,
       wrongBookReview: chapterOptions.wrongBookReview, wrongBookRound: chapterOptions.wrongBookRound,
-      wrongBookOriginalIds: chapterOptions.wrongBookOriginalIds, wrongBookRoundCounts: chapterOptions.wrongBookRoundCounts } : chapterOptions;
+      wrongBookOriginalIds: chapterOptions.wrongBookOriginalIds, wrongBookRoundCounts: chapterOptions.wrongBookRoundCounts,
+      wrongBookClearedAt: chapterOptions.wrongBookClearedAt } : chapterOptions;
   const previous = rememberSession(state.session);
   const sid = options.wrongBookReview ? `wrong-book:${chapterOptions.bankScope}:${options.routePlan.chapter}` : randomId();
   state.session = { sid, ids: queue, mode, index, results: {}, selected: [], ...options,
@@ -2243,12 +2289,15 @@ function completeRound(changes = []) {
   session.selected = [];
   if (wrongBook) {
     session.wrongBookFinished = true;
+    const originalIds = session.wrongBookOriginalIds || (wrongBookRoundNumber(session) === 1 ? session.ids : []);
     const remaining = wrongBookRemaining(session);
     if (remaining.length) {
-      startWrongBookRound(chapter, bank, remaining, session.wrongBookOriginalIds || session.ids, session);
+      startWrongBookRound(chapter, bank, remaining, originalIds, session);
       return;
     }
+    session.wrongBookOriginalIds = originalIds;
     session.wrongBookRoundCounts = wrongBookRoundCounts(session);
+    session.wrongBookClearedAt = wrongBookClearedAt(session, originalIds);
   }
   saveSession(changes);
   const memoryMode = session.mode === "memory";
@@ -2261,7 +2310,7 @@ function completeRound(changes = []) {
   const retryCount = route ? route.wrong.length : wrong.length;
   const passed = wrongBook && route && chapterWrongReviewPassed(route);
   $("result").dataset.reviewCleared = String(Boolean(wrongBook));
-  renderWrongBookHistory($("result-wrong-history"), wrongBook ? session.wrongBookOriginalIds?.length : 0, wrongBook ? session : null);
+  renderWrongBookHistory($("result-wrong-history"), wrongBook ? session.wrongBookOriginalIds : [], wrongBook ? session : null);
   $("result-title").textContent = wrongBook ? (passed ? `${chapter} · 已通过` : "本轮错题已清空")
     : !round.length ? "填空题查看完成" : testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
     : reviewing ? "本轮错题复练完成" : route && !route.remaining.length ? "本章练习完成"

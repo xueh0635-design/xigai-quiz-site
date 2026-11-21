@@ -308,6 +308,14 @@ test("every chapter starts its own first round and only its missed questions adv
   assert.equal(await retry.isVisible(), false);
   assert.deepEqual(await page.locator("#result-wrong-history li").allTextContents(),
     ["原始错题 4 道", "第 1 轮后剩 2 道", "第 2 轮后剩 1 道", "第 3 轮后剩 0 道"]);
+  const snapshots = [fixture.ids, [fixture.ids[1], fixture.ids[3]], [fixture.ids[1]], []];
+  const dialog = page.locator("#wrong-round-questions");
+  for (const [index, expected] of snapshots.entries()) {
+    await page.locator("#result-wrong-history button").nth(index).click();
+    assert.equal(await dialog.isVisible(), true);
+    assert.deepEqual(await dialog.locator("[data-question-id]").evaluateAll((buttons) => buttons.map((button) => button.dataset.questionId)), expected);
+    await dialog.getByRole("button", { name: "返回", exact: true }).click();
+  }
   await page.locator("#again").click();
   assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(),
     ["原始错题 4 道", "第 1 轮后剩 2 道", "第 2 轮后剩 1 道", "第 3 轮后剩 0 道"]);
@@ -361,8 +369,16 @@ test("the original whole-book snapshot restores chapter questions and already gr
     [true, false]);
   await page.locator("#back").click();
   assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(), ["原始错题 4 道"]);
-  await page.locator("#wrong-restart-original").click();
+  assert.equal(await page.locator("#wrong-restart-original").count(), 0);
+  await page.locator("#chapter-wrong-history button").click();
+  const dialog = page.locator("#wrong-round-questions");
+  assert.deepEqual(await dialog.locator("[data-question-id]").evaluateAll((buttons) => buttons.map((button) => button.dataset.questionId)), fixture.ids);
+  await dialog.locator("[data-question-id]").first().click();
+  assert.equal(await page.locator("#history-question").isVisible(), true);
+  assert.equal(await page.locator("#history-question-redo").isVisible(), false);
+  await page.locator("#history-question-close").click();
+  await dialog.getByRole("button", { name: "返回", exact: true }).click();
   assert.deepEqual(await page.evaluate(() => state.session.ids), fixture.ids);
-  assert.deepEqual(await page.evaluate(() => state.session.results), {});
+  assert.equal(await page.evaluate(() => Object.keys(state.session.results).length), 2);
   assert.equal(await page.evaluate((id) => historyEntry(id).wrong, fixture.correct), false);
 });

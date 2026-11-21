@@ -335,6 +335,14 @@
         <button id="again" type="button" class="primary">返回路线</button>
       </div>
     </section>
+    <dialog id="wrong-round-questions" aria-labelledby="wrong-round-questions-title">
+      <header class="history-question-heading">
+        <h2 id="wrong-round-questions-title"></h2>
+        <form method="dialog"><button>返回</button></form>
+      </header>
+      <p id="wrong-round-questions-empty" hidden></p>
+      <div id="wrong-round-questions-list"></div>
+    </dialog>
     <dialog id="wrong-share-dialog" aria-labelledby="wrong-share-title">
       <form method="dialog">
         <h2 id="wrong-share-title">错题本分享</h2>
@@ -373,7 +381,6 @@
       </section>
       <div class="actions library-actions">
         <button id="library-start" class="primary" type="button">开始练习</button>
-        <button id="wrong-restart-original" type="button" hidden>重刷本章原始错题</button>
         <button id="library-configure" type="button">自定义组卷</button>
         <button id="wrong-continue" type="button" hidden>练剩余题</button>
         <button id="wrong-test" type="button" hidden>整章测验</button>

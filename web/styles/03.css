@@ -101,18 +101,22 @@
   list-style: none;
 }
 
-.wrong-round-history li {
-  padding: 5px 9px;
-  border: 1px solid var(--world-edge);
+.wrong-round-history button {
+  min-height: 44px;
+  padding: 6px 9px;
   border-radius: 8px;
-  color: var(--world-muted);
   font-size: .8rem;
 }
 
-#result[data-review-cleared="true"] .wrong-round-history li:last-child {
+#result[data-review-cleared="true"] .wrong-round-history li:last-child button {
   background: var(--world-good);
   color: var(--world-good-ink);
 }
+
+#wrong-round-questions h2 { margin: 0; font-size: 1.14rem; }
+#wrong-round-questions header { margin-block-end: 12px; }
+#wrong-round-questions header button { min-height: 44px; white-space: nowrap; }
+#wrong-round-questions-list { display: grid; gap: 8px; }
 
 #library:has(#chapter-study-status:not([hidden])) .library-actions button {
   min-height: 44px;
