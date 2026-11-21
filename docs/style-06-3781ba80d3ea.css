@@ -1,0 +1,195 @@
+.desk-learner { position: relative; }
+#desk .desk-learner-open {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: start;
+  justify-content: end;
+  padding: clamp(10px, 2.25vw, 18px);
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  color: var(--world-muted);
+  font-size: .74rem;
+  font-weight: 650;
+  line-height: 1.55;
+  touch-action: manipulation;
+}
+#desk .desk-learner-open:hover, #desk .desk-learner-open:focus-visible {
+  border-color: var(--learner-tint);
+  color: var(--world-ink);
+}
+#desk .desk-learner-open:active { transform: none; }
+.desk-learner:has(.desk-learner-open:focus-visible) { outline: 2px solid var(--world-accent); outline-offset: 2px; }
+
+.desk-progress-dialog.account-dialog.glass {
+  --progress-correct: var(--world-good-ink);
+  --progress-wrong: var(--world-bad-ink);
+  --progress-hatch: repeating-linear-gradient(
+    135deg, var(--progress-wrong) 0 3px,
+    color-mix(in srgb, var(--progress-wrong) 62%, var(--world-card)) 3px 6px
+  );
+  width: min(568px, calc(100% - 16px));
+  max-height: min(86dvh, 810px);
+  color: var(--world-ink);
+}
+.desk-progress-dialog :is(button, select) { min-height: 44px; }
+.desk-progress-dialog h3 { margin: 0 0 5px; font-size: 1.04rem; }
+.desk-progress-note, #desk-progress-status {
+  margin: 0 0 9px;
+  color: var(--world-muted);
+  font-size: .82rem;
+}
+#desk-progress-status:empty { display: none; }
+.desk-progress-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.desk-progress-metrics > div {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--world-edge);
+  border-radius: 12px;
+  background: var(--world-card-alt);
+}
+.desk-progress-metrics dt {
+  color: var(--world-muted);
+  font-size: .76rem;
+  line-height: 1.3;
+}
+.desk-progress-metrics dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+.desk-progress-metrics strong { display: block; font-size: 1.26rem; line-height: 1.25; }
+.desk-progress-metrics dd span { display: block; color: var(--world-muted); font-size: .73rem; }
+.desk-progress-metrics [data-metric="review"] strong { color: var(--world-bad-ink); }
+
+.desk-progress-views {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--world-edge);
+  border-radius: 14px;
+  background: var(--world-card-alt);
+}
+#desk-progress-dialog .desk-progress-views button {
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--world-muted);
+  font-size: .87rem;
+  box-shadow: none;
+}
+#desk-progress-dialog .desk-progress-views button[aria-pressed="true"] {
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  font-weight: 720;
+}
+.desk-chart-panel { margin-top: 14px; }
+.desk-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  color: var(--world-muted);
+  font-size: .75rem;
+}
+.desk-chart-legend li { display: flex; align-items: center; gap: 5px; }
+.desk-chart-legend li::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  content: "";
+}
+.desk-chart-legend [data-segment="correct"]::before,
+.desk-chart-correct { background: var(--progress-correct); }
+.desk-chart-legend [data-segment="wrong"]::before,
+.desk-chart-wrong { background: var(--progress-hatch); }
+.desk-chart-legend [data-segment="new"]::before { background: var(--world-edge); }
+
+.desk-day-chart {
+  --plot-height: clamp(84px, 14dvh, 128px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+}
+.desk-day-chart-axis {
+  height: var(--plot-height);
+  display: grid;
+  align-content: space-between;
+  text-align: end;
+  color: var(--world-muted);
+  font-size: .67rem;
+  font-variant-numeric: tabular-nums;
+}
+.desk-day-chart-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  background:
+    linear-gradient(var(--world-edge), var(--world-edge)) left top / 100% 1px no-repeat,
+    linear-gradient(var(--world-edge), var(--world-edge)) left var(--plot-height) / 100% 1px no-repeat;
+}
+#desk-progress-dialog .desk-day-chart button {
+  display: grid;
+  place-items: end center;
+  min-width: 0;
+  grid-template-rows: var(--plot-height) 25px;
+  padding: 0 1px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--world-muted);
+  font-size: .66rem;
+  white-space: nowrap;
+}
+#desk-progress-dialog .desk-day-chart button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--world-accent) 11%, transparent);
+  color: var(--world-ink);
+  font-weight: 720;
+}
+.desk-day-chart button:active { transform: none; }
+.desk-day-chart button > :last-child { align-self: center; }
+.desk-day-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  width: min(62%, 22px);
+  height: 100%;
+}
+.desk-day-stack > span { height: var(--segment); }
+.desk-day-detail {
+  margin: 8px 0;
+  padding: 8px;
+  border-radius: 9px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  font-size: .79rem;
+  font-variant-numeric: tabular-nums;
+}
+.desk-chart-bars { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.desk-chart-bars li { display: grid; gap: 5px; padding: 0 0 8px; border-bottom: 1px solid var(--world-edge); }
+.desk-chart-row-label { display: flex; justify-content: space-between; gap: 6px; font-size: .86rem; }
+.desk-chart-row-label span { flex: none; font-variant-numeric: tabular-nums; }
+.desk-chart-row-detail { color: var(--world-muted); font-size: .75rem; }
+.desk-chart-track {
+  display: flex;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--world-edge);
+}
+.desk-chart-track > span { width: var(--segment); }
+.desk-chart-filter { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 9px; }
+.desk-chart-filter label { font-size: .86rem; }
+.desk-chart-filter select { width: min(66%, 220px); }
+#desk-progress-history { width: 100%; margin-top: 10px; }

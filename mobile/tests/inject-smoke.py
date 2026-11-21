@@ -37,6 +37,7 @@ window.addEventListener("load", async () => {
   report.id = "xigai-smoke-result";
   report.style.cssText = "position:fixed;top:32%;left:8%;right:8%;z-index:2147483646;background:#fff;color:#111;padding:20px;text-align:center;font:bold 24px system-ui;border:2px solid #111";
   try {
+    await until(() => document.documentElement.dataset.studyReady === "true", "study initialization");
     const bank = window.QuizData;
     check(Array.isArray(bank) && bank.length > 0, "question bank");
     for (const item of bank) {

@@ -1,0 +1,786 @@
+:root {
+  color-scheme: light;
+  --world-bg: #e7efe5;
+  --world-wash: #f7e4be;
+  --world-card: #f8f9ef;
+  --world-card-alt: #e9f0e3;
+  --world-ink: #203d33;
+  --world-muted: #4c675b;
+  --world-edge: #cedbcd;
+  --world-accent: #266b54;
+  --world-action: #276a51;
+  --world-action-deep: #164738;
+  --world-action-text: #f5fff4;
+  --world-glass: #f7f9eff0;
+  --world-shadow: #29463821;
+  --world-gold: #bd5a2f;
+  --world-glow: #f5b75a;
+  --world-good: #dfefd9;
+  --world-good-ink: #21573c;
+  --world-bad: #f7ded9;
+  --world-bad-ink: #783d39;
+  --world-stat-wrong: #f9eddc;
+  --world-stat-starred: #f1e6f7;
+  --world-sky-top: #8fbebc;
+  --world-sky-bottom: #ebdab0;
+  --world-ridge: #79998a;
+  --world-ridge-near: #48705d;
+  --world-orb: #fff2b1;
+  --world-halo: #ffe3a986;
+  --world-stars: transparent;
+  --world-paper-sign: #f8e4b7;
+  --world-route-preview: url("assets/art-ec1dbf28fee7bdac.jpg");
+  --world-camp-preview: url("assets/art-911fd94a68d91b39.jpg");
+  --ink: var(--world-ink);
+  --muted: var(--world-muted);
+  --paper: var(--world-card);
+  --background: var(--world-bg);
+  --accent: var(--world-accent);
+  --line: var(--world-edge);
+  --sheet-surface: var(--world-card);
+  --sheet-glass: linear-gradient(148deg, var(--world-card), var(--world-card-alt));
+  --sheet-shade: #112c2c72;
+}
+
+:root[data-world-theme="dawn"] {
+  --world-bg: #e9efea;
+  --world-wash: #e9e1d5;
+  --world-card: #f4f7ee;
+  --world-card-alt: #e5ede5;
+  --world-ink: #213e40;
+  --world-muted: #52696d;
+  --world-edge: #cadbd6;
+  --world-accent: #306a69;
+  --world-action: #306a69;
+  --world-action-deep: #1b4b4e;
+  --world-glass: #f2f7f2ed;
+  --world-sky-top: #8aa7ae;
+  --world-sky-bottom: #efd1b4;
+  --world-ridge: #899b96;
+  --world-ridge-near: #4e716f;
+  --world-orb: #ffe4ae;
+  --world-halo: #f4c69a6e;
+  --world-paper-sign: #f1ddbd;
+  --world-route-preview: url("assets/art-63ecbfe8031b9e3a.jpg");
+  --world-camp-preview: url("assets/art-6573875039f91d2d.jpg");
+}
+
+:root[data-world-theme="dusk"], :root[data-world-theme="night"] {
+  color-scheme: dark;
+  --world-bg: #1a1b2a;
+  --world-wash: #392838;
+  --world-card: #272637;
+  --world-card-alt: #333044;
+  --world-ink: #f3e5da;
+  --world-muted: #c4b6c1;
+  --world-edge: #594a61;
+  --world-accent: #ffd4a2;
+  --world-action: #edaa74;
+  --world-action-deep: #9b6248;
+  --world-action-text: #301c25;
+  --world-glass: #272637ef;
+  --world-shadow: #10101d96;
+  --world-gold: #ffc29a;
+  --world-glow: #ed9d64;
+  --world-good: #23473d;
+  --world-good-ink: #bde9c9;
+  --world-bad: #592f3b;
+  --world-bad-ink: #ffd2ce;
+  --world-stat-wrong: #473641;
+  --world-stat-starred: #39344d;
+  --world-sky-top: #3c3d61;
+  --world-sky-bottom: #c97467;
+  --world-ridge: #575168;
+  --world-ridge-near: #383848;
+  --world-orb: #ffd291;
+  --world-halo: #e7956d69;
+  --world-stars: #ffdfbd73;
+  --world-paper-sign: #a76448;
+  --world-route-preview: url("assets/art-144ded0ef1c9786c.jpg");
+  --world-camp-preview: url("assets/art-aeda41f9c390e69f.jpg");
+}
+
+:root[data-world-theme="night"] {
+  --world-route-preview: url("assets/art-c955854ac287aeec.jpg");
+  --world-camp-preview: url("assets/art-09b7c78e051e4e36.jpg");
+  --world-bg: #0f1d2b;
+  --world-wash: #252a3b;
+  --world-card: #172939;
+  --world-card-alt: #203748;
+  --world-ink: #e5eef1;
+  --world-muted: #a9c4ce;
+  --world-edge: #355164;
+  --world-accent: #f6d4a5;
+  --world-action: #f3bd7f;
+  --world-action-deep: #936347;
+  --world-action-text: #261f27;
+  --world-glass: #172938ed;
+  --world-shadow: #040f1ccb;
+  --world-gold: #ffd4a9;
+  --world-glow: #ffc17a;
+  --world-good: #1e403a;
+  --world-good-ink: #b7e9cc;
+  --world-bad: #543541;
+  --world-bad-ink: #ffd9d4;
+  --world-stat-wrong: #353442;
+  --world-stat-starred: #292f49;
+  --world-sky-top: #121f39;
+  --world-sky-bottom: #456284;
+  --world-ridge: #374e65;
+  --world-ridge-near: #203b4a;
+  --world-orb: #f1ebcc;
+  --world-halo: #acc5f26b;
+  --world-stars: #e4eaffcc;
+  --world-paper-sign: #665784;
+}
+
+body {
+  background: radial-gradient(ellipse 90vw 52vh at 90% 0, var(--world-wash), transparent 90%),
+    linear-gradient(165deg, var(--world-card-alt), var(--world-bg) 85vh), var(--world-bg);
+}
+.masthead.glass, .study-tabs.glass {
+  border-color: var(--world-edge);
+  background: var(--world-glass);
+  box-shadow: 0 10px 26px var(--world-shadow), inset 0 1px #ffffff23;
+}
+.masthead .account-top { min-width: 0; gap: 6px; }
+.masthead #account-label { max-width: 10ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.study-tabs button { color: var(--world-muted); }
+.study-tabs button[data-study-tab="desk"] { color: var(--world-ink); }
+.study-tabs button[aria-current="page"], .study-tabs button[data-tab-preview] { color: var(--world-accent); }
+.study-tabs button[data-study-tab="desk"] .tab-icon-together,
+.study-tabs button[data-study-tab="desk"][aria-current="page"] .tab-icon-together {
+  border-color: var(--world-edge);
+  background: linear-gradient(145deg, var(--world-action), var(--world-action-deep));
+  color: var(--world-action-text);
+  box-shadow: 0 3px 0 var(--world-action-deep), inset 0 1px #fff5;
+}
+.study-tabs .tab-icon-together i { background: var(--world-action-text); }
+#mobile-tabs button[data-study-tab] { border-color: transparent; background: transparent; }
+@media (hover: hover) {
+  #mobile-tabs button[data-study-tab]:not(:disabled):hover { color: var(--world-accent); }
+}
+
+:where(button, select, textarea, input):not([type=checkbox]) {
+  border-color: var(--world-edge);
+  background-color: var(--world-card);
+  color: var(--world-ink);
+}
+:where(button, select, input, a, summary):focus-visible { outline-color: var(--world-accent); }
+.primary, .social-lobby .live-primary {
+  border-color: var(--world-action-deep);
+  background: var(--world-action);
+  color: var(--world-action-text);
+  box-shadow: 0 3px 0 var(--world-action-deep), inset 0 1px #ffffff48;
+}
+.primary:not(:disabled):hover,
+.social-lobby .live-primary:not(:disabled):hover {
+  border-color: var(--world-action-deep);
+  background: color-mix(in srgb, var(--world-action) 88%, var(--world-action-text));
+  color: var(--world-action-text);
+}
+
+.world-theme-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  padding-inline: 9px;
+  white-space: nowrap;
+}
+.world-theme-glyph {
+  position: relative;
+  width: 17px;
+  height: 15px;
+  flex-shrink: 0;
+  border-bottom: 1.7px solid currentColor;
+}
+.world-theme-glyph::before {
+  position: absolute; inset: 1px 3px 2px;
+  border: 1.6px solid currentColor; border-radius: 50%;
+  content: "";
+}
+[data-world-theme="night"] .world-theme-glyph::before {
+  border-color: transparent;
+  box-shadow: -3px 2px 0 currentColor;
+  transform: translate(3px, -2px);
+}
+#theme-current { font-size: .8rem; }
+.world-theme-dialog #theme-summary { margin: 3px 0 15px; color: var(--world-muted); }
+.world-theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.account-dialog .world-theme-options button {
+  display: grid;
+  justify-items: stretch;
+  min-width: 0;
+  gap: 3px;
+  padding: 6px 5px 9px;
+  border: 1px solid var(--world-edge);
+  border-radius: 17px;
+  background: var(--world-card);
+  color: var(--world-ink);
+  font-size: .89rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.world-theme-options button[aria-pressed="true"] {
+  border-color: var(--world-accent);
+  background: var(--world-card-alt);
+  box-shadow: 0 0 0 1px var(--world-accent);
+}
+.world-theme-options small { display: block; color: var(--world-muted); font-size: .69rem; }
+.world-theme-swatch {
+  --swatch-top: #77b5bd;
+  --swatch-edge: #f3dea4;
+  --swatch-ground: #547c6c;
+  position: relative;
+  display: block;
+  aspect-ratio: 2.1;
+  overflow: hidden;
+  margin-bottom: 2px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 70% 35%, var(--swatch-edge) 0 10%, transparent 11%),
+    linear-gradient(164deg, var(--swatch-top), var(--swatch-edge));
+}
+.world-theme-swatch::after {
+  position: absolute; inset: 20% 0 0;
+  background: var(--swatch-ground);
+  clip-path: polygon(0 65%, 24% 31%, 35% 42%, 58% 16%, 87% 62%, 100% 43%, 100% 100%, 0 100%);
+  content: "";
+}
+.world-theme-auto { --swatch-top: #bd9bb8; --swatch-edge: #ffd6a2; --swatch-ground: #816381; }
+.world-theme-dawn { --swatch-top: #9caeb2; --swatch-edge: #ead3bd; --swatch-ground: #557a7a; }
+.world-theme-dusk { --swatch-top: #535180; --swatch-edge: #ffbe83; --swatch-ground: #62495b; }
+.world-theme-night { --swatch-top: #182339; --swatch-edge: #829ccb; --swatch-ground: #30495e; }
+
+#overview.adventure-overview .world-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--world-edge);
+  border-radius: clamp(22px, 4vw, 32px);
+  background: var(--world-card);
+  box-shadow: 0 9px 25px var(--world-shadow);
+}
+.world-scene {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-width: 0;
+  min-height: clamp(236px, 62vw, 450px);
+  overflow: hidden;
+  background: var(--world-sky-top);
+}
+.world-camp {
+  overflow: hidden;
+  margin-bottom: clamp(12px, 3vw, 18px);
+  border: 1px solid var(--world-edge);
+  border-radius: clamp(23px, 5vw, 37px);
+  box-shadow: 0 15px 35px var(--world-shadow);
+}
+.world-scene-camp { min-height: clamp(244px, 68vw, 458px); }
+.desk-page[data-live-active]:not([data-live-active="false"]) > .world-camp { display: none; }
+.world-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 13% 18%, var(--world-stars) 0 1.3px, transparent 2px),
+    radial-gradient(circle at 32% 29%, var(--world-stars) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 47% 13%, var(--world-stars) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 81% 19%, var(--world-stars) 0 1px, transparent 1.5px),
+    linear-gradient(170deg, var(--world-sky-top), var(--world-sky-bottom) 92%);
+  pointer-events: none;
+}
+.world-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background: var(--scene-preview) center / cover no-repeat;
+  content: "";
+}
+.world-scene-camp { --scene-preview: var(--world-camp-preview); }
+.world-backdrop > i, .world-backdrop > b {
+  position: absolute;
+  inset: 15% 0 0;
+  background: var(--world-ridge);
+  clip-path: polygon(0 48%, 8% 39%, 14% 43%, 27% 19%, 38% 41%, 55% 29%, 70% 54%, 82% 43%, 100% 70%, 100% 100%, 0 100%);
+}
+.world-backdrop > b {
+  inset: 27% 0 0;
+  background: var(--world-ridge-near);
+  clip-path: polygon(0 59%, 13% 49%, 23% 63%, 38% 55%, 52% 77%, 69% 59%, 79% 35%, 100% 56%, 100% 100%, 0 100%);
+}
+.world-orb {
+  position: absolute;
+  top: 18%; left: 69%;
+  width: clamp(36px, 10%, 74px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--world-orb);
+  box-shadow: 0 0 29px 9px var(--world-halo);
+}
+.world-backdrop-fire {
+  position: absolute;
+  left: 47%; bottom: 16%;
+  width: 32px; height: 38px;
+  background: var(--world-glow);
+  clip-path: polygon(48% 0, 65% 29%, 74% 53%, 88% 45%, 100% 81%, 71% 100%, 23% 100%, 0 81%, 15% 41%, 29% 57%);
+}
+.world-scene canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: pan-y pinch-zoom;
+}
+.world-scene canvas[data-world-rendered="true"] { opacity: 1; pointer-events: auto; cursor: grab; }
+.world-scene canvas[data-world-rendered="true"]:active { cursor: grabbing; }
+.world-camera {
+  position: absolute;
+  z-index: 1;
+  align-items: center;
+  border: 1px solid #e6eee150;
+  background: #142b30ba;
+  color: #fff8e5;
+  box-shadow: 0 4px 11px #0d27293b;
+  -webkit-backdrop-filter: blur(13px);
+  backdrop-filter: blur(13px);
+  right: 10px;
+  bottom: 10px;
+  display: none;
+  border-radius: 16px;
+}
+.world-scene:has(canvas[data-world-rendered="true"]) .world-camera { display: flex; }
+.world-camera button {
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff8e5;
+  font-size: 1.35rem;
+  box-shadow: none;
+}
+.world-camera button:focus-visible { outline-color: #ffe0a2; outline-offset: -3px; }
+.world-camera button:not(:disabled):hover { background: #ffffff21; color: #fff; }
+
+.world-route-content {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  padding: clamp(13px, 3.7vw, 24px);
+}
+.route-kicker, .route-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.world-route-content .route-kicker .inventory {
+  margin: 0;
+  color: var(--world-muted);
+  font-size: .78rem;
+  font-weight: 650;
+}
+#route-all-chapters {
+  min-height: 44px;
+  margin-block: -6px 0;
+  margin-inline-end: -5px;
+  padding: 5px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--world-accent);
+  font-size: .82rem;
+  font-weight: 660;
+}
+#route-all-chapters span { display: inline-block; margin-inline-start: 3px; }
+.world-route-content #course-title {
+  margin: 0;
+  color: var(--world-ink);
+  font-size: clamp(1.5rem, 6.2vw, 2.23rem);
+  line-height: 1.19;
+  font-weight: 800;
+  letter-spacing: -.026em;
+  overflow-wrap: anywhere;
+}
+.world-route-content #adventure-target {
+  margin: 4px 0 0;
+  color: var(--world-muted);
+  font-size: .84rem;
+}
+.route-progress { display: grid; gap: 4px; margin-top: 10px; }
+.route-progress-labels { color: var(--world-muted); font-size: .76rem; font-variant-numeric: tabular-nums; }
+#route-wrong { color: var(--world-bad-ink); }
+.route-progress progress {
+  display: block;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--world-card-alt);
+  accent-color: var(--world-action);
+}
+.route-progress progress::-webkit-progress-bar { background: var(--world-card-alt); }
+.route-progress progress::-webkit-progress-value { background: var(--world-action); border-radius: 99px; }
+.route-progress progress::-moz-progress-bar { background: var(--world-action); border-radius: 99px; }
+.route-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.route-actions:not(:has(button:not([hidden]))) { display: none; }
+.route-actions button { min-height: 44px; border-radius: 13px; font-weight: 740; }
+#adventure-start { flex: 1 1 auto; }
+#route-next { flex: 0 1 auto; }
+
+.route-map {
+  --map-ink: #fff8e9;
+  --map-gold: #ffe1a5;
+  position: relative;
+  display: grid;
+  grid-template-rows: min-content 1fr;
+  align-items: end;
+  min-width: 0;
+  min-height: clamp(130px, 34vw, 172px);
+  gap: 13px;
+  padding: 9px clamp(9px, 2.9vw, 21px) 11px;
+  border-top: 1px solid var(--world-edge);
+  background: linear-gradient(0deg, #102728e8, #10272842 44%, transparent 68%), var(--world-route-preview) center 54% / cover;
+  color: var(--map-ink);
+}
+#route-map-summary {
+  justify-self: start;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: #0d252be8;
+  color: var(--map-ink);
+  font-size: .72rem;
+  font-weight: 650;
+}
+.route-stops {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--stop-count, 3), minmax(0, 1fr));
+  align-items: stretch;
+  gap: clamp(4px, 1.5vw, 12px);
+}
+.route-stops::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(50% / var(--stop-count, 3)) auto;
+  border-top: 1px dashed #fff3ccbe;
+  pointer-events: none;
+}
+.route-map .route-stop {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 52px;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 2px 5px;
+  border: 1px solid #d7e7d264;
+  border-radius: 11px;
+  background: #0d252be8;
+  color: var(--map-ink);
+  font-size: .76rem;
+  line-height: 1.2;
+  text-align: center;
+}
+.route-stop strong { overflow-wrap: anywhere; }
+.route-stop-count { color: #d9e8df; font-size: .68rem; font-variant-numeric: tabular-nums; }
+.route-map .route-stop[aria-current="step"] {
+  border-color: var(--map-gold);
+  background: #163333fa;
+  color: var(--map-gold);
+}
+.route-map .route-stop[aria-current="step"] .route-stop-count { color: var(--map-gold); }
+.route-map .route-stop:hover { border-color: var(--map-gold); }
+.route-map .route-stop:focus-visible { outline: 2px solid var(--map-gold); outline-offset: 2px; }
+.route-pin {
+  position: absolute;
+  inset: -8px auto auto 50%;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: conic-gradient(var(--map-gold) var(--stop-progress), #91aaa2 0);
+  box-shadow: 0 0 0 2px #163139;
+}
+.route-pin::before {
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: #163139;
+  content: "";
+}
+.route-stop[aria-current="step"] .route-pin::before { background: var(--map-gold); }
+.route-stop[data-complete="true"] .route-pin { background: #d7f6d7; }
+.route-stop[data-complete="true"] .route-pin::before {
+  inset: 4px 4px 5px 4px;
+  border: solid #163139;
+  border-width: 0 0 2px 2px;
+  border-radius: 0;
+  background: transparent;
+  transform: rotate(-45deg);
+}
+
+.adventure-community, #overview.adventure-overview .overview-stats button, #overview.adventure-overview #resume {
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  box-shadow: 0 2px 0 var(--world-shadow);
+}
+.adventure-community :is(.adventure-community-mark,.adventure-community-arrow), #overview.adventure-overview .overview-stats strong { color: var(--world-gold); }
+.adventure-community .adventure-community-mark { border-color: var(--world-edge); background: var(--world-card); }
+.adventure-community > span:nth-child(2) > span, #overview.adventure-overview #resume-detail { color: var(--world-muted); }
+.adventure-community:not(:disabled):hover, #overview.adventure-overview .overview-stats button:not(:disabled):hover { background: var(--world-card); border-color: var(--world-accent); }
+
+#setup .chapter-heading { border-bottom: 1px solid var(--world-edge); }
+#setup-heading, #setup .advanced-settings > summary, .tab-page .tab-page-heading h2 { color: var(--world-ink); }
+#setup .advanced-settings form { background: var(--world-card); box-shadow: 0 4px 0 var(--world-shadow); }
+#chapter-list::before { border-color: var(--world-edge); }
+#chapter-list .chapter-card, #chapter-list .chapter-card[data-adventure-state="done"], #chapter-list .chapter-card[data-adventure-state="next"] {
+  --station: var(--world-accent);
+  --station-soft: var(--world-card-alt);
+  --station-shadow: var(--world-shadow);
+  --station-edge: var(--world-edge);
+  border-radius: 17px;
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 4px 0 var(--world-shadow);
+}
+#chapter-list .chapter-card[data-adventure-state="next"] {
+  --station: var(--world-gold);
+  border-color: var(--world-gold);
+}
+#chapter-list .chapter-card[data-adventure-state="done"] { --station: var(--world-good-ink); }
+#chapter-list .chapter-card .chapter-medallion { box-shadow: 0 3px 0 var(--world-shadow), inset 0 1px #ffffff31; }
+#chapter-list .chapter-card:not(:disabled):hover { border-color: var(--station); background: var(--world-card-alt); }
+
+#desk .social-lobby {
+  padding: clamp(14px, 4vw, 24px);
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 10px 22px var(--world-shadow);
+}
+#desk .social-lobby::before, #desk .social-lobby::after { display: none; }
+#desk .social-lobby .live-lobby-content {
+  grid-template-columns: minmax(0, 1fr) minmax(148px, .92fr);
+  gap: 12px 10px;
+  align-items: center;
+}
+#desk .social-lobby .live-lobby-intro { align-self: center; }
+#desk .social-lobby .live-lobby-intro h3 { color: var(--world-ink); font-size: clamp(1.35rem, 4.2vw, 2rem); text-shadow: none; }
+#desk .social-lobby :is(.live-lobby-intro p,.live-lobby-status,.live-lobby-chapter label) { color: var(--world-muted); }
+#desk .social-lobby :is(.live-lobby-status,.live-lobby-controls) { grid-column: 1 / -1; }
+#desk .social-lobby .world-companions {
+  min-height: 0;
+  gap: 4px;
+  padding: 7px 4px;
+  border-color: var(--world-edge);
+  border-radius: 15px;
+  background: var(--world-card-alt);
+  box-shadow: none;
+}
+#desk .world-companions .live-seat-frame.desk-avatar {
+  width: clamp(33px, 10vw, 46px);
+  height: clamp(33px, 10vw, 46px);
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 2px 0 var(--world-shadow);
+}
+#desk .world-companions .live-seat strong { color: var(--world-ink); font-size: .77rem; }
+#desk .world-companions .live-online {
+  max-width: 100%;
+  padding-inline: 4px;
+  background: var(--world-card);
+  color: var(--world-muted);
+  font-size: .64rem;
+  overflow-wrap: anywhere;
+}
+#desk .world-companions .live-online[data-online="true"] { color: var(--world-good-ink); }
+#desk .social-lobby .live-lobby-chapter :is(select,.chapter-picker-trigger) {
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  box-shadow: none;
+}
+#desk .social-lobby .live-lobby-chapter :is(select,.chapter-picker-trigger):not(:disabled):hover { background: var(--world-card); }
+#desk .social-lobby .chapter-picker-chevron { color: var(--world-accent); }
+
+button:not(.primary), select, textarea, input:not([type=checkbox]) {
+  border-color: var(--world-edge);
+  background-color: var(--world-card);
+  color: var(--world-ink);
+}
+button:not(.primary):not(:disabled):hover { border-color: var(--world-accent); }
+.study-tabs button, .world-camera button, .adventure-community { background-color: transparent; }
+.world-camera button { border-color: transparent; color: #fff8e5; }
+.world-camera button:not(:disabled):hover { color: #fff; }
+.panel, #library-list .library-item, .profile-account, .profile-stats button, #result.panel,
+  #quiz .lesson-card, #quiz .lesson-answer, #quiz .study-note, #quiz .lesson-related {
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 8px 22px var(--world-shadow);
+}
+#library-list .library-item, .profile-stats button, #quiz .lesson-card #kind {
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  box-shadow: none;
+}
+.profile-stats [data-profile-library="wrong"] { background: var(--world-stat-wrong); }
+.profile-stats [data-profile-library="starred"] { background: var(--world-stat-starred); }
+#wrong-review[aria-pressed="true"] {
+  background: var(--world-bad);
+  border-color: var(--world-bad-ink);
+  color: var(--world-bad-ink);
+}
+#library-list .library-remove {
+  background: var(--world-bad);
+  color: var(--world-bad-ink);
+  border-color: var(--world-edge);
+}
+.library-item .library-meta, #quiz .lesson-header #where, .lesson-answer h3, #quiz .study-note h3, .lesson-related h3 {
+  color: var(--world-muted);
+}
+#quiz .lesson-header :is(#back,#star), #quiz .quiz-actions.glass {
+  border-color: var(--world-edge);
+  background: var(--world-glass);
+  color: var(--world-ink);
+}
+#quiz .lesson-header #star[aria-pressed="true"] {
+  border-color: var(--world-gold);
+  background: var(--world-card-alt);
+  color: var(--world-gold);
+}
+#quiz .lesson-card .option, #quiz .lesson-card .option .letter {
+  border-color: var(--world-edge); background: var(--world-card-alt); color: var(--world-ink); box-shadow: none;
+}
+#quiz .lesson-card .option[aria-pressed="true"], #quiz .lesson-card .option[aria-pressed="true"] .letter {
+  border-color: var(--world-accent); background: var(--world-card); color: var(--world-accent);
+}
+#quiz .lesson-card .option.correct, #quiz .lesson-card .option.correct .letter, #quiz #feedback[data-state="correct"] {
+  border-color: var(--world-good-ink); background: var(--world-good); color: var(--world-good-ink); box-shadow: none;
+}
+#quiz .lesson-card .option.incorrect, #quiz .lesson-card .option.incorrect .letter, #quiz #feedback[data-state="incorrect"] {
+  border-color: var(--world-bad-ink); background: var(--world-bad); color: var(--world-bad-ink); box-shadow: none;
+}
+#quiz .lesson-answer:has(#feedback[data-state="incorrect"]) {
+  border-color: var(--world-edge); background: var(--world-card); box-shadow: 0 8px 22px var(--world-shadow);
+}
+#quiz .study-note .memory-note, #result .adventure-result-hero {
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+  box-shadow: none;
+}
+#quiz .study-note .memory-note h3, #result .adventure-result-hero div, #result .adventure-result-hero div > span { color: var(--world-ink); }
+#result .adventure-result-hero::before { display: none; }
+
+#desk :is(.desk-surface,.live-room-overview,.live-question,.live-reveal,.live-summary) {
+  border-color: var(--world-edge);
+  background: var(--world-card);
+  color: var(--world-ink);
+  box-shadow: 0 8px 24px var(--world-shadow);
+}
+#desk :is(.desk-section-heading p,.live-room-status,.live-room-people strong,.desk-onboard p) { color: var(--world-muted); }
+#desk :is(.desk-round-header,.desk-learner,.desk-duel,.live-room-people > div,.live-choice-comparison) {
+  border-color: var(--world-edge);
+  background-color: var(--world-card-alt);
+  color: var(--world-ink);
+}
+#desk :is(.desk-heading-button,.desk-duel-scores > div,.desk-learner .desk-today,.live-online,.desk-arena-actions select) {
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+}
+#desk .desk-learner h4, #desk .desk-learner :is(dt,dd), #desk .desk-learner .desk-completion > span,
+#desk .desk-duel-empty {
+  color: var(--world-muted);
+}
+#desk .social-received {
+  background: var(--world-card-alt);
+  color: var(--world-gold);
+}
+#desk :is(.live-options,.desk-round-options) .option {
+  border-color: var(--world-edge);
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+}
+#desk .live-options .option.correct { border-color: var(--world-good-ink); background: var(--world-good); color: var(--world-good-ink); }
+#desk .live-options .option.incorrect { border-color: var(--world-bad-ink); background: var(--world-bad); color: var(--world-bad-ink); }
+#desk .duel-paper-item {
+  padding: 12px;
+  border: 1px solid var(--world-edge);
+  border-radius: 13px;
+  background: var(--world-card-alt);
+  color: var(--world-ink);
+}
+#desk .duel-paper-item[data-outcome="right"] { border-inline-start: 3px solid var(--world-good-ink); }
+#desk .duel-paper-item[data-outcome="wrong"] { border-inline-start: 3px solid var(--world-bad-ink); }
+#desk .duel-paper-item[data-outcome="right"] .duel-paper-verdict { color: var(--world-good-ink); }
+#desk .duel-paper-item[data-outcome="wrong"] .duel-paper-verdict { color: var(--world-bad-ink); }
+#desk .duel-paper-item h4 { color: var(--world-ink); }
+#desk .duel-paper-verdict { font-weight: 800; }
+.chapter-picker-option, .chapter-picker-options [role="option"] {
+  border-color: var(--world-edge);
+  background-color: var(--world-card);
+  color: var(--world-ink);
+}
+.chapter-picker-options [aria-selected="true"] {
+  border-color: var(--world-accent);
+  background-color: var(--world-card-alt);
+  color: var(--world-ink);
+}
+
+@media (min-width: 730px) {
+  #overview.adventure-overview .world-route:has(.route-map:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+  .route-map { border-top: 0; border-inline-start: 1px solid var(--world-edge); padding-block: 13px; }
+}
+@media (max-width: 390px) {
+  .masthead .account-top { gap: 4px; }
+  #theme-current { display: none; }
+  #desk .social-lobby .live-lobby-content { grid-template-columns: minmax(0, 1fr) minmax(128px, .92fr); }
+}
+@media (max-width: 350px) {
+  .masthead #account-label { display: none; }
+  .world-theme-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@keyframes world-arrival {
+  from { opacity: .82; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes world-crane-rise {
+  from { opacity: .65; transform: translateY(12px) rotate(-5deg); }
+  to { opacity: 1; transform: translateY(0) rotate(0); }
+}
+@keyframes world-answer-glint {
+  0% { opacity: 0; transform: translateY(5px) scale(.87); }
+  72% { opacity: 1; transform: translateY(-2px) scale(1.035); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+:root:not([data-reduced-motion]) .world-scene canvas { transition: opacity 320ms ease; }
+:root:not([data-reduced-motion]) :is(.world-route-content, .world-camp) { animation: world-arrival 240ms cubic-bezier(.20,.72,.22,1); }
+:root:not([data-reduced-motion]) #result .adventure-result-hero img { animation: world-crane-rise 330ms cubic-bezier(.20,.72,.22,1); }
+:root:not([data-reduced-motion]) #desk .duel-paper-item { animation: world-answer-glint 410ms cubic-bezier(.22,.72,.3,1) both; }
+:root:not([data-reduced-motion]) :is(.world-theme-options button, #chapter-list .chapter-card, .world-camera button) {
+  transition: border-color 175ms ease, box-shadow 175ms ease, transform 200ms cubic-bezier(.2,.8,.25,1);
+}
+:root:not([data-reduced-motion]) :is(#chapter-list .chapter-card:not(:disabled):active, .world-theme-options button:active) { transform: translateY(2px) scale(.985); }

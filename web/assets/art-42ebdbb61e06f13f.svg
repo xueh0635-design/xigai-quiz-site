@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" role="img" aria-labelledby="title description">
+  <title id="title">引路纸鹤</title>
+  <desc id="description">一只展开杏红色与淡紫色双翼的纸鹤</desc>
+  <g id="flight-marks" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M27 98c13-7 25-11 38-12M39 111c8-4 17-6 26-7" stroke="#9b674c" stroke-width="2" stroke-dasharray="3 5"/>
+    <path d="M341 26c0 7-4 11-11 11 7 0 11 4 11 11 0-7 4-11 11-11-7 0-11-4-11-11Z" fill="#fff0aa" stroke="#8d5668" stroke-width="1.8"/>
+    <path d="M362 52v8m-4-4h8m-24 65v10m-5-5h10" stroke="#8d5668" stroke-width="1.8"/>
+  </g>
+  <g id="crane" stroke="#603c45" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <g id="tail">
+      <path d="m22 131 98-10 63-6 27 37-53 15Z" fill="#f59469"/>
+      <path d="m22 131 110 9 25 27" fill="#dc695c"/>
+      <path d="m68 133 65 5 28 23" fill="none" stroke="#ffc6a3" stroke-width="1.5"/>
+    </g>
+    <g id="far-wing">
+      <path d="m176 111 41-53 79-40-22 69-40 50Z" fill="#d4bcea"/>
+      <path d="m176 111 67-39 53-54-22 69-40 50Z" fill="#b99bdb"/>
+      <path d="m192 104 29-42 58-32" fill="none" stroke="#ead8fb" stroke-width="2"/>
+    </g>
+    <g id="head-and-neck">
+      <path d="m210 136 50-7 20-53 25-14 24 5 47 24-52-2-22 11-21 49-43 20Z" fill="#ffefce"/>
+      <path d="m260 129 26-42 19-25-25 14Z" fill="#ffbc81"/>
+      <path d="m260 129 23-14 19-15 22-11-38-2Z" fill="#f49872"/>
+      <path d="m324 89 5-22 47 24Z" fill="#f7b267"/>
+      <path d="m292 76 13-8 18 4" fill="none" stroke="#fff9e9" stroke-width="1.8"/>
+      <circle cx="316" cy="78" r="2.4" fill="#603c45" stroke="none"/>
+    </g>
+    <g id="body">
+      <path d="m132 140 40-25 44-6 37 20 28 20-72 35-52-17Z" fill="#ffe0a4"/>
+      <path d="m157 167 53-13 71-5-72 35Z" fill="#f0a16e"/>
+      <path d="m172 115 38 39 43-25-37-20Z" fill="#f5bd88"/>
+      <path d="M170 169l39 12 48-24" fill="none" stroke="#ffcc9d" stroke-width="1.6"/>
+    </g>
+    <g id="near-wing">
+      <path d="m63 25 132 42 46 42 12 20-43 25-62-26Z" fill="#ffc47d"/>
+      <path d="m63 25 105 70 42 59-62-26Z" fill="#f18a68"/>
+      <path d="m168 95 73 14 12 20-43 25Z" fill="#eb775d"/>
+      <path d="m78 33 114 39 40 34" fill="none" stroke="#ffedb4" stroke-width="2"/>
+      <path d="m170 103 34 47" fill="none" stroke="#ffaf87" stroke-width="1.5"/>
+    </g>
+  </g>
+</svg>

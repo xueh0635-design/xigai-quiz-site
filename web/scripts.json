@@ -1,0 +1,156 @@
+[
+  {
+    "id": "theme",
+    "kind": "script",
+    "source": "web/scripts/theme.js"
+  },
+  {
+    "id": "questions",
+    "kind": "data",
+    "source": "content/questions.json",
+    "global": "QuizData"
+  },
+  {
+    "id": "question-catalog",
+    "kind": "script",
+    "source": "web/scripts/question-catalog.js"
+  },
+  {
+    "id": "cloud-config",
+    "kind": "data",
+    "source": "web/cloud-config.json",
+    "global": "QuizCloud"
+  },
+  {
+    "id": "account",
+    "kind": "bundle",
+    "source": "mobile/account.js"
+  },
+  {
+    "id": "liquid-glass",
+    "kind": "script",
+    "source": "web/scripts/liquid-glass.js"
+  },
+  {
+    "id": "sheet-motion",
+    "kind": "script",
+    "source": "web/scripts/sheet-motion.js"
+  },
+  {
+    "id": "avatar-transform",
+    "kind": "script",
+    "source": "web/scripts/avatar-transform.js"
+  },
+  {
+    "id": "avatar-dialog",
+    "kind": "script",
+    "source": "web/scripts/avatar-dialog.js"
+  },
+  {
+    "id": "world",
+    "kind": "script",
+    "source": "web/scripts/world.js"
+  },
+  {
+    "id": "live-study",
+    "kind": "script",
+    "source": "web/scripts/live-study.js"
+  },
+  {
+    "id": "social",
+    "kind": "script",
+    "source": "web/scripts/social.js"
+  },
+  {
+    "id": "voice",
+    "kind": "script",
+    "source": "web/scripts/voice.js"
+  },
+  {
+    "id": "arena-effects",
+    "kind": "script",
+    "source": "web/scripts/arena-effects.js"
+  },
+  {
+    "id": "arena",
+    "kind": "script",
+    "source": "web/scripts/arena.js"
+  },
+  {
+    "id": "progress",
+    "kind": "script",
+    "source": "web/scripts/progress.js"
+  },
+  {
+    "id": "desk",
+    "kind": "script",
+    "source": "web/scripts/desk.js"
+  },
+  {
+    "id": "leaderboard",
+    "kind": "script",
+    "source": "web/scripts/leaderboard.js"
+  },
+  {
+    "id": "meetings",
+    "kind": "data",
+    "source": "content/meetings.json",
+    "global": "QuizMeetingData"
+  },
+  {
+    "id": "meeting-timeline",
+    "kind": "script",
+    "source": "web/scripts/meeting-timeline.js"
+  },
+  {
+    "id": "concept-overrides",
+    "kind": "script",
+    "source": "web/scripts/concept-overrides.js"
+  },
+  {
+    "id": "wrong-option-reasons",
+    "kind": "data",
+    "source": "content/wrong-option-reasons.json",
+    "global": "QuizWrongOptionReasons"
+  },
+  {
+    "id": "question-overrides",
+    "kind": "script",
+    "source": "web/scripts/question-overrides.js"
+  },
+  {
+    "id": "option-notes",
+    "kind": "script",
+    "source": "web/scripts/option-notes.js"
+  },
+  {
+    "id": "tutor",
+    "kind": "script",
+    "source": "web/scripts/tutor.js"
+  },
+  {
+    "id": "development-requests",
+    "kind": "script",
+    "source": "web/scripts/development-requests.js"
+  },
+  {
+    "id": "practice",
+    "kind": "script",
+    "source": "web/scripts/practice.js"
+  },
+  {
+    "id": "reading-settings",
+    "kind": "script",
+    "source": "web/scripts/reading-settings.js"
+  },
+  {
+    "id": "chapter-picker",
+    "kind": "script",
+    "source": "web/scripts/chapter-picker.js"
+  },
+  {
+    "id": "android-update",
+    "kind": "script",
+    "source": "mobile/android-update.js"
+  }
+]

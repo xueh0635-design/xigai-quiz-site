@@ -1,0 +1,156 @@
+{
+  "source": "Supabase migration history and deployed Edge Function definitions (read-only)",
+  "project_ref": "gbqgcyqxawuzmuhrlggr",
+  "retrieved_on": "2026-11-21",
+  "data_rows_read": false,
+  "migrations": [
+    {
+      "version": "20261117194920",
+      "name": "quiz_accounts_and_progress",
+      "source_sha256": "6d40e19a1f5031cd42fb929b8f7e97b181acbd845eebafe167f81d4ce5865c75",
+      "repository_sha256": "6d40e19a1f5031cd42fb929b8f7e97b181acbd845eebafe167f81d4ce5865c75"
+    },
+    {
+      "version": "20261117195650",
+      "name": "quiz_bind_outbox_to_account",
+      "source_sha256": "006a9f27d3c5f7eea0861b47197dbe733df44b22f3039145496acc7b1df90eff",
+      "repository_sha256": "006a9f27d3c5f7eea0861b47197dbe733df44b22f3039145496acc7b1df90eff"
+    },
+    {
+      "version": "20261118044737",
+      "name": "direct_email_registration",
+      "source_sha256": "84e3eca53cc348bb5b77ba38714e4beabbf34187df91f8c878cf3a4edaf89d9f",
+      "repository_sha256": "84e3eca53cc348bb5b77ba38714e4beabbf34187df91f8c878cf3a4edaf89d9f"
+    },
+    {
+      "version": "20261118045237",
+      "name": "provision_direct_email_membership_on_metadata_update",
+      "source_sha256": "3814ef07f6954a0fe7614b45f5b3756253a7559bd324f8280c77127ac261001b",
+      "repository_sha256": "3814ef07f6954a0fe7614b45f5b3756253a7559bd324f8280c77127ac261001b"
+    },
+    {
+      "version": "20261118121502",
+      "name": "quiz_pk_rings",
+      "source_sha256": "441adfd127955c3e6d532f3b76d4df827011094d2713adef179b42964f32127e",
+      "previous_repository_filename": "20261118120738_quiz_pk_rings.sql",
+      "repository_sha256": "441adfd127955c3e6d532f3b76d4df827011094d2713adef179b42964f32127e"
+    },
+    {
+      "version": "20261118130050",
+      "name": "quiz_pk_avatars",
+      "source_sha256": "f94f55cd00715cb5106cc30381ad92e6a2543149d2bb94505924f3537ea92ade",
+      "previous_repository_filename": "20261118125122_quiz_pk_avatars.sql",
+      "repository_sha256": "f94f55cd00715cb5106cc30381ad92e6a2543149d2bb94505924f3537ea92ade"
+    },
+    {
+      "version": "20261118155740",
+      "name": "quiz_live_study",
+      "source_sha256": "2e3505f78c8ab575aae4bd94477cc85abe4a50ed4f0f5c5918d59e7e8f85ef85",
+      "previous_repository_filename": "20261118155257_quiz_live_study.sql",
+      "repository_sha256": "2e3505f78c8ab575aae4bd94477cc85abe4a50ed4f0f5c5918d59e7e8f85ef85"
+    },
+    {
+      "version": "20261118162538",
+      "name": "quiz_social_daily",
+      "source_sha256": "2207bb3c1e039eb85758406f33a6fdd38f028658eb1bf8218a18903254ba191c",
+      "previous_repository_filename": "20261118162143_quiz_social_daily.sql",
+      "repository_sha256": "2207bb3c1e039eb85758406f33a6fdd38f028658eb1bf8218a18903254ba191c"
+    },
+    {
+      "version": "20261118170850",
+      "name": "quiz_pk_personal_paper",
+      "source_sha256": "e714f79ffc81a2c2c3155d928a3a41096005cb91ddf737c70e76978524f1b541",
+      "previous_repository_filename": "20261118170136_quiz_pk_personal_paper.sql",
+      "repository_sha256": "e714f79ffc81a2c2c3155d928a3a41096005cb91ddf737c70e76978524f1b541"
+    },
+    {
+      "version": "20261118172116",
+      "name": "quiz_arena_realtime",
+      "source_sha256": "503a07533b461e356d57bfc5e1c1c4c571904d021a82f6659f98ec0e20dc9c8d",
+      "previous_repository_filename": "20261118171542_quiz_arena_realtime.sql",
+      "repository_sha256": "503a07533b461e356d57bfc5e1c1c4c571904d021a82f6659f98ec0e20dc9c8d"
+    },
+    {
+      "version": "20261118180347",
+      "name": "quiz_arena_tactics",
+      "source_sha256": "c9627bd91fd5b79a17ff315862d278c1fedd8deac0d7f72f65c1a8dd0b66e62c",
+      "previous_repository_filename": "20261118175327_quiz_arena_tactics.sql",
+      "repository_sha256": "c9627bd91fd5b79a17ff315862d278c1fedd8deac0d7f72f65c1a8dd0b66e62c"
+    },
+    {
+      "version": "20261119143320",
+      "name": "xuexitong_chapter_question_progress",
+      "source_sha256": "1c68abb1b8de3016b8c50d3fd730f633694da1e84d40662a76c407bc9cf80ff8",
+      "repository_sha256": "1c68abb1b8de3016b8c50d3fd730f633694da1e84d40662a76c407bc9cf80ff8"
+    },
+    {
+      "version": "20261120003549",
+      "name": "quiz_paired_learning_progress",
+      "source_sha256": "ccb07146ab04b6e1567db9b2fc6cc8a086debdb5c7fa841561685859654a3e57",
+      "repository_sha256": "ccb07146ab04b6e1567db9b2fc6cc8a086debdb5c7fa841561685859654a3e57"
+    },
+    {
+      "version": "20261120012457",
+      "name": "quiz_progress_charts",
+      "source_sha256": "fd6a52a34aa5a405d1c5f42ebb4e1a50f37ccf1f5963335a2d4d5e37b80521d6",
+      "repository_sha256": "fd6a52a34aa5a405d1c5f42ebb4e1a50f37ccf1f5963335a2d4d5e37b80521d6"
+    },
+    {
+      "version": "20261120071643",
+      "name": "quiz_daily_leaderboard",
+      "source_sha256": "fa6ff3f0d21166d33a5dddf33be3facdf5d2a98108638b860727d6e0d359748a",
+      "repository_sha256": "fa6ff3f0d21166d33a5dddf33be3facdf5d2a98108638b860727d6e0d359748a"
+    },
+    {
+      "version": "20261120125319",
+      "name": "quiz_tutor_daily_limit",
+      "source_sha256": "a930d8f65232e576457c0c00a93102772d74d02adbf15a2a3f176b784b1bcc16",
+      "repository_sha256": "a930d8f65232e576457c0c00a93102772d74d02adbf15a2a3f176b784b1bcc16"
+    },
+    {
+      "version": "20261120131949",
+      "name": "quiz_development_requests",
+      "source_sha256": "54c8c024ae4d0718043b0855406f5a59855e67ed4b0212cd1017348c00cd76b5",
+      "repository_sha256": "54c8c024ae4d0718043b0855406f5a59855e67ed4b0212cd1017348c00cd76b5"
+    },
+    {
+      "version": "20261120133559",
+      "name": "quiz_admin_study_progress",
+      "source_sha256": "e4a0bf996335a9bd4007a9d4949838ffc52985ba543173fd108af4a7d997c3e1",
+      "repository_sha256": "e4a0bf996335a9bd4007a9d4949838ffc52985ba543173fd108af4a7d997c3e1"
+    },
+    {
+      "version": "20261120152459",
+      "name": "quiz_fixed_desk_partner",
+      "source_sha256": "d5a5b9933bdcb93ecbbb171035a1d9dc6de13853a82022d10ee76a7d362aab7a",
+      "adaptation": "Moved deployment-specific data cutover to operations/20261120152459_fixed_desk_cutover.sql; schema and grants retained.",
+      "repository_sha256": "649551553d136d7e82fa9e336da2726b22ee0b794ecd4e16f3e5bcf81e2606d3"
+    },
+    {
+      "version": "20261120195728",
+      "name": "quiz_question_notes",
+      "source_sha256": "4093b99e58d679647ba9e50b06f73d058d8cbd79037903c0f78e433f76461a69",
+      "repository_sha256": "4093b99e58d679647ba9e50b06f73d058d8cbd79037903c0f78e433f76461a69"
+    }
+  ],
+  "edge_functions": [
+    {
+      "slug": "quiz-enroll",
+      "file": "index.ts",
+      "sha256": "2e7afb07e81742be0a2cf553bc4787d657ae87334979c30372971432fa0720b5",
+      "verify_jwt": false
+    },
+    {
+      "slug": "quiz-register",
+      "file": "index.ts",
+      "sha256": "872d6ac06868b20ab70c690c94dee87561d976986dfed1dce127e6d2f74ea773",
+      "verify_jwt": false
+    },
+    {
+      "slug": "quiz-tutor",
+      "file": "index.ts",
+      "sha256": "7f6a1304bfaa8ab9956e58863b6e09e82ecd386ad8f8690f061724a7632993b8",
+      "verify_jwt": false
+    }
+  ]
+}

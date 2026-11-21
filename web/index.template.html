@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f7f0e5">
+<!-- quiz:script:theme -->
+  <title>习概题库</title>
+  <link rel="icon" href="data:,">
+  <!-- quiz:style:00 -->
+  <!-- quiz:style:01 -->
+  <!-- quiz:style:02 -->
+  <!-- quiz:style:03 -->
+  <!-- quiz:style:04 -->
+  <!-- quiz:style:05 -->
+  <!-- quiz:style:06 -->
+  <!-- quiz:style:07 -->
+  <!-- quiz:style:08 -->
+  <!-- quiz:style:09 -->
+  <!-- quiz:style:10 -->
+  <!-- quiz:style:11 -->
+  <!-- quiz:style:12 -->
+  <!-- quiz:style:13 -->
+  <!-- quiz:style:14 -->
+</head>
+<body>
+  <header class="top">
+    <div class="wrap masthead glass">
+      <div class="brand"><img class="brand-mark" src="assets/art-3c77b34f46f103af.webp" width="38" height="38" alt=""><h1>习概题库</h1></div>
+      <div class="account-top">
+        <span id="account-label" class="inventory" role="status"></span>
+        <button id="theme-button" class="world-theme-button" type="button" aria-label="切换昼夜场景" aria-haspopup="dialog" aria-controls="theme-dialog">
+          <span class="world-theme-glyph" aria-hidden="true"></span><span id="theme-current">日光</span>
+        </button>
+        <button id="account-button" type="button" hidden>登录</button>
+      </div>
+    </div>
+  </header>
+  <dialog id="theme-dialog" class="account-dialog glass quiz-sheet world-theme-dialog" aria-labelledby="theme-heading" aria-describedby="theme-summary">
+    <div data-sheet-handle>
+      <h2 id="theme-heading">山谷时刻</h2>
+      <button id="theme-close" type="button" autofocus>关闭</button>
+    </div>
+    <p id="theme-summary">让光线跟着时间走，也可以停在喜欢的时刻。</p>
+    <div class="world-theme-options" role="group" aria-label="场景模式">
+      <button type="button" data-theme-choice="auto" aria-pressed="true">
+        <span class="world-theme-swatch world-theme-auto" aria-hidden="true"></span><span>随时间</span><small>自动流转</small>
+      </button>
+      <button type="button" data-theme-choice="dawn" aria-pressed="false">
+        <span class="world-theme-swatch world-theme-dawn" aria-hidden="true"></span><span>晨雾</span><small>薄云浮起</small>
+      </button>
+      <button type="button" data-theme-choice="day" aria-pressed="false">
+        <span class="world-theme-swatch world-theme-day" aria-hidden="true"></span><span>日光</span><small>日间模式</small>
+      </button>
+      <button type="button" data-theme-choice="dusk" aria-pressed="false">
+        <span class="world-theme-swatch world-theme-dusk" aria-hidden="true"></span><span>暮色</span><small>落日余温</small>
+      </button>
+      <button type="button" data-theme-choice="night" aria-pressed="false">
+        <span class="world-theme-swatch world-theme-night" aria-hidden="true"></span><span>星夜</span><small>夜间模式</small>
+      </button>
+    </div>
+  </dialog>
+  <dialog id="account-dialog" class="account-dialog glass quiz-sheet" aria-labelledby="account-heading">
+    <div class="account-dialog-header" data-sheet-handle>
+      <h2 id="account-heading">同步学习进度</h2>
+      <button type="button" id="account-close" autofocus>关闭</button>
+    </div>
+    <form id="account-form">
+      <label>邮箱<input id="account-email-input" type="email" autocomplete="username" required></label>
+      <label><span id="account-password-label">密码</span><input id="account-password" type="password" autocomplete="current-password" required></label>
+      <p id="account-register-hint" hidden>请使用自己的邮箱注册和登录。</p>
+      <p id="account-message" role="status"></p>
+      <div class="actions">
+        <button type="submit" class="primary" id="account-submit">登录</button>
+        <button type="button" id="account-toggle">注册账号</button>
+        <button type="button" id="account-forgot" hidden>忘记密码</button>
+      </div>
+    </form>
+    <form id="account-recovery-form" hidden>
+      <label>邮箱<input id="account-recovery-email" type="email" autocomplete="email" required></label>
+      <div id="account-recovery-verification" hidden>
+        <label>邮箱验证码<input id="account-recovery-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required disabled></label>
+        <label>新密码（至少 10 个字符）<input id="account-recovery-password" type="password" autocomplete="new-password" minlength="10" required disabled></label>
+      </div>
+      <p id="account-recovery-message" role="status" aria-live="polite"></p>
+      <div class="actions">
+        <button type="submit" class="primary" id="account-recovery-submit">发送验证码</button>
+        <button type="button" id="account-recovery-back">返回登录</button>
+        <button type="button" id="account-recovery-restart" hidden>更换邮箱或重新发送</button>
+      </div>
+    </form>
+    <div id="account-active" hidden>
+      <p id="account-email"></p>
+      <div class="actions">
+        <button type="button" id="account-refresh">立即同步</button>
+        <button type="button" id="account-logout">退出登录</button>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="chapter-picker" class="chapter-picker glass quiz-sheet" aria-labelledby="chapter-picker-heading">
+    <div class="chapter-picker-header" data-sheet-handle>
+      <h2 id="chapter-picker-heading">选择章节</h2>
+      <button id="chapter-picker-close" type="button">关闭</button>
+    </div>
+    <div id="chapter-picker-options" class="chapter-picker-options" role="listbox" aria-labelledby="chapter-picker-heading"></div>
+  </dialog>
+  <dialog id="desk-avatar-dialog" class="desk-avatar-dialog account-dialog glass quiz-sheet" aria-labelledby="desk-avatar-heading" aria-describedby="desk-avatar-hint">
+    <div class="account-dialog-header" data-sheet-handle>
+      <h2 id="desk-avatar-heading">更换头像</h2>
+      <button id="desk-avatar-close" type="button" autofocus>关闭</button>
+    </div>
+    <div class="desk-avatar-editor">
+      <div class="desk-avatar-preview-frame">
+        <img id="desk-avatar-preview" class="desk-avatar-picture" alt="头像预览" hidden>
+        <span class="desk-avatar-fallback" aria-hidden="true"></span>
+      </div>
+      <p id="desk-avatar-hint">选一张图片作为头像。头像会裁成方形，仅你和已绑定的同桌可见。</p>
+      <input id="desk-avatar-input" type="file" accept="image/*" aria-label="选择头像图片" hidden>
+      <p id="desk-avatar-status" role="status" aria-live="polite"></p>
+      <div class="desk-avatar-actions">
+        <button id="desk-avatar-pick" type="button">选择图片</button>
+        <button id="desk-avatar-save" class="primary" type="button" disabled>保存头像</button>
+      </div>
+      <button id="desk-avatar-remove" class="desk-avatar-remove" type="button" hidden>恢复默认头像</button>
+      <div id="desk-avatar-remove-confirm" class="desk-avatar-remove-confirm" hidden>
+        <p>恢复默认头像？</p>
+        <div class="desk-avatar-actions">
+          <button id="desk-avatar-remove-cancel" type="button">取消</button>
+          <button id="desk-avatar-remove-yes" type="button">确认恢复</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+  <div class="wrap page-layout">
+  <main>
+    <section id="overview" class="overview adventure-overview" aria-labelledby="course-title">
+      <div id="bank-selector" class="bank-selector" role="group" aria-label="练习题库" hidden>
+        <button type="button" data-study-bank="all" aria-pressed="true">全部题库</button>
+        <button type="button" data-study-bank="sizheng" aria-pressed="false">思政云</button>
+        <button type="button" data-study-bank="xuexitong" aria-pressed="false">学习通</button>
+        <button type="button" data-study-bank="common" aria-pressed="false" hidden>只刷常考题</button>
+      </div>
+      <div class="world-route">
+        <div class="world-route-content">
+          <div class="route-kicker">
+            <p id="inventory" class="inventory"></p>
+            <button type="button" id="route-all-chapters">全部章节 <span aria-hidden="true">↓</span></button>
+          </div>
+          <h2 id="course-title">学习路线</h2>
+          <p id="adventure-target"></p>
+          <div class="route-progress" id="route-progress">
+            <div class="route-progress-labels"><span id="route-answered"></span><span id="route-wrong" hidden></span></div>
+            <progress id="adventure-goal" value="0" aria-label="本章作答进度"></progress>
+          </div>
+          <div class="route-actions">
+            <button type="button" id="adventure-start" class="primary">开始本章</button>
+            <button type="button" id="route-answers" hidden>回看本章作答</button>
+            <button type="button" id="route-next" hidden></button>
+          </div>
+        </div>
+        <div id="route-map" class="route-map" hidden>
+          <p id="route-map-summary"><span id="route-map-completion"></span><span id="adventure-today"></span></p>
+          <div id="route-stops" class="route-stops" role="group" aria-label="山谷章节路标"></div>
+        </div>
+      </div>
+      <button type="button" id="resume" hidden><span>继续上次练习</span><span id="resume-detail"></span></button>
+      <button type="button" id="adventure-together" class="adventure-community">
+        <span class="adventure-community-mark" aria-hidden="true">✦</span>
+        <span><strong>和同桌一起学</strong><span>共学与学习进度</span></span>
+        <span class="adventure-community-arrow" aria-hidden="true">›</span>
+      </button>
+      <button id="leaderboard-home" class="leaderboard-entry" type="button" data-open-leaderboard aria-haspopup="dialog" aria-controls="leaderboard-dialog">
+        <span>今日排行榜</span><span aria-hidden="true">›</span>
+      </button>
+      <div class="overview-stats" aria-label="学习进度">
+        <button id="stat-done" type="button"><strong>0</strong><span>已答题</span></button>
+        <button id="stat-wrong" type="button"><strong>0</strong><span>错题</span></button>
+        <button id="stat-starred" type="button"><strong>0</strong><span>收藏</span></button>
+      </div>
+    </section>
+    <section id="setup" aria-labelledby="setup-heading">
+      <header class="chapter-heading">
+        <h2 id="setup-heading" tabindex="-1">章节路线</h2>
+      </header>
+      <details id="advanced-settings" class="advanced-settings">
+      <summary>自定义测验</summary>
+      <form id="setup-form">
+        <div class="fields">
+          <div class="picker-field chapter-field">
+            <label id="chapter-picker-label" for="chapter">章节</label>
+            <select id="chapter"></select>
+            <button id="chapter-picker-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="chapter-picker-label chapter-picker-value" hidden>
+              <span id="chapter-picker-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="picker-field">
+            <label id="scope-picker-label" for="scope">范围</label>
+            <select id="scope">
+              <option value="all">全部可练习题</option>
+              <option value="new">未做过</option>
+              <option value="done">已答题</option>
+              <option value="wrong">错题</option>
+              <option value="starred">已收藏</option>
+            </select>
+            <button id="scope-picker-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="scope-picker-label scope-picker-value" hidden>
+              <span id="scope-picker-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="picker-field">
+            <label id="mode-picker-label" for="mode">模式</label>
+            <select id="mode">
+              <option value="practice">刷题</option>
+              <option value="memory">背诵</option>
+            </select>
+            <button id="mode-picker-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="mode-picker-label mode-picker-value" hidden>
+              <span id="mode-picker-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+            </button>
+          </div>
+          <label>题数<input type="number" id="count" min="1" value="20" required></label>
+          <div class="picker-field">
+            <label id="order-picker-label" for="order">顺序</label>
+            <select id="order"><option value="random">随机</option><option value="source">原题顺序</option></select>
+            <button id="order-picker-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="order-picker-label order-picker-value" hidden>
+              <span id="order-picker-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <fieldset>
+          <legend>题型</legend>
+          <div id="types" class="types"></div>
+        </fieldset>
+        <div class="actions">
+          <button id="start" class="primary" type="submit">开始练习</button>
+          <button id="adventure-chapter-long" type="button">练习整章</button>
+          <span id="availability" role="status"></span>
+        </div>
+      </form>
+      </details>
+      <button id="meeting-open" class="meeting-entry" type="button" aria-haspopup="dialog" aria-controls="meeting-dialog" hidden>
+        <span><strong>会议时间线</strong><small id="meeting-entry-count"></small></span>
+        <span aria-hidden="true">›</span>
+      </button>
+      <nav id="chapter-list" aria-label="章节"></nav>
+    </section>
+    <section id="quiz" class="panel" hidden aria-labelledby="question">
+      <header class="lesson-header">
+        <div class="quiz-bar">
+          <button id="back" type="button">返回章节</button>
+          <span id="where"></span>
+          <div class="quiz-bar-tools">
+            <button class="question-development-shortcut" data-development-shortcut type="button" aria-label="开发助手" title="开发助手" aria-haspopup="dialog" aria-controls="development-requests" hidden><span aria-hidden="true">&lt;/&gt;</span></button>
+            <button id="star" type="button" aria-pressed="false">收藏</button>
+          </div>
+        </div>
+        <input id="question-position" type="range" min="1" max="1" value="1" aria-label="跳到题号">
+        <p id="quiz-completion" class="quiz-completion" hidden></p>
+        <p id="chapter-test-status" class="chapter-test-status" hidden></p>
+      </header>
+      <div class="lesson-card">
+        <div class="question-header">
+          <span id="kind"></span>
+          <span id="common-question-badge" class="common-question-badge" hidden></span>
+          <span id="option-hint" hidden>选齐后提交</span>
+          <div class="question-card-actions">
+            <button id="wrong-review" type="button" aria-label="留在错题本" aria-pressed="false">加入错题本</button>
+            <button id="question-redo" class="question-redo" type="button" aria-label="重做本题" disabled><span aria-hidden="true">↻</span>重做</button>
+          </div>
+        </div>
+        <h2 id="question" tabindex="-1"></h2>
+        <div id="options" class="options"></div>
+        <div class="question-tools question-tools-practice">
+          <button id="quiz-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+            <span class="tutor-mark" aria-hidden="true"></span>
+            <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>解题提示</small></span>
+          </button>
+          <div id="option-note-tools" class="option-note-tools" hidden>
+            <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button" title="也可长按任一选项打开">选项详解</button>
+          </div>
+          <button id="quiz-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button" hidden>本题笔记</button>
+        </div>
+      </div>
+      <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
+        <p id="feedback" role="status" tabindex="-1"></p>
+        <p id="submitted-answer" hidden></p>
+        <h3 id="answer-heading">正确答案</h3>
+        <p id="answer-text" tabindex="-1"></p>
+        <section id="distractor-notes" class="distractor-notes" hidden>
+          <h3>为什么不选</h3>
+          <ul></ul>
+        </section>
+        <button id="meeting-from-answer" class="meeting-jump" type="button" aria-haspopup="dialog" aria-controls="meeting-dialog" hidden>看会议时间线 ›</button>
+      </section>
+      <section id="study-note" class="study-note" hidden aria-label="考点与解析">
+        <div class="memory-note">
+          <h3>考点速记</h3>
+          <p id="memory"></p>
+        </div>
+        <div class="lesson-explanation">
+          <h3>为什么这样答</h3>
+          <p id="explanation"></p>
+        </div>
+        <div id="textbook-evidence" class="lesson-textbook" hidden>
+          <h3 id="textbook-label">教材原文</h3>
+          <blockquote id="textbook-quote"></blockquote>
+        </div>
+        <p id="reference" class="reference"></p>
+      </section>
+      <section id="related-study" class="lesson-related" hidden aria-labelledby="related-heading">
+        <h3 id="related-heading">同一考点练一练</h3>
+        <div id="related-list"></div>
+      </section>
+      <a id="source" target="_blank" rel="noopener" hidden>查看原图</a>
+      <p class="keys">按 A–H 选择，Enter 提交，方向键翻题</p>
+      <div class="actions quiz-actions glass">
+        <button id="submit" class="primary" type="button" disabled>提交</button>
+      </div>
+    </section>
+    <section id="result" class="panel" hidden aria-labelledby="result-title">
+      <h2 id="result-title">本次练习完成</h2>
+      <p id="score"></p>
+      <p id="chapter-result-next-step" class="chapter-result-next-step" hidden></p>
+      <div id="adventure-result" class="adventure-result-hero" hidden>
+        <img src="assets/art-42ebdbb61e06f13f.svg" width="360" height="180" alt="">
+        <div><strong id="adventure-result-stops"></strong><span id="adventure-result-streak"></span></div>
+      </div>
+      <div class="actions">
+        <button id="retry" type="button">重练本次错题</button>
+        <button id="result-chapter-review" type="button" hidden>查看本章错题</button>
+        <button id="result-chapter-test" type="button" hidden>整章测验</button>
+        <button id="route-result-next" type="button" hidden></button>
+        <button id="review-round" type="button">回看本次</button>
+        <button id="again" type="button" class="primary">返回路线</button>
+      </div>
+    </section>
+    <section id="library" class="panel tab-page" hidden aria-labelledby="library-title">
+      <div class="tab-page-heading">
+        <button id="library-back" type="button" hidden>返回我的旅程</button>
+        <h2 id="library-title" tabindex="-1"></h2>
+        <p id="library-count" role="status"></p>
+      </div>
+      <div id="wrong-bank-field" class="wrong-bank-field" hidden>
+        <label for="wrong-bank">题库</label>
+        <select id="wrong-bank"></select>
+      </div>
+      <div id="chapter-study-status" class="chapter-study-status" hidden>
+        <div id="chapter-study-steps" class="chapter-study-steps"></div>
+        <p id="chapter-study-last-test" hidden></p>
+      </div>
+      <div class="actions library-actions">
+        <button id="library-start" class="primary" type="button">开始练习</button>
+        <button id="library-configure" type="button">自定义组卷</button>
+        <button id="wrong-continue" type="button" hidden>练剩余题</button>
+        <button id="wrong-test" type="button" hidden>整章测验</button>
+      </div>
+      <p id="library-swipe-hint" hidden>左滑题目或点「···」可移除。</p>
+      <div id="library-removal" hidden>
+        <span role="status">已移出错题本</span>
+        <button id="library-undo" type="button">撤销</button>
+      </div>
+      <div id="library-list"></div>
+      <button id="library-more" type="button" hidden>显示更多</button>
+    </section>
+    <dialog id="history-question" class="account-dialog glass" aria-labelledby="history-question-title">
+      <div class="history-question-heading">
+        <p id="history-question-meta"></p>
+        <div class="question-card-actions">
+          <button class="question-development-shortcut" data-development-shortcut type="button" aria-label="开发助手" title="开发助手" aria-haspopup="dialog" aria-controls="development-requests" hidden><span aria-hidden="true">&lt;/&gt;</span></button>
+          <button id="history-question-redo" class="question-redo" type="button" aria-label="重做本题" disabled><span aria-hidden="true">↻</span>重做</button>
+          <button id="history-question-close" type="button">关闭</button>
+        </div>
+      </div>
+      <h2 id="history-question-title"></h2>
+      <ul id="history-question-options" class="history-question-options"></ul>
+      <p id="history-question-result"></p>
+      <h3>我的作答</h3>
+      <p id="history-question-selection"></p>
+      <h3>正确答案</h3>
+      <p id="history-question-answer"></p>
+      <section id="history-distractor-notes" class="distractor-notes" hidden>
+        <h3>为什么不选</h3>
+        <ul></ul>
+      </section>
+      <div id="history-question-study" hidden>
+        <h3>解析</h3>
+        <p id="history-question-explanation"></p>
+        <div id="history-question-textbook-evidence" class="lesson-textbook" hidden>
+          <h3 id="history-question-textbook-label">教材原文</h3>
+          <blockquote id="history-question-textbook-quote"></blockquote>
+        </div>
+        <p id="history-question-reference"></p>
+      </div>
+      <button id="meeting-from-history" class="meeting-jump" type="button" aria-haspopup="dialog" aria-controls="meeting-dialog" hidden>看会议时间线 ›</button>
+      <div class="question-tools">
+        <button id="history-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>追问解析</small></span>
+        </button>
+        <button id="history-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button">本题笔记</button>
+      </div>
+      <button id="history-question-practice" type="button" class="primary" hidden>复练此题</button>
+    </dialog>
+    <dialog id="option-notes-dialog" class="account-dialog glass quiz-sheet option-notes-sheet" aria-labelledby="option-notes-heading">
+      <div data-sheet-handle>
+        <h2 id="option-notes-heading">选项详解</h2>
+        <button id="option-notes-close" type="button" autofocus>关闭</button>
+      </div>
+      <div id="option-notes-tabs" class="option-notes-tabs" role="group" aria-label="切换选项"></div>
+      <div id="option-notes-scroll" class="option-notes-scroll" tabindex="0" role="region" aria-label="选项内容">
+        <article id="option-notes-content"></article>
+        <button id="option-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <span class="tutor-launch-label"><strong data-tutor-label>问这项</strong><small data-tutor-purpose>辨析选项</small></span>
+        </button>
+        <details id="option-notes-basis" class="option-notes-basis" hidden>
+          <summary>本题依据</summary>
+          <div id="option-note-textbook-evidence" class="lesson-textbook" hidden>
+            <h3 id="option-note-textbook-label">教材原文</h3>
+            <blockquote id="option-note-textbook-quote"></blockquote>
+          </div>
+          <p id="option-note-reference" class="reference"></p>
+        </details>
+      </div>
+    </dialog>
+    <dialog id="quiz-tutor" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="quiz-tutor-title">
+      <div class="tutor-header" data-sheet-handle>
+        <div class="tutor-heading">
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <div>
+            <h2 id="quiz-tutor-title">题目助手</h2>
+            <p id="quiz-tutor-mode"></p>
+          </div>
+        </div>
+        <button id="quiz-tutor-close" type="button" aria-label="关闭题目助手" title="关闭" autofocus><span aria-hidden="true">×</span></button>
+      </div>
+      <div id="quiz-tutor-scroll" class="tutor-scroll" tabindex="0" role="region" aria-label="题目、依据和对话">
+        <details id="quiz-tutor-context" class="tutor-context">
+          <summary>
+            <span class="tutor-context-copy">
+              <span id="quiz-tutor-meta" class="tutor-context-meta"></span>
+              <span id="quiz-tutor-stem"></span>
+              <span id="quiz-tutor-focus" class="tutor-context-focus" hidden></span>
+            </span>
+          </summary>
+        </details>
+        <details id="quiz-tutor-evidence" class="tutor-evidence" hidden>
+          <summary><span id="quiz-tutor-source">教材依据</span></summary>
+          <blockquote id="quiz-tutor-quote"></blockquote>
+        </details>
+        <div id="quiz-tutor-starters" class="tutor-starters">
+          <h3>快捷提问</h3>
+          <div id="quiz-tutor-prompts" class="tutor-prompts" role="group" aria-label="快捷提问"></div>
+        </div>
+        <ul id="quiz-tutor-log" class="tutor-log" aria-label="本题对话" role="log"></ul>
+        <p id="quiz-tutor-waiting" class="tutor-waiting" role="status" hidden>正在生成回答<span aria-hidden="true"></span></p>
+      </div>
+      <div class="tutor-composer">
+        <p id="quiz-tutor-status" role="status"></p>
+        <form id="quiz-tutor-form">
+          <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="输入你的疑问"></textarea>
+          <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
+        </form>
+        <button id="tutor-development-open" class="quiz-tutor-entry" data-development-shortcut aria-haspopup="dialog" aria-controls="development-requests" type="button" hidden>给题库提需求</button>
+      </div>
+    </dialog>
+    <dialog id="question-note-dialog" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="question-note-title">
+      <div data-sheet-handle>
+        <h2 id="question-note-title">本题笔记</h2>
+        <button id="question-note-close" type="button" autofocus>关闭</button>
+      </div>
+      <p id="question-note-stem"></p>
+      <form id="question-note-form">
+        <textarea id="question-note-text" rows="7" maxlength="8000" aria-label="本题笔记内容" placeholder="记下易混点或自己的理解"></textarea>
+        <p id="question-note-status" role="status"></p>
+        <button class="primary" type="submit">保存笔记</button>
+      </form>
+    </dialog>
+    <dialog id="development-requests" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="development-title">
+      <div data-sheet-handle>
+        <h2 id="development-title">开发助手</h2>
+        <button id="development-close" type="button" autofocus>关闭</button>
+      </div>
+      <p id="development-mac"></p>
+      <form id="development-pair-form" hidden>
+        <label for="development-pair-code">Mac 上的绑定码</label>
+        <input id="development-pair-code" type="password" maxlength="32" autocomplete="off" spellcheck="false" required>
+        <button type="submit" class="primary">绑定</button>
+      </form>
+      <form id="development-request-form" hidden>
+        <button id="development-mark" type="button">框选页面</button>
+        <ol id="development-marks" aria-label="待发送的批注" hidden></ol>
+        <label for="development-brief">还有什么要补充？</label>
+        <textarea id="development-brief" rows="2" maxlength="2000"></textarea>
+        <div class="development-actions">
+          <button id="development-local" type="submit" value="local" hidden>用 Mac 本地改文案</button>
+          <button id="development-send" type="submit" value="codex" class="primary">发给 Codex</button>
+        </div>
+      </form>
+      <p id="development-status" role="status"></p>
+      <div class="tutor-scroll">
+        <ul id="development-receipts" class="tutor-log" aria-label="开发请求"></ul>
+      </div>
+    </dialog>
+    <dialog id="development-picker" aria-label="框选页面并添加批注">
+      <div id="development-target" aria-hidden="true"></div>
+      <div id="development-box" aria-hidden="true" hidden></div>
+      <div class="development-picker-bar">
+        <span id="development-picker-hint" role="status">拖动手指框出要改的位置</span>
+        <button id="development-picker-done" type="button" autofocus>返回</button>
+      </div>
+      <form id="development-note-form" hidden>
+        <label for="development-note">选区批注</label>
+        <p id="development-note-target"></p>
+        <textarea id="development-note" rows="2" maxlength="240" placeholder="这里希望怎么改？" required></textarea>
+        <div class="development-actions">
+          <button id="development-redraw" type="button">重画</button>
+          <button type="submit" class="primary">添加批注</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="meeting-dialog" class="account-dialog glass quiz-sheet meeting-dialog" aria-labelledby="meeting-title">
+      <div class="account-dialog-header" data-sheet-handle>
+        <h2 id="meeting-title">会议时间线</h2>
+        <button id="meeting-close" type="button" autofocus>关闭</button>
+      </div>
+      <div class="meeting-filter">
+        <div>
+          <label for="meeting-track">记忆线索</label>
+          <select id="meeting-track"></select>
+        </div>
+        <button id="meeting-practice" type="button" class="primary">练专题原题</button>
+      </div>
+      <div class="meeting-views" role="group" aria-label="专题视图">
+        <button type="button" data-meeting-view="timeline" aria-pressed="true" aria-controls="meeting-timeline">时间线</button>
+        <button type="button" data-meeting-view="questions" aria-pressed="false" aria-controls="meeting-questions">专题原题</button>
+      </div>
+      <p id="meeting-hint" class="meeting-hint" hidden></p>
+      <ol id="meeting-timeline" class="meeting-timeline" aria-label="按日期排列的会议"></ol>
+      <ul id="meeting-questions" class="meeting-questions" aria-label="专题原题" hidden></ul>
+    </dialog>
+    <dialog id="leaderboard-dialog" class="account-dialog glass quiz-sheet leaderboard-dialog" aria-labelledby="leaderboard-title">
+      <div class="account-dialog-header" data-sheet-handle>
+        <h2 id="leaderboard-title">今日排行榜</h2>
+        <button id="leaderboard-close" type="button" autofocus>关闭</button>
+      </div>
+      <div id="leaderboard-scroll" class="leaderboard-scroll">
+        <div id="leaderboard-guest" hidden>
+          <p>登录后可以查看榜单和今日题量。</p>
+          <button id="leaderboard-login" class="primary" type="button">登录</button>
+        </div>
+        <p id="leaderboard-status" class="leaderboard-note" role="status"></p>
+        <button id="leaderboard-retry" type="button" hidden>重试</button>
+        <div id="leaderboard-data" hidden>
+          <div class="leaderboard-summary">
+            <div><time id="leaderboard-day"></time><p id="leaderboard-total"></p></div>
+            <button id="leaderboard-refresh" type="button">刷新</button>
+          </div>
+          <form id="leaderboard-editor" class="leaderboard-editor" hidden>
+            <label for="leaderboard-nickname">榜单昵称</label>
+            <input id="leaderboard-nickname" type="text" autocomplete="off" maxlength="32" placeholder="留空使用自动昵称">
+            <p class="leaderboard-note">榜单显示你的昵称、今日题量和名次。</p>
+            <div class="actions">
+              <button id="leaderboard-save" class="primary" type="submit">加入榜单</button>
+              <button id="leaderboard-cancel" type="button">取消</button>
+              <button id="leaderboard-leave" type="button" hidden>退出榜单</button>
+            </div>
+          </form>
+          <p id="leaderboard-empty" class="leaderboard-note" hidden>今天还没有学友上榜。</p>
+          <ol id="leaderboard-top" class="leaderboard-top" aria-label="排名最靠前的学友"></ol>
+          <ol id="leaderboard-rows" class="leaderboard-rows" aria-label="其余名次"></ol>
+          <p class="leaderboard-note leaderboard-rule">按北京时间统计已同步的作答，同一道题每天计一次。题量相同并列。</p>
+        </div>
+      </div>
+      <footer id="leaderboard-self" class="leaderboard-self" hidden>
+        <div><span id="leaderboard-self-rank"></span><strong id="leaderboard-self-count"></strong></div>
+        <button id="leaderboard-edit" type="button"></button>
+      </footer>
+    </dialog>
+    <section id="desk" class="desk-page" hidden aria-labelledby="desk-heading">
+      <header class="desk-heading">
+        <h2 id="desk-heading" tabindex="-1">一起学</h2>
+        <div class="desk-heading-actions">
+          <button class="desk-heading-button" type="button" data-open-leaderboard aria-haspopup="dialog" aria-controls="leaderboard-dialog">排行榜</button>
+          <button id="desk-avatar-edit" class="desk-heading-button" type="button" aria-haspopup="dialog" aria-controls="desk-avatar-dialog" hidden>更换头像</button>
+          <button id="desk-refresh" class="desk-heading-button" type="button" hidden>
+            <span class="desk-refresh-icon" aria-hidden="true"></span>刷新
+          </button>
+        </div>
+      </header>
+      <p id="desk-status" class="desk-status" role="status" aria-live="polite"></p>
+      <div id="desk-cover" class="world-camp desk-cover">
+        <div class="world-scene world-scene-camp">
+          <div class="world-backdrop" aria-hidden="true"><span class="world-orb"></span><i></i><b></b><span class="world-backdrop-fire"></span></div>
+          <canvas id="camp-world-canvas" aria-hidden="true"></canvas>
+          <div class="world-camera" role="group" aria-label="调整营地视角">
+            <button type="button" data-scene-target="camp" data-scene-action="left" aria-label="视角向左转">‹</button>
+            <button type="button" data-scene-target="camp" data-scene-action="reset" aria-label="重置营地视角">⌖</button>
+            <button type="button" data-scene-target="camp" data-scene-action="right" aria-label="视角向右转">›</button>
+          </div>
+        </div>
+        <section id="desk-guest" class="desk-cover-copy desk-guest" aria-labelledby="desk-guest-heading" hidden>
+          <h3 id="desk-guest-heading">和同桌一起刷题</h3>
+          <p>同步答题、一起看解析，也可以各自练习、互看进度。</p>
+          <button id="desk-login" class="primary" type="button">登录或注册</button>
+        </section>
+        <section id="desk-unpaired" class="desk-cover-copy" aria-labelledby="desk-unpaired-heading" hidden>
+          <div class="desk-seat">
+            <h3 id="desk-unpaired-heading">当前账号暂无同桌</h3>
+            <span class="desk-avatar" aria-hidden="true">
+              <img id="desk-seat-avatar" class="desk-avatar-picture" alt="" hidden>
+              <span class="desk-avatar-fallback"></span>
+            </span>
+          </div>
+        </section>
+        <section id="desk-companions" class="desk-cover-copy" aria-labelledby="desk-companions-heading" hidden>
+          <h3 id="desk-companions-heading">同桌营地</h3>
+          <div class="desk-companions">
+            <div class="desk-companion">
+              <span class="desk-avatar" aria-hidden="true">
+                <img id="desk-mine-avatar" class="desk-avatar-picture" alt="" hidden>
+                <span class="desk-avatar-fallback"></span>
+              </span>
+              <div><strong>我</strong><span id="live-local-presence" class="desk-presence">连接中</span></div>
+            </div>
+            <div class="desk-companion">
+              <span class="desk-avatar" aria-hidden="true">
+                <img id="desk-peer-avatar" class="desk-avatar-picture" alt="" hidden>
+                <span class="desk-avatar-fallback"></span>
+              </span>
+              <div><strong>同桌</strong><span id="live-presence" class="desk-presence">连接中</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div id="desk-paired" class="desk-paired" hidden>
+        <section id="live-lobby" class="desk-mode desk-mode-coop" aria-labelledby="live-lobby-heading">
+          <header class="desk-mode-heading">
+            <span class="desk-mode-icon desk-mode-icon-coop" aria-hidden="true"></span>
+            <div>
+              <h3 id="live-lobby-heading">五题共学</h3>
+              <p>各自作答，两人提交后一起看解析。</p>
+            </div>
+          </header>
+          <p id="live-lobby-status" class="desk-mode-status" role="status" aria-live="polite"></p>
+          <div class="desk-coop-controls">
+            <div id="live-settings" class="picker-field">
+              <label id="live-chapter-label" for="live-chapter">练习范围</label>
+              <select id="live-chapter"><option value="">综合题库</option></select>
+              <button id="live-chapter-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="live-chapter-label live-chapter-value" hidden>
+                <span id="live-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button id="live-start" type="button" class="primary live-primary" disabled>发起共学</button>
+            <button id="live-join" type="button" class="primary live-primary" hidden>加入共学</button>
+            <button id="live-resume" type="button" class="primary live-primary" hidden>继续共学</button>
+          </div>
+        </section>
+        <section id="battle-arena" class="battle-arena desk-mode" data-mood="waiting" aria-labelledby="arena-heading">
+          <header class="battle-header">
+            <span class="desk-mode-icon desk-mode-icon-arena" aria-hidden="true"></span>
+            <div class="desk-arena-heading">
+              <h3 id="arena-heading" class="battle-title" tabindex="-1">双塔擂台</h3>
+              <p id="arena-intro">限时答题，用战术卡牌攻守。</p>
+              <p id="arena-status" class="battle-status" role="status">正在连接擂台…</p>
+            </div>
+            <button id="arena-back" class="battle-back" type="button" hidden>返回营地</button>
+          </header>
+          <div class="battlefield">
+            <article id="arena-self" class="battle-side battle-side--self" data-state="intact" aria-label="我的塔">
+              <strong>我的塔</strong>
+              <div class="battle-tower-art" aria-hidden="true">
+                <span class="battle-tower-shield"></span><span class="battle-tower-base"></span><span class="battle-tower-crown"></span>
+                <span class="battle-tower-core"></span><span class="battle-tower-cracks"></span>
+              </div>
+              <div id="arena-self-shield" class="battle-health-track" role="progressbar" aria-label="我的护盾" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                <span class="battle-health-fill"></span>
+              </div>
+              <span id="arena-self-health" class="battle-health-value">100</span>
+              <small id="arena-self-combo" class="battle-combo" hidden></small>
+            </article>
+            <div id="arena-lane" class="battle-lane" aria-hidden="true">
+              <span id="arena-lane-effect" class="battle-lane-light"></span>
+            </div>
+            <article id="arena-opponent" class="battle-side battle-side--opponent" data-state="intact" aria-label="同桌的塔">
+              <strong>同桌的塔</strong>
+              <div class="battle-tower-art" aria-hidden="true">
+                <span class="battle-tower-shield"></span><span class="battle-tower-base"></span><span class="battle-tower-crown"></span>
+                <span class="battle-tower-core"></span><span class="battle-tower-cracks"></span>
+              </div>
+              <div id="arena-opponent-shield" class="battle-health-track" role="progressbar" aria-label="同桌的护盾" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                <span class="battle-health-fill"></span>
+              </div>
+              <span id="arena-opponent-health" class="battle-health-value">100</span>
+              <small id="arena-opponent-combo" class="battle-combo" hidden></small>
+            </article>
+          </div>
+          <div id="arena-lobby" class="battle-arena-lobby">
+            <div class="battle-controls">
+              <div id="arena-scope" class="picker-field battle-scope">
+                <label id="arena-chapter-label" for="arena-chapter">挑战范围</label>
+                <select id="arena-chapter"><option value="">综合题库</option></select>
+                <button id="arena-chapter-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="arena-chapter-label arena-chapter-value" hidden>
+                  <span id="arena-chapter-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+            <div id="arena-rounds" class="arena-rounds">
+              <strong id="arena-rounds-label">题数</strong>
+              <div role="group" aria-labelledby="arena-rounds-label">
+                <button type="button" data-arena-rounds="3" aria-label="3 道题" aria-pressed="false" hidden>3</button>
+                <button type="button" data-arena-rounds="5" aria-label="5 道题" aria-pressed="false">5</button>
+                <button type="button" data-arena-rounds="10" aria-label="10 道题" aria-pressed="false">10</button>
+                <button type="button" data-arena-rounds="15" aria-label="15 道题" aria-pressed="true">15</button>
+                <button type="button" data-arena-rounds="20" aria-label="20 道题" aria-pressed="false">20</button>
+                <button type="button" data-arena-rounds="25" aria-label="25 道题" aria-pressed="false">25</button>
+                <button type="button" data-arena-rounds="30" aria-label="30 道题" aria-pressed="false">30</button>
+              </div>
+              <p id="arena-rounds-hint" class="arena-rounds-hint" role="status"></p>
+            </div>
+            <div class="battle-controls">
+              <button id="arena-create" class="primary" type="button" disabled>发起擂台</button>
+              <button id="arena-join" class="primary" type="button" hidden>应战</button>
+              <button id="arena-open" type="button" hidden>进入擂台</button>
+            </div>
+          </div>
+          <div id="arena-stage" class="battle-stage" hidden>
+            <p id="arena-match-info" class="battle-match-info"></p>
+            <div id="arena-live-stats" class="battle-live-stats" hidden>
+              <p><strong>我</strong> <span id="arena-live-self"></span></p>
+              <p><strong>同桌</strong> <span id="arena-live-opponent"></span></p>
+            </div>
+            <section id="arena-voice" aria-label="对局语音" hidden></section>
+            <section id="arena-countdown" class="battle-countdown" aria-label="开场倒数" aria-live="polite" hidden></section>
+            <section id="arena-question" class="battle-question" aria-labelledby="arena-stem" hidden>
+              <div class="battle-progress">
+                <span id="arena-counter"></span><span id="arena-kind"></span><time id="arena-timer" aria-label="剩余时间"></time>
+              </div>
+              <h4 id="arena-stem" tabindex="-1"></h4>
+              <div id="arena-options" class="battle-options" role="group" aria-label="选择答案"></div>
+              <button id="arena-answer" class="primary" type="button" disabled>提交答案</button>
+            </section>
+            <section id="arena-tactics" class="arena-tactics" aria-labelledby="arena-tactics-heading" hidden>
+              <header class="arena-tactics-head">
+                <h4 id="arena-tactics-heading">战术手牌</h4>
+                <span id="arena-energy">0 能量</span>
+              </header>
+              <div class="arena-hand" role="group" aria-label="选择战术牌">
+                <button class="arena-card" type="button" data-skill="guard" disabled>
+                  <span class="arena-card-emblem" aria-hidden="true"></span>
+                  <strong>护阵</strong>
+                  <span class="arena-card-copy">抵挡 18 点伤害</span>
+                  <span class="arena-card-state">待充能</span>
+                </button>
+                <button class="arena-card" type="button" data-skill="pierce" disabled>
+                  <span class="arena-card-emblem" aria-hidden="true"></span>
+                  <strong>破阵</strong>
+                  <span class="arena-card-copy">下一击穿透护阵，伤害 +9</span>
+                  <span class="arena-card-state">待充能</span>
+                </button>
+                <button class="arena-card" type="button" data-skill="repair" disabled>
+                  <span class="arena-card-emblem" aria-hidden="true"></span>
+                  <strong>回炉</strong>
+                  <span class="arena-card-copy">恢复 12 点护盾</span>
+                  <span class="arena-card-state">待充能</span>
+                </button>
+                <button class="arena-card" type="button" data-skill="focus" disabled>
+                  <span class="arena-card-emblem" aria-hidden="true"></span>
+                  <strong>蓄势</strong>
+                  <span class="arena-card-copy">下次答错保留连击</span>
+                  <span class="arena-card-state">待充能</span>
+                </button>
+              </div>
+              <p id="arena-hand-note" role="status">每答对两题获得 1 点能量，每张牌每场可出一次。</p>
+            </section>
+            <p id="arena-feedback" class="battle-feedback" role="status" hidden></p>
+            <div id="arena-quick" class="battle-quick" role="group" aria-label="给同桌发快捷消息" hidden>
+              <button type="button" data-arena-react="nice">漂亮！</button>
+              <button type="button" data-arena-react="letsgo">加油</button>
+              <button type="button" data-arena-react="close">好接近</button>
+              <button type="button" data-arena-react="gg">打得好</button>
+            </div>
+            <p id="arena-reaction" class="battle-reaction" role="status" hidden></p>
+            <section id="arena-result" class="battle-result" aria-labelledby="arena-result-heading" hidden>
+              <h4 id="arena-result-heading"></h4>
+              <div class="battle-result-scores">
+                <p><strong>我</strong> <span id="arena-result-self"></span></p>
+                <p><strong>同桌</strong> <span id="arena-result-opponent"></span></p>
+              </div>
+            </section>
+            <button id="arena-leave" class="battle-leave" type="button" hidden>退出本场</button>
+            <div id="arena-confirm" class="battle-confirm" hidden>
+              <p id="arena-confirm-copy"></p>
+              <button id="arena-leave-yes" type="button">确认退出</button>
+              <button id="arena-leave-no" type="button">继续对局</button>
+            </div>
+          </div>
+          <div id="arena-review-stage">
+            <details id="arena-review" class="battle-review" hidden>
+              <summary id="arena-review-heading">回看我的试卷</summary>
+              <div id="arena-paper" class="desk-duel-review"></div>
+            </details>
+          </div>
+        </section>
+        <section id="live-room" class="live-room" aria-labelledby="live-room-title" hidden>
+          <header class="live-room-top">
+            <button id="live-back" type="button" class="live-back">返回课桌</button>
+            <button id="live-leave" type="button" class="live-leave">结束本轮</button>
+          </header>
+          <div id="live-leave-confirm" class="live-leave-confirm" role="group" aria-label="确认结束共学" hidden>
+            <p>结束后，你和同桌都会离开这一轮。</p>
+            <div><button id="live-leave-cancel" type="button">取消</button><button id="live-leave-yes" type="button">确认结束</button></div>
+          </div>
+          <header class="live-room-overview">
+            <div class="live-session-title">
+              <h3 id="live-room-title" tabindex="-1">共用课桌</h3>
+              <span id="live-round-counter"></span>
+            </div>
+            <progress id="live-progress" value="0" max="5" aria-label="这轮共学进度"></progress>
+            <div class="live-room-people">
+              <div><span>我</span><strong id="live-me-status"></strong></div>
+              <div><span>同桌</span><strong id="live-peer-status"></strong></div>
+            </div>
+            <p id="live-room-status" class="live-room-status" role="status" aria-live="polite"></p>
+          </header>
+          <section id="live-question" class="desk-surface live-question" aria-labelledby="live-stem" hidden>
+            <span id="live-kind" class="live-kind"></span>
+            <h3 id="live-stem" tabindex="-1"></h3>
+            <div id="live-options" class="options live-options" role="group" aria-labelledby="live-stem"></div>
+            <div class="live-question-actions"><button id="live-submit" class="primary live-primary" type="button" disabled>提交答案</button></div>
+          </section>
+          <section id="live-reveal" class="desk-surface live-reveal" aria-labelledby="live-reveal-heading" hidden>
+            <h3 id="live-reveal-heading">一起看解析</h3>
+            <p id="live-choice-comparison" class="live-choice-comparison"></p>
+            <dl class="live-reading">
+              <div><dt>正确答案</dt><dd id="live-correct-answer"></dd></div>
+              <div><dt>解析</dt><dd id="live-review"></dd></div>
+              <div><dt>记忆提示</dt><dd id="live-memory"></dd></div>
+            </dl>
+            <div class="live-question-actions"><button id="live-next" class="primary live-primary" type="button">一起继续</button></div>
+          </section>
+          <section id="live-summary" class="desk-surface live-summary" aria-labelledby="live-summary-heading" hidden>
+            <h3 id="live-summary-heading" tabindex="-1"></h3>
+            <p id="live-summary-detail"></p>
+            <div id="live-summary-review" class="live-summary-review"></div>
+            <div class="live-question-actions"><button id="live-finish" class="primary live-primary" type="button">返回课桌</button></div>
+          </section>
+        </section>
+        <section id="desk-progress-comparison" class="desk-surface desk-compare" aria-labelledby="desk-compare-heading">
+          <div class="desk-section-heading">
+            <h3 id="desk-compare-heading">学习进度</h3>
+          </div>
+          <div class="desk-comparison">
+            <article class="desk-learner desk-learner-mine" aria-labelledby="desk-mine-name">
+              <button class="desk-learner-open" type="button" data-desk-progress-owner="mine" aria-label="查看我的学习进度" aria-haspopup="dialog" aria-controls="desk-progress-dialog"><span aria-hidden="true">详情 ›</span></button>
+              <h4>
+                <span id="desk-mine-name">我</span>
+              </h4>
+              <div class="desk-completion">
+                <strong id="desk-mine-completion">—</strong>
+                <span>完成度</span>
+              </div>
+              <progress id="desk-mine-bar" value="0" max="100" aria-label="我的题库完成度"></progress>
+              <dl class="desk-metrics">
+                <div class="desk-today"><dt>今日练习</dt><dd id="desk-mine-today">—</dd></div>
+                <div><dt>累计已答</dt><dd id="desk-mine-answered">—</dd></div>
+                <div><dt>正确率</dt><dd id="desk-mine-accuracy">—</dd></div>
+              </dl>
+            </article>
+            <article class="desk-learner desk-learner-peer" aria-labelledby="desk-peer-name">
+              <button class="desk-learner-open" type="button" data-desk-progress-owner="peer" aria-label="查看同桌的学习进度" aria-haspopup="dialog" aria-controls="desk-progress-dialog"><span aria-hidden="true">详情 ›</span></button>
+              <h4>
+                <span id="desk-peer-name">同桌</span>
+              </h4>
+              <div class="desk-completion">
+                <strong id="desk-peer-completion">—</strong>
+                <span>完成度</span>
+              </div>
+              <progress id="desk-peer-bar" value="0" max="100" aria-label="同桌的题库完成度"></progress>
+              <dl class="desk-metrics">
+                <div class="desk-today"><dt>今日练习</dt><dd id="desk-peer-today">—</dd></div>
+                <div><dt>累计已答</dt><dd id="desk-peer-answered">—</dd></div>
+                <div><dt>正确率</dt><dd id="desk-peer-accuracy">—</dd></div>
+              </dl>
+            </article>
+          </div>
+          <section id="social-reactions" class="social-reactions" aria-labelledby="social-reactions-heading" hidden>
+            <h4 id="social-reactions-heading">给同桌鼓励</h4>
+            <div class="social-reaction-actions">
+              <button type="button" data-social-reaction="cheer"><span aria-hidden="true">✦</span> 打气</button>
+              <button type="button" data-social-reaction="high_five"><span aria-hidden="true">✋</span> 击掌</button>
+            </div>
+            <p id="social-reaction-status" class="social-reaction-status" role="status"></p>
+            <p id="social-received" class="social-received" role="status" hidden></p>
+          </section>
+        </section>
+        <dialog id="desk-progress-dialog" class="account-dialog glass quiz-sheet desk-progress-dialog" aria-labelledby="desk-progress-title">
+          <div class="account-dialog-header" data-sheet-handle>
+            <h2 id="desk-progress-title">学习进度</h2>
+            <button id="desk-progress-close" type="button" autofocus>关闭</button>
+          </div>
+          <p id="desk-progress-status" role="status" aria-live="polite"></p>
+          <button id="desk-progress-retry" type="button" hidden>重新加载</button>
+          <div id="desk-progress-data" hidden>
+            <dl id="desk-progress-metrics" class="desk-progress-metrics"></dl>
+            <div class="desk-progress-views" role="group" aria-label="学习进度统计维度">
+              <button type="button" data-progress-view="trend" aria-pressed="true" aria-controls="desk-progress-trend">近况</button>
+              <button type="button" data-progress-view="chapters" aria-pressed="false" aria-controls="desk-progress-chapters">章节</button>
+              <button type="button" data-progress-view="types" aria-pressed="false" aria-controls="desk-progress-types">题型</button>
+              <button type="button" data-progress-view="tests" aria-pressed="false" aria-controls="desk-progress-tests">测验</button>
+            </div>
+            <section id="desk-progress-trend" class="desk-chart-panel" aria-labelledby="desk-progress-week">
+              <h3 id="desk-progress-week">近 7 天作答</h3>
+              <p id="desk-progress-week-summary" class="desk-progress-note"></p>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li></ul>
+              <div id="desk-progress-days" class="desk-day-chart" role="group" aria-label="按日查看作答数和正确率"></div>
+              <p id="desk-progress-day-detail" class="desk-day-detail" role="status"></p>
+              <p class="desk-progress-note">按每题最近一次提交统计，日期使用北京时间。</p>
+            </section>
+            <section id="desk-progress-chapters" class="desk-chart-panel" aria-labelledby="desk-progress-chapter-title" hidden>
+              <h3 id="desk-progress-chapter-title">各章完成度</h3>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li><li data-segment="new">未答</li></ul>
+              <ul id="desk-progress-chapter-bars" class="desk-chart-bars"></ul>
+            </section>
+            <section id="desk-progress-types" class="desk-chart-panel" aria-labelledby="desk-progress-type-title" hidden>
+              <h3 id="desk-progress-type-title">各题型作答情况</h3>
+              <ul class="desk-chart-legend" aria-label="图例"><li data-segment="correct">答对</li><li data-segment="wrong">答错</li><li data-segment="new">未答</li></ul>
+              <ul id="desk-progress-type-bars" class="desk-chart-bars"></ul>
+            </section>
+            <section id="desk-progress-tests" class="desk-chart-panel" aria-labelledby="desk-progress-test-title" hidden>
+              <h3 id="desk-progress-test-title">各章最近一次测验</h3>
+              <div class="desk-chart-filter" id="desk-progress-test-filter" hidden>
+                <label for="desk-progress-test-bank">题库</label>
+                <select id="desk-progress-test-bank"></select>
+              </div>
+              <p id="desk-progress-tests-empty" class="desk-progress-note">完成整章测验后，这里会显示最近一次成绩。</p>
+              <ul id="desk-progress-test-bars" class="desk-chart-bars"></ul>
+            </section>
+            <button id="desk-progress-history" type="button">回看我的作答</button>
+          </div>
+        </dialog>
+        <section id="desk-records" class="desk-surface desk-records" aria-labelledby="desk-records-heading">
+          <h3 id="desk-records-heading">对局记录与收藏</h3>
+          <details id="arena-history" class="battle-history" hidden>
+            <summary>双塔战绩</summary>
+            <div id="arena-history-list" class="desk-duel-history"></div>
+          </details>
+          <details id="desk-duel-history-panel" class="desk-more desk-archive" hidden>
+            <summary>旧场次记录</summary>
+            <div id="desk-duel-history" class="desk-duel-history"></div>
+            <details id="desk-duel-review-panel" class="desk-more" hidden>
+              <summary>回看我的试卷</summary>
+              <div id="desk-duel-review" class="desk-duel-review"></div>
+            </details>
+          </details>
+          <details id="arena-collection" class="arena-collection">
+            <summary>集卡册 <span id="arena-collection-count"></span></summary>
+            <div id="arena-collection-grid" class="arena-collection-grid"></div>
+          </details>
+        </section>
+      </div>
+    </section>
+    <section id="profile" class="panel tab-page" hidden aria-labelledby="profile-heading">
+      <div class="tab-page-heading">
+        <h2 id="profile-heading" tabindex="-1">我的旅程</h2>
+      </div>
+      <div class="profile-stats" role="group" aria-label="我的题目">
+        <button type="button" data-profile-library="done"><strong id="profile-done">0</strong><span>已答题</span></button>
+        <button type="button" data-profile-library="wrong"><strong id="profile-wrong">0</strong><span>错题</span></button>
+        <button type="button" data-profile-library="starred"><strong id="profile-starred">0</strong><span>收藏</span></button>
+      </div>
+      <div class="profile-account">
+        <h3>跨设备同步</h3>
+        <button id="profile-account" type="button">登录或管理账号</button>
+      </div>
+      <div id="development-profile" class="profile-account" hidden>
+        <h3>开发助手</h3>
+        <button id="profile-development-open" aria-haspopup="dialog" aria-controls="development-requests" type="button">提需求</button>
+      </div>
+      <div class="profile-account world-profile-setting">
+        <h3>山谷时刻</h3>
+        <button id="theme-profile" type="button" aria-haspopup="dialog" aria-controls="theme-dialog">切换昼夜场景</button>
+      </div>
+      <div class="profile-account">
+        <h3>刷题设置</h3>
+        <div class="picker-field">
+          <label id="reading-size-label" for="reading-size">阅读字号</label>
+          <select id="reading-size">
+            <option value="100">标准</option>
+            <option value="115">较大</option>
+            <option value="130">大号</option>
+          </select>
+          <button id="reading-size-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="reading-size-label reading-size-value" hidden>
+            <span id="reading-size-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="picker-field">
+          <label id="auto-advance-delay-label" for="auto-advance-delay">答对后等待时间</label>
+          <select id="auto-advance-delay">
+            <option value="400">0.4 秒</option>
+            <option value="800" selected>0.8 秒（默认）</option>
+            <option value="1500">1.5 秒</option>
+            <option value="2000">2 秒</option>
+            <option value="3000">3 秒</option>
+            <option value="5000">5 秒</option>
+            <option value="0">不自动跳转</option>
+          </select>
+          <button id="auto-advance-delay-trigger" class="chapter-picker-trigger" type="button" aria-haspopup="dialog" aria-controls="chapter-picker" aria-expanded="false" aria-labelledby="auto-advance-delay-label auto-advance-delay-value" hidden>
+            <span id="auto-advance-delay-value" class="picker-field-value"></span><span class="chapter-picker-chevron" aria-hidden="true"></span>
+          </button>
+        </div>
+        <label id="answer-haptics-setting" class="profile-switch" hidden>
+          <span>答题震动反馈</span>
+          <input id="answer-haptics" type="checkbox" role="switch" checked>
+        </label>
+      </div>
+      <section id="android-updates" class="profile-account" aria-labelledby="update-heading" hidden>
+        <div>
+          <h3 id="update-heading">应用更新</h3>
+          <p id="update-status" role="status"></p>
+        </div>
+        <div class="actions">
+          <button id="update-check" type="button">检查更新</button>
+          <button id="update-notify" type="button">开启更新通知</button>
+          <button id="update-download" class="primary" type="button" hidden>前往 GitHub 下载</button>
+        </div>
+      </section>
+    </section>
+    <details id="review-panel" class="review">
+      <summary>待核对题目 <span id="review-count"></span></summary>
+      <p>识别有疑点的题目可直接打开原图。</p>
+      <div id="review-list"></div>
+    </details>
+    <p id="storage-status" role="status"></p>
+  </main>
+  </div>
+  <p id="answer-streak-status" role="status" aria-atomic="true"></p>
+  <div id="answer-streak" hidden aria-hidden="true">
+    <div class="streak-halo"></div>
+    <div class="streak-trail"></div>
+    <div class="streak-ticket">
+      <span class="streak-ticket-glint"></span>
+      <span>连对</span>
+      <strong id="answer-streak-count"></strong>
+      <span>题</span>
+    </div>
+    <img class="streak-crane" src="assets/art-42ebdbb61e06f13f.svg" width="128" height="64" alt="">
+    <div class="streak-sparks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <nav id="mobile-tabs" class="study-tabs glass" aria-label="主导航">
+    <span class="tab-highlight" aria-hidden="true"><canvas class="tab-lens-optics" aria-hidden="true"></canvas></span>
+    <button type="button" data-study-tab="practice" aria-current="page">
+      <span class="study-tab-icon tab-icon-route" aria-hidden="true"></span><span>路线</span>
+    </button>
+    <button type="button" data-study-tab="wrong">
+      <span class="study-tab-icon tab-icon-wrong" aria-hidden="true"></span><span>错题</span>
+    </button>
+    <button type="button" data-study-tab="desk">
+      <span class="study-tab-icon tab-icon-together" aria-hidden="true"><i></i></span><span>一起学</span>
+    </button>
+    <button type="button" data-study-tab="starred">
+      <span class="study-tab-icon tab-icon-starred" aria-hidden="true"></span><span>收藏</span>
+    </button>
+    <button type="button" data-study-tab="profile">
+      <span class="study-tab-icon tab-icon-profile" aria-hidden="true"></span><span>我的</span>
+    </button>
+  </nav>
+<!-- quiz:script:questions -->
+<!-- quiz:script:question-catalog -->
+<!-- quiz:script:cloud-config -->
+<!-- quiz:script:account -->
+<!-- quiz:script:liquid-glass -->
+<!-- quiz:script:sheet-motion -->
+<!-- quiz:script:avatar-transform -->
+<!-- quiz:script:avatar-dialog -->
+<!-- quiz:script:world -->
+<!-- quiz:script:live-study -->
+<!-- quiz:script:social -->
+<!-- quiz:script:voice -->
+<!-- quiz:script:arena-effects -->
+<!-- quiz:script:arena -->
+<!-- quiz:script:progress -->
+<!-- quiz:script:desk -->
+<!-- quiz:script:leaderboard -->
+<!-- quiz:script:meetings -->
+<!-- quiz:script:meeting-timeline -->
+<!-- quiz:script:concept-overrides -->
+<!-- quiz:script:wrong-option-reasons -->
+<!-- quiz:script:question-overrides -->
+<!-- quiz:script:option-notes -->
+<!-- quiz:script:tutor -->
+<!-- quiz:script:development-requests -->
+<!-- quiz:script:practice -->
+<!-- quiz:script:reading-settings -->
+<!-- quiz:script:chapter-picker -->
+<!-- quiz:script:android-update -->
+</body>
+</html>

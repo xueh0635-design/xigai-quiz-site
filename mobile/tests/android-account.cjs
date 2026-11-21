@@ -5,7 +5,7 @@ const test = require("node:test");
 const { runInNewContext } = require("node:vm");
 
 const source = readFileSync(resolve(__dirname, "../account.js"), "utf8");
-const sourceWithMockClient = source.replace(/^import .* from "@supabase\/supabase-js";\r?\n/m, "");
+const sourceWithMockClient = require("./helpers/account-source.cjs").accountSource();
 assert.notEqual(source, sourceWithMockClient);
 
 const user = { id: "local-account-fixture", email: "learner@example.test" };
@@ -67,6 +67,8 @@ async function setup({ registration = { error: null }, signIn = { data: { user }
   runInNewContext(sourceWithMockClient, {
     window,
     document,
+    structuredClone,
+    crypto: require("node:crypto").webcrypto,
     createClient: () => client,
     localStorage: { getItem: (key) => key === `xigai-account-v1:${user.id}` ? JSON.stringify(saved) : null },
     addEventListener() {},

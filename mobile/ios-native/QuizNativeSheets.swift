@@ -25,14 +25,17 @@ enum QuizNativeSheets {
     static func presentAccount(
         on presenter: UIViewController,
         email: String?,
+        recoveryAvailable: Bool,
         perform: @escaping @MainActor (String, String, String) async -> String?,
-        completion: @escaping () -> Void
+        completion: @escaping (String?) -> Void
     ) {
-        let sheet = QuizSheetPresentation<String> { _ in completion() }
+        let sheet = QuizSheetPresentation<String>(completion: completion)
         let content = QuizAccountContent(
             accountEmail: email,
+            recoveryAvailable: recoveryAvailable,
             perform: perform,
             setBusy: sheet.setBusy,
+            recover: { sheet.dismiss($0) },
             close: sheet.cancel
         )
         sheet.present(on: presenter, title: email == nil ? "账号登录" : "学习账号", content: content)
@@ -164,8 +167,10 @@ private struct QuizAccountContent: View {
     }
 
     let accountEmail: String?
+    let recoveryAvailable: Bool
     let perform: @MainActor (String, String, String) async -> String?
     let setBusy: (Bool) -> Void
+    let recover: (String) -> Void
     let close: () -> Void
 
     @State private var registering = false
@@ -227,6 +232,14 @@ private struct QuizAccountContent: View {
                 message = nil
             }
             .buttonStyle(.glass)
+            if recoveryAvailable && !registering {
+                Button("忘记密码") {
+                    password = ""
+                    recover(cleanEmail)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("quiz-account-recovery")
+            }
         }
         .textFieldStyle(.roundedBorder)
         .disabled(busy)

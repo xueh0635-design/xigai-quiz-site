@@ -24,6 +24,25 @@ android {
     }
 }
 
+def provenanceDirectory = layout.buildDirectory.dir("generated/quiz-release-assets")
+android.sourceSets.release.assets.srcDir(provenanceDirectory)
+def stampQuizRelease = tasks.register("stampQuizRelease", Exec) {
+    workingDir rootProject.projectDir
+    outputs.dir(provenanceDirectory)
+    outputs.upToDateWhen { false }
+    commandLine "python3", new File(rootProject.projectDir, "../android-native/stamp_build.py"),
+        "--project", projectDir,
+        "--output", provenanceDirectory.get().asFile,
+        "--version-code", android.defaultConfig.versionCode.toString(),
+        "--version-name", android.defaultConfig.versionName
+    if (providers.gradleProperty("quizSourceCommit").isPresent()) {
+        args "--commit", providers.gradleProperty("quizSourceCommit").get()
+    }
+}
+tasks.configureEach {
+    if (name in ["preReleaseBuild", "mergeReleaseAssets"]) dependsOn(stampQuizRelease)
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
