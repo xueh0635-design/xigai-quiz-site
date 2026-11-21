@@ -24,7 +24,7 @@ function model() {
     deferredResume: null, clearAnswerStreak() {}, resumeQuestion() {}, cancelAutoAdvance() {},
     accountSwitching: false, accountScopeRevision: 0, activeAccountId: null,
     pageContent: { inert: false }, tabDock: { inert: false },
-    guestWrites: Promise.resolve(), guestUnsaved: new Map(), persistenceRevision: 0, sync: null,
+    guestWrites: Promise.resolve(), guestUnsaved: new Map(), persistenceRevision: 0, sync: null, knowledge: null,
     persistence: { stateFromCache: (cache) => structuredClone(cache) },
     selectedBank: "all", selectedTab: "practice", resetLibrary() {}, showTab() {},
     $: (id) => {

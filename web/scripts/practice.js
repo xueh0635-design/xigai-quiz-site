@@ -86,6 +86,7 @@ let autoAdvanceTimer;
 let sync = null;
 let desk = null;
 let meetingTimeline = null;
+let knowledge = null;
 let deferredResume = null;
 let state = guestState();
 let guestStore = null;
@@ -102,6 +103,16 @@ const questionNoteText = $("question-note-text");
 const questionNoteStatus = $("question-note-status");
 const questionNoteSheet = optionalFeature("note sheet", () => window.QuizSheetMotion.attach(questionNoteDialog), { close: () => questionNoteDialog.close() });
 let editingNote = null;
+const inlineQuestionNotes = window.Capacitor?.getPlatform?.() === "ios";
+if (!inlineQuestionNotes) {
+  for (const id of ["quiz-note-open", "history-note-open"]) {
+    const button = $(id);
+    button?.removeAttribute("aria-expanded");
+    button?.setAttribute("aria-haspopup", "dialog");
+    button?.setAttribute("aria-controls", "question-note-dialog");
+  }
+}
+const questionNoteDrafts = new Map();
 
 function guestState() {
   try {
@@ -113,20 +124,58 @@ function guestState() {
   }
 }
 
-function openQuestionNote(id, answer = "") {
+function fitQuestionNote() {
+  if (!inlineQuestionNotes || !questionNoteDialog.open) return;
+  questionNoteText.style.height = "auto";
+  const border = questionNoteText.offsetHeight - questionNoteText.clientHeight;
+  questionNoteText.style.height = `${questionNoteText.scrollHeight + border}px`;
+}
+
+questionNoteText.addEventListener("input", fitQuestionNote);
+window.addEventListener("resize", fitQuestionNote);
+
+function appendQuestionReplies(answer) {
+  const answers = Array.isArray(answer) ? answer : [answer];
+  for (const reply of new Set(answers.filter(Boolean))) {
+    if (!questionNoteText.value.includes(reply)) {
+      const appended = [questionNoteText.value, reply].filter(Boolean).join("\n\n");
+      if (!inlineQuestionNotes && appended.length > questionNoteText.maxLength) {
+        questionNoteStatus.textContent = "这份回答放不进当前笔记。可以先缩短笔记，再填入回答。";
+        continue;
+      }
+      questionNoteText.value = appended;
+    }
+  }
+  if (questionNoteText.value.length > questionNoteText.maxLength) {
+    questionNoteStatus.textContent = `已填入全部回答，保存前请缩短到 ${questionNoteText.maxLength} 字以内。`;
+  }
+}
+
+function openQuestionNote(id, answer = "", trigger = null) {
   const item = byId.get(id);
-  if (!item || questionNoteDialog.open) return;
-  const original = state.notes[id] || "";
+  if (!item) return;
+  if (questionNoteDialog.open) {
+    if (answer && editingNote?.id === id) {
+      appendQuestionReplies(answer);
+      fitQuestionNote();
+    } else if (trigger && !answer) questionNoteSheet.close();
+    return;
+  }
+  if (!trigger && answer) {
+    trigger = $("history-question")?.open ? $("history-note-open") : !$("quiz").hidden ? $("quiz-note-open") : null;
+  }
+  const draft = questionNoteDrafts.get(id);
+  const original = draft?.original ?? (state.notes[id] || "");
+  questionNoteDrafts.delete(id);
   editingNote = { id, original };
   $("question-note-stem").textContent = item.stem;
   questionNoteStatus.textContent = "";
-  questionNoteText.value = original;
-  if (answer && !original.includes(answer)) {
-    const appended = [original, answer].filter(Boolean).join("\n\n");
-    if (appended.length <= questionNoteText.maxLength) questionNoteText.value = appended;
-    else questionNoteStatus.textContent = "这份回答放不进当前笔记。可以先缩短笔记，再填入回答。";
+  questionNoteText.value = draft?.text ?? original;
+  appendQuestionReplies(answer);
+  if (!window.QuizInlinePanel?.open(questionNoteDialog, trigger, fitQuestionNote)) {
+    questionNoteDialog.showModal();
+    fitQuestionNote();
   }
-  questionNoteDialog.showModal();
 }
 
 $("question-note-close").onclick = questionNoteSheet.close;
@@ -134,12 +183,17 @@ questionNoteDialog.addEventListener("close", () => {
   if (questionNoteDialog.open) return;
   editingNote = null;
   questionNoteText.value = "";
+  questionNoteText.style.removeProperty("height");
 });
 $("question-note-form").onsubmit = (event) => {
   event.preventDefault();
   if (!editingNote || questionNoteDialog.hasAttribute("data-sheet-closing")) return;
   const { id, original } = editingNote;
   const value = questionNoteText.value.trim();
+  if (value.length > questionNoteText.maxLength) {
+    questionNoteStatus.textContent = `请缩短到 ${questionNoteText.maxLength} 字以内再保存。`;
+    return;
+  }
   const latest = state.notes[id] || "";
   if (value !== original && value !== latest) {
     if (latest !== original) {
@@ -189,6 +243,7 @@ function setAccountSwitching(value) {
   pageContent.inert = value;
   tabDock.inert = value;
   if (value) cancelAutoAdvance();
+  else knowledge?.accountReady();
 }
 
 function draftSnapshot(session) {
@@ -249,7 +304,7 @@ function view(name) {
   answerMotion = null;
   const wasAnswering = !$("quiz").hidden;
   const answering = name === "quiz";
-  for (const id of ["setup", "quiz", "result", "library", "desk", "profile"]) $(id).hidden = id !== name;
+  for (const id of ["setup", "quiz", "result", "library", "desk", "knowledge", "profile"]) $(id).hidden = id !== name;
   document.documentElement.classList.toggle("question-swipe-active", answering);
   if (nativeNavigation && answering !== wasAnswering) {
     nativeNavigation.postMessage({ kind: "question-swipe", enabled: answering }).catch(() => {});
@@ -257,6 +312,7 @@ function view(name) {
   }
   $("overview").hidden = name !== "setup";
   desk?.show(name === "desk");
+  knowledge?.show(name === "knowledge");
 }
 
 function animatePage(horizontal, vertical, duration = 210) {
@@ -274,6 +330,13 @@ reducedMotion.addEventListener("change", () => {
 });
 
 function showTab(tab, animate = false, fromNative = false) {
+  window.QuizInlinePanel?.closeCurrent(true);
+  // Collections remain reachable from home and profile without a sixth native tab.
+  if (tab === "starred") {
+    showTab("profile", animate, fromNative);
+    openProfileLibrary("starred");
+    return;
+  }
   const previousIndex = tabButtons.findIndex((button) => button.dataset.studyTab === selectedTab);
   if (nativeNavigation && !fromNative && selectedTab !== tab) {
     nativeNavigation.postMessage({ kind: "tab", tab, animate: animate && !reducedMotion.matches }).catch(() => {});
@@ -295,9 +358,9 @@ function showTab(tab, animate = false, fromNative = false) {
   tabDock.style.setProperty("--tab-index", String(index));
   moveTabLens(index, animate);
   const library = libraryTabs[tab];
-  const destination = library ? "library" : { desk: "desk", profile: "profile" }[tab] || "setup";
+  const destination = library ? "library" : { desk: "desk", knowledge: "knowledge", profile: "profile" }[tab] || "setup";
   const changed = index !== previousIndex || $(destination).hidden;
-  $("back").textContent = library ? `返回${library.title}` : "返回路线";
+  $("back").textContent = tab === "knowledge" ? "返回知识" : library ? `返回${library.title}` : "返回路线";
   view(destination);
   updateAvailability();
   window.scrollTo(0, 0);
@@ -321,8 +384,12 @@ function openProfileLibrary(scope) {
 }
 
 function returnFromQuestion() {
+  window.QuizInlinePanel?.closeCurrent(true);
   const session = state.session;
-  if (session?.wrongBookReview && session.routePlan?.chapter) {
+  if (session?.knowledgePractice) {
+    showTab("knowledge", true);
+    knowledge?.selectConcept(session.knowledgeConcept);
+  } else if (session?.wrongBookReview && session.routePlan?.chapter) {
     openChapterReview(session.routePlan.chapter, bankForSession(session));
   } else if (session?.meetingPractice && meetingTimeline) {
     showTab("practice", true);
@@ -1605,7 +1672,10 @@ function renderHistoryAnswer(item) {
   renderDistractorNotes(item, $("history-distractor-notes"), selected);
 }
 
+$("history-question").addEventListener("close", () => window.QuizInlinePanel?.closeCurrent(true));
+
 function showHistoryQuestion(item, practice = false, readOnly = false) {
+  window.QuizInlinePanel?.closeCurrent(true);
   const dialog = $("history-question");
   $("history-question-redo").hidden = readOnly;
   dialog.dataset.questionId = item.id;
@@ -1632,7 +1702,7 @@ function showHistoryQuestion(item, practice = false, readOnly = false) {
   quizTutor.bind($("history-tutor-open"), tutorContext(item, {
     revealed: true, selected: state.history[item.id]?.selected || [],
   }));
-  $("history-note-open").onclick = () => openQuestionNote(item.id);
+  $("history-note-open").onclick = () => openQuestionNote(item.id, "", $("history-note-open"));
   renderStudyEvidence(study, "history-question-");
   meetingTimeline?.link($("meeting-from-history"), item.id);
   const retry = $("history-question-practice");
@@ -1845,7 +1915,7 @@ function updateAvailability() {
     if (row === routeChapter) card.setAttribute("aria-current", "step");
     else card.removeAttribute("aria-current");
   }
-  const resume = !routeResume && (state.session?.meetingPractice || selectedBank !== "common" ||
+  const resume = !routeResume && (state.session?.knowledgePractice || state.session?.meetingPractice || selectedBank !== "common" ||
     bankForSession(state.session) === "common") && canResumeSession();
   $("resume").hidden = !resume;
   if (resume) {
@@ -1856,13 +1926,14 @@ function updateAvailability() {
     const label = kind === "test" ? " · 整章测验" : kind === "review" ? " · 错题复练" : "";
     $("resume-detail").textContent = chapter
       ? `${chapter} · ${bankLabels[bank]}${label}`
-      : `${session.meetingPractice ? "会议专题" : current().chapter} · ${session.index + 1} / ${session.ids.length}`;
+      : `${session.knowledgePractice ? "知识 · " + (session.knowledgeTitle || "关联练习") : session.meetingPractice ? "会议专题" : current().chapter} · ${session.index + 1} / ${session.ids.length}`;
   }
   if (!$("library").hidden) renderLibrary();
   if (!$("quiz").hidden && current()) renderQuestionFlags(current().id);
   const historyDialog = $("history-question");
   if (historyDialog.open) renderHistoryAnswer(byId.get(historyDialog.dataset.questionId));
   window.QuizChapterPicker?.refresh();
+  knowledge?.refresh();
 }
 
 function randomId() {
@@ -1913,10 +1984,19 @@ function current() {
   return byId.get(state.session?.ids?.[state.session.index]);
 }
 
+function keepQuestionNoteDraft() {
+  if (editingNote && questionNoteDialog.open && questionNoteDialog.hasAttribute("data-inline") &&
+      questionNoteText.value !== editingNote.original) {
+    questionNoteDrafts.set(editingNote.id, { original: editingNote.original, text: questionNoteText.value });
+  }
+}
+
 function goToQuestion(index, { swipe = false, direction, focusQuestion = true } = {}) {
   if (accountSwitching) return;
   const session = state.session;
   if (!byId.has(session?.ids[index]) || index === session.index) return;
+  keepQuestionNoteDraft();
+  window.QuizInlinePanel?.closeCurrent(true);
   const travel = direction ?? Math.sign(index - session.index);
   const item = current();
   const drafts = session.drafts ??= {};
@@ -1936,7 +2016,7 @@ function goToQuestion(index, { swipe = false, direction, focusQuestion = true } 
 
 function checksOnTap(item) {
   const session = state.session;
-  return session.mode === "practice" && (session.quickChapter || session.meetingPractice || session.wrongBookReview ||
+  return session.mode === "practice" && (session.knowledgePractice || session.quickChapter || session.meetingPractice || session.wrongBookReview ||
     isAdventureSession(session) || session.routePlan?.kind === "review") &&
     (item.type === "单选" || item.type === "判断");
 }
@@ -2104,7 +2184,8 @@ function renderQuestionActions(session, item, result, { answered, total }) {
 
 function previewQuestionPosition(session, number) {
   const total = session.ids.length;
-  const chapter = session.meetingPractice ? "会议专题" : byId.get(session.ids[number - 1])?.chapter;
+  const chapter = session.knowledgePractice ? "知识 · " + (session.knowledgeTitle || "关联练习")
+    : session.meetingPractice ? "会议专题" : byId.get(session.ids[number - 1])?.chapter;
   const label = `第 ${number} 题，共 ${total} 题`;
   const slider = $("question-position");
   slider.setAttribute("aria-valuetext", label);
@@ -2130,6 +2211,7 @@ function renderQuestion() {
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
+  if (session.knowledgePractice) $("back").textContent = "返回知识";
   if (session.wrongBookReview) $("back").textContent = "返回本章错题";
   const slider = $("question-position");
   slider.disabled = total < 2;
@@ -2197,7 +2279,7 @@ function renderQuestion() {
   }));
   const noteButton = $("quiz-note-open");
   noteButton.hidden = testing;
-  noteButton.onclick = testing ? null : () => openQuestionNote(item.id);
+  noteButton.onclick = testing ? null : () => openQuestionNote(item.id, "", noteButton);
   $("study-note").hidden = !study;
   if (study) {
     $("explanation").textContent = study.explanation;
@@ -2205,7 +2287,7 @@ function renderQuestion() {
     $("memory").parentElement.hidden = !study.memory;
     renderStudyEvidence(study);
   }
-  renderRelated(showAnswer && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
+  renderRelated(showAnswer && !session.knowledgePractice && bank !== "common" && !chapterForSession(session) ? item.related || [] : [], session);
   document.querySelector(".keys").textContent = fill ? "方向键翻题"
     : testing ? "方向键翻题，可回到前面修改答案"
     : memoryMode
@@ -2371,8 +2453,11 @@ function moveQuestion(direction, swipe = false, skipShared = false) {
   const destination = direction > 0 && session.wrongBookReview && wrongBookFinished(session)
     ? session.ids.length : questionDestination(session, direction, skipShared);
   if (destination === null) return;
-  if (destination === session.ids.length) completeRound();
-  else goToQuestion(destination, { swipe, direction });
+  if (destination === session.ids.length) {
+    keepQuestionNoteDraft();
+    window.QuizInlinePanel?.closeCurrent(true);
+    completeRound();
+  } else goToQuestion(destination, { swipe, direction });
 }
 
 function cancelAutoAdvance() {
@@ -2434,7 +2519,8 @@ function completeRound(changes = []) {
   retry.disabled = !retryCount;
   retry.textContent = route ? `复练 ${retryCount} 道错题` : "重练本次错题";
   retry.onclick = route ? () => startWrongChapter(chapter, bank)
-    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice });
+    : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice,
+      knowledgePractice: session.knowledgePractice, knowledgeConcept: session.knowledgeConcept, knowledgeTitle: session.knowledgeTitle });
   const review = $("result-chapter-review");
   review.hidden = !route || wrongBook;
   review.textContent = retryCount ? "查看本章错题" : "查看本章进度";
@@ -2461,7 +2547,7 @@ function completeRound(changes = []) {
   $("review-round").textContent = wrongBook ? "回看本轮" : testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
   const library = libraryTabs[profileLibrary || selectedTab];
   $("again").textContent = wrongBook ? "返回本章错题"
-    : session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
+    : session.knowledgePractice ? "返回知识" : session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
   $("again").onclick = returnFromQuestion;
   view("result");
   window.scrollTo(0, 0);
@@ -2583,7 +2669,7 @@ document.addEventListener("visibilitychange", () => {
 function canSwipeQuestion() {
   // Leave one-finger pans to the browser while a reader magnifies the page.
   return (window.visualViewport?.scale ?? 1) <= 1 && !accountSwitching &&
-    !$("quiz").hidden && current() && !document.querySelector("dialog[open]");
+    !$("quiz").hidden && current() && !document.querySelector("dialog[open]:not([data-inline])");
 }
 
 function syncNativeQuestionPosition() {
@@ -2648,8 +2734,11 @@ function connectQuestionSwipe() {
 
   document.addEventListener("touchstart", (event) => {
     if (gesture) clearGesture();
+    const field = event.target.closest?.("input, textarea, select, [contenteditable]");
+    const readingNote = field === questionNoteText && questionNoteDialog.hasAttribute("data-inline") &&
+      document.activeElement !== questionNoteText;
     if (!canSwipeQuestion() || event.touches.length !== 1 ||
-        event.target.closest?.("input, textarea, select, [contenteditable]") ||
+        (field && !readingNote) ||
         window.getSelection()?.toString()) return;
     const touch = event.touches[0];
     const session = state.session;
@@ -3139,6 +3228,21 @@ meetingTimeline = optionalFeature("meeting timeline", () => window.QuizMeetingTi
     start(shuffled(ids), "practice", { meetingPractice: true });
   },
 }), null);
+knowledge = optionalFeature("knowledge graph", () => window.QuizKnowledge?.connect({
+  questions,
+  historyEntry,
+  inWrongLibrary,
+  accountScope: () => activeAccountId || "guest",
+  practiceQuestions(ids, concept) {
+    if (accountSwitching) return;
+    const unique = [...new Set(ids.filter((id) => byId.has(id) && requiresAnswer(id)).map(sharedQuestionId))];
+    if (!unique.length) return;
+    showTab("knowledge");
+    start(shuffled(unique), "practice", { bankScope: "all", knowledgePractice: true,
+      knowledgeConcept: concept.id, knowledgeTitle: concept.title });
+  },
+}), null);
+if (!knowledge) $("knowledge-count").textContent = "知识图谱暂时未能加载，其他练习功能仍可使用。";
 desk = optionalFeature("study desk", () => window.QuizDesk?.connect({
   byId,
   chapters: [...chapterPools].filter(([, pool]) => pool.filter((item) => item.type !== "填空").length >= 10).map(([chapter]) => chapter),
@@ -3158,6 +3262,8 @@ sync = optionalFeature("account", () => window.QuizAccount?.connect({
   accountChanged(account) {
     accountScopeRevision++;
     activeAccountId = account;
+    questionNoteDrafts.clear();
+    knowledge?.reset();
     $("wrong-share-dialog").close();
     $("wrong-share-code").value = "";
     setAccountSwitching(true);

@@ -138,6 +138,7 @@
 #question-note-form { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
 #question-note-form button { align-self: end; min-height: 44px; }
 #question-note-text { max-height: none; flex: 0 1 auto; width: 100%; resize: none; }
+[data-inline] #question-note-text { flex: 0 0 auto; overflow: hidden; }
 #question-note-status { margin: 0; color: var(--muted); font-size: .85rem; }
 #question-note-status:empty { display: none; }
 #quiz-tutor.account-dialog.glass {

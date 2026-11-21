@@ -22,6 +22,7 @@
   <!-- quiz:style:12 -->
   <!-- quiz:style:13 -->
   <!-- quiz:style:14 -->
+  <!-- quiz:style:15 -->
 </head>
 <body>
   <header class="top">
@@ -276,8 +277,9 @@
           <div id="option-note-tools" class="option-note-tools" hidden>
             <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button" title="也可长按任一选项打开">选项详解</button>
           </div>
-          <button id="quiz-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button" hidden>本题笔记</button>
+          <button id="quiz-note-open" class="quiz-tutor-entry" aria-expanded="false" aria-controls="question-inline-panel" type="button" hidden>本题笔记</button>
         </div>
+      <div id="question-inline-panel" class="question-inline-panel" hidden></div>
       </div>
       <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
         <p id="feedback" role="status" tabindex="-1"></p>
@@ -432,8 +434,9 @@
           <span class="tutor-mark" aria-hidden="true"></span>
           <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>追问解析</small></span>
         </button>
-        <button id="history-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button">本题笔记</button>
+        <button id="history-note-open" class="quiz-tutor-entry" aria-expanded="false" aria-controls="history-inline-panel" type="button">本题笔记</button>
       </div>
+      <div id="history-inline-panel" class="question-inline-panel" hidden></div>
       <button id="history-question-practice" type="button" class="primary" hidden>复练此题</button>
     </dialog>
     <dialog id="option-notes-dialog" class="account-dialog glass quiz-sheet option-notes-sheet" aria-labelledby="option-notes-heading">
@@ -1016,6 +1019,55 @@
         </section>
       </div>
     </section>
+    <section id="knowledge" class="panel tab-page knowledge-page" hidden aria-labelledby="knowledge-heading">
+      <div class="knowledge-heading">
+        <div><p class="knowledge-eyebrow">把错题串成知识</p><h2 id="knowledge-heading" tabindex="-1">知识图谱</h2></div>
+        <span class="knowledge-heading-mark" aria-hidden="true">✧</span>
+      </div>
+      <p class="knowledge-intro">看清考点的联系，记住关键，再用关联题检验。</p>
+      <div id="knowledge-summary" class="knowledge-summary" aria-label="当前账号的知识概览">
+        <div><strong id="knowledge-wrong">0</strong><span>当前答错</span></div>
+        <div><strong id="knowledge-points">0</strong><span>关联考点</span></div>
+        <div><strong id="knowledge-retained">0</strong><span>手动保留</span></div>
+      </div>
+      <p id="knowledge-count" class="knowledge-caption" role="status">正在整理知识点…</p>
+      <div class="knowledge-views" role="group" aria-label="知识学习方式">
+        <button type="button" data-knowledge-view="graph" aria-pressed="true">图谱</button>
+        <button type="button" data-knowledge-view="cards" aria-pressed="false">背诵卡片</button>
+        <button type="button" data-knowledge-view="analysis" aria-pressed="false">薄弱分析</button>
+      </div>
+      <div class="knowledge-filters">
+        <label class="knowledge-search-label"><span class="knowledge-sr-only">搜索知识点或题干</span><input id="knowledge-search" type="search" placeholder="搜索知识点或题干" maxlength="120" autocomplete="off"></label>
+        <label><span class="knowledge-sr-only">知识范围</span><select id="knowledge-scope"><option value="wrong">我的错题</option><option value="all">全部考点</option></select></label>
+        <label><span class="knowledge-sr-only">知识章节</span><select id="knowledge-chapter"><option value="">全部章节</option></select></label>
+      </div>
+      <p id="knowledge-filter-count" class="knowledge-caption"></p>
+      <div id="knowledge-empty" class="knowledge-empty" hidden>
+        <h3 id="knowledge-empty-title">还没有需要复习的错题</h3>
+        <p id="knowledge-empty-text">练习后，这里会按当前错题整理考点。也可以先浏览知识卡片。</p>
+        <button id="knowledge-reset-filters" type="button">浏览全部考点</button>
+      </div>
+      <div id="knowledge-graph-view">
+        <div class="knowledge-graph-tools">
+          <div role="group" aria-label="图谱范围"><button id="knowledge-neighbors" type="button" aria-pressed="false">只看关联</button><button id="knowledge-list-toggle" type="button" aria-pressed="false">列表</button></div>
+          <div role="group" aria-label="图谱缩放"><button id="knowledge-zoom-out" type="button" aria-label="缩小图谱">−</button><button id="knowledge-zoom-in" type="button" aria-label="放大图谱">＋</button><button id="knowledge-fit" type="button">居中</button></div>
+        </div>
+        <div class="knowledge-workspace">
+          <div class="knowledge-map-column">
+            <div id="knowledge-map" class="knowledge-map">
+              <canvas id="knowledge-canvas" tabindex="0" role="img" aria-label="可交互的知识图谱。方向键选择考点，加减键缩放；也可切换列表浏览。"></canvas>
+              <p id="knowledge-map-hint" class="knowledge-map-hint" aria-hidden="true">拖动节点 · 双指缩放 · 点击查看</p>
+            </div>
+            <div id="knowledge-list" class="knowledge-list" aria-label="知识点列表" hidden></div>
+            <p class="knowledge-caption">节点越大，关联错题越多；连线表示知识之间的联系。同一题可能关联多个考点。</p>
+          </div>
+          <article id="knowledge-detail" class="knowledge-detail" aria-label="选中知识点"></article>
+        </div>
+      </div>
+      <div id="knowledge-cards-view" class="knowledge-cards" hidden></div>
+      <div id="knowledge-analysis-view" class="knowledge-analysis" hidden></div>
+      <p id="knowledge-message" class="knowledge-caption" role="status" aria-live="polite"></p>
+    </section>
     <section id="profile" class="panel tab-page" hidden aria-labelledby="profile-heading">
       <div class="tab-page-heading">
         <h2 id="profile-heading" tabindex="-1">我的旅程</h2>
@@ -1111,11 +1163,11 @@
     <button type="button" data-study-tab="wrong">
       <span class="study-tab-icon tab-icon-wrong" aria-hidden="true"></span><span>错题</span>
     </button>
+    <button type="button" data-study-tab="knowledge">
+      <span class="study-tab-icon tab-icon-knowledge" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 7 21 10 12 22 7 7"/><circle cx="7" cy="7" r="3" fill="var(--paper)"/><circle cx="21" cy="10" r="3" fill="var(--paper)"/><circle cx="12" cy="22" r="3" fill="var(--paper)"/></svg></span><span>知识</span>
+    </button>
     <button type="button" data-study-tab="desk">
       <span class="study-tab-icon tab-icon-together" aria-hidden="true"><i></i></span><span>一起学</span>
-    </button>
-    <button type="button" data-study-tab="starred">
-      <span class="study-tab-icon tab-icon-starred" aria-hidden="true"></span><span>收藏</span>
     </button>
     <button type="button" data-study-tab="profile">
       <span class="study-tab-icon tab-icon-profile" aria-hidden="true"></span><span>我的</span>
@@ -1146,6 +1198,9 @@
 <!-- quiz:script:option-notes -->
 <!-- quiz:script:tutor -->
 <!-- quiz:script:development-requests -->
+<!-- quiz:script:knowledge-concepts -->
+<!-- quiz:script:knowledge-model -->
+<!-- quiz:script:knowledge -->
 <!-- quiz:script:practice -->
 <!-- quiz:script:reading-settings -->
 <!-- quiz:script:chapter-picker -->
