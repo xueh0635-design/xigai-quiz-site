@@ -195,3 +195,120 @@ test("wrong-book codes import a separate persistent practice set", async (t) => 
   assert.deepEqual(await recipient.evaluate(() => state.session.ids), [ids[0]]);
   assert.deepEqual(await recipient.evaluate(() => Object.keys(state.history)), []);
 });
+
+test("chapter review narrows each round and keeps its own progress for the selected bank", async (t) => {
+  const page = await (await context(t)).newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(origin + "/docs/index.html");
+  await ready(page);
+  const fixture = await page.evaluate(async () => {
+    const chapter = "第一章";
+    const bank = "sizheng";
+    const pool = chapterQuestions(chapter, bank).filter(({ id }) => requiresAnswer(id));
+    const ids = pool.filter(({ type }) => type === "单选").slice(0, 4).map(({ id }) => id);
+    const sameBank = chapterQuestions("第二章", bank).find(({ id, type }) => requiresAnswer(id) && type === "单选").id;
+    const keys = new Set(pool.map(({ id }) => sharedQuestionId(id)));
+    const otherBank = chapterQuestions(chapter, "xuexitong").find(({ id }) => requiresAnswer(id) && !keys.has(sharedQuestionId(id))).id;
+    const later = pool.find(({ id, type }) => type === "单选" && !ids.includes(id)).id;
+    await guestStore.commit([
+      ...pool.map(({ id, answer }) => ["history", sharedQuestionId(id), { wrong: ids.includes(id), selected: answer }]),
+      ["history", sharedQuestionId(otherBank), { wrong: true }],
+      ["history", sharedQuestionId(sameBank), { wrong: true }],
+      ["star", sameBank, true],
+      ["note", sameBank, "保留的笔记"],
+    ]);
+    await restoreGuestState();
+    return { chapter, bank, ids, sameBank, otherBank, later };
+  });
+  const bank = page.locator("#wrong-bank");
+  const chapter = page.locator(`[data-review-chapter="${fixture.chapter}"]`);
+  const review = page.locator("#library-start");
+  const retry = page.locator("#retry");
+  const back = page.locator("#back");
+  const openWrongBook = async () => {
+    await page.locator('#mobile-tabs [data-study-tab="wrong"]').click();
+    await bank.selectOption(fixture.bank);
+  };
+  const roundIds = () => page.evaluate(() => state.session.ids);
+
+  await openWrongBook();
+  await page.locator("#wrong-book-review").click();
+  assert.deepEqual(new Set(await roundIds()), new Set([...fixture.ids, fixture.sameBank]));
+  await back.click();
+  assert.equal(await bank.inputValue(), fixture.bank);
+  await chapter.click();
+  assert.match(await review.textContent(), /重刷本章 4 道/);
+  await review.click();
+  assert.deepEqual(await roundIds(), fixture.ids);
+  assert.match(await page.locator("#quiz-completion").textContent(), /第 1 轮 · 已答 0 \/ 4/);
+
+  const answer = (correct) => page.evaluate((right) => {
+    const item = current();
+    const letters = right ? item.answer : [Object.keys(item.options).find((letter) => !item.answer.includes(letter))];
+    for (const letter of letters) choose(letter);
+    if (!questionResult(state.session, item.id)) document.getElementById("submit").click();
+    moveQuestion(1);
+  }, correct);
+  await answer(true);
+  await back.click();
+  assert.match(await review.textContent(), /继续第 1 轮（1\/4）/);
+  await page.locator("#library-back").click();
+  await bank.selectOption("xuexitong");
+  await chapter.click();
+  await review.click();
+  assert.deepEqual(await roundIds(), [fixture.otherBank]);
+  await back.click();
+  await page.locator("#library-back").click();
+  await bank.selectOption(fixture.bank);
+  await chapter.click();
+  await review.click();
+  assert.equal(await page.evaluate(() => current().id), fixture.ids[1]);
+  await answer(false);
+  await answer(true);
+  await answer(false);
+  assert.match(await page.locator("#score").textContent(), /答对 2 \/ 4 道 · 剩 2 道错题/);
+  assert.match(await retry.textContent(), /开始第 2 轮（2 道）/);
+
+  // An unrelated answer and reload must not restart the chapter review.
+  await page.locator("#again").click();
+  await page.evaluate((id) => {
+    start([id], "practice");
+    const item = current();
+    choose(Object.keys(item.options).find((letter) => !item.answer.includes(letter)));
+    submit();
+    return guestWrites;
+  }, fixture.later);
+  await page.reload();
+  await ready(page);
+  await openWrongBook();
+  await chapter.click();
+  assert.match(await review.textContent(), /开始第 2 轮（2 道）/);
+  await review.click();
+  assert.deepEqual(await roundIds(), [fixture.ids[1], fixture.ids[3]]);
+  await answer(false);
+  await answer(true);
+  assert.match(await retry.textContent(), /开始第 3 轮（1 道）/);
+  await retry.click();
+  assert.deepEqual(await roundIds(), [fixture.ids[1]]);
+  await answer(true);
+  assert.equal(await page.locator("#result-title").textContent(), "本轮错题已清空");
+  assert.equal(await retry.isVisible(), false);
+  await page.locator("#again").click();
+  assert.match(await review.textContent(), /重刷本章 1 道/);
+  await review.click();
+  assert.deepEqual(await roundIds(), [fixture.later]);
+  await answer(true);
+  assert.equal(await page.locator("#result-title").textContent(), `${fixture.chapter} · 已通过`);
+  assert.equal(await page.locator("#result").getAttribute("data-review-cleared"), "true");
+  await page.locator("#again").click();
+  assert.match(await page.locator('#chapter-study-steps [data-status="passed"]').last().textContent(), /错题复练已通过/);
+  assert.equal(await review.isVisible(), false);
+  await page.locator("#library-back").click();
+  assert.equal(await chapter.getAttribute("data-passed"), "true");
+  assert.deepEqual(await page.evaluate(({ sameBank, otherBank }) => ({
+    otherWrong: inWrongLibrary(otherBank), otherChapterWrong: inWrongLibrary(sameBank),
+    star: isStarred(sameBank), note: state.notes[sameBank],
+  }), fixture), { otherWrong: true, otherChapterWrong: true, star: true, note: "保留的笔记" });
+  assert.deepEqual(errors, []);
+});

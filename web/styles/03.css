@@ -39,6 +39,17 @@
   color: var(--world-bad-ink);
 }
 
+#library-list .chapter-review-row[data-passed="true"] {
+  border-color: var(--world-good-ink);
+}
+
+.chapter-review-row[data-passed="true"] .chapter-review-count {
+  background: var(--world-good);
+  color: var(--world-good-ink);
+}
+
+#result[data-review-cleared="true"] #result-title { color: var(--world-good-ink); }
+
 .chapter-study-status {
   margin: 0 0 14px;
   padding: 11px 12px;
