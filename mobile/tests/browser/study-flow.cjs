@@ -211,8 +211,8 @@ test("every chapter starts its own first round and only its missed questions adv
     const keys = new Set(pool.map(({ id }) => sharedQuestionId(id)));
     const otherBank = chapterQuestions(chapter, "xuexitong").find(({ id }) => requiresAnswer(id) && !keys.has(sharedQuestionId(id))).id;
     const later = pool.find(({ id, type }) => type === "单选" && !ids.includes(id)).id;
-    const oldReview = { sid: "wrong-book:all:", ids: [later, ...ids, sameBank], mode: "practice", index: 1,
-      results: { [later]: { correct: true, selected: byId.get(later).answer } }, selected: [],
+    const oldReview = { sid: "wrong-book:all:", ids: [...ids, sameBank], mode: "practice", index: 1,
+      results: {}, selected: [],
       bankScope: "all", wrongBookReview: true, wrongBookRound: 1 };
     await guestStore.commit([
       ...pool.map(({ id, answer }) => ["history", sharedQuestionId(id), { wrong: ids.includes(id), selected: answer }]),
@@ -306,7 +306,11 @@ test("every chapter starts its own first round and only its missed questions adv
   await answer(true);
   assert.equal(await page.locator("#result-title").textContent(), "本轮错题已清空");
   assert.equal(await retry.isVisible(), false);
+  assert.deepEqual(await page.locator("#result-wrong-history li").allTextContents(),
+    ["原始错题 4 道", "第 1 轮后剩 2 道", "第 2 轮后剩 1 道", "第 3 轮后剩 0 道"]);
   await page.locator("#again").click();
+  assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(),
+    ["原始错题 4 道", "第 1 轮后剩 2 道", "第 2 轮后剩 1 道", "第 3 轮后剩 0 道"]);
   assert.match(await review.textContent(), /开始第 1 轮（1 道）/);
   await review.click();
   assert.deepEqual(await roundIds(), [fixture.later]);
@@ -325,4 +329,40 @@ test("every chapter starts its own first round and only its missed questions adv
     star: isStarred(sameBank), note: state.notes[sameBank],
   }), fixture), { otherWrong: true, otherChapterWrong: true, star: true, note: "保留的笔记" });
   assert.deepEqual(errors, []);
+});
+
+test("the original whole-book snapshot restores chapter questions and already graded first-round answers", async (t) => {
+  const page = await (await context(t)).newPage();
+  await page.goto(origin + "/docs/index.html");
+  await ready(page);
+  const fixture = await page.evaluate(async () => {
+    const chapter = "新增（必刷）";
+    const ids = chapterQuestions(chapter, "all").filter(({ type }) => type === "单选").slice(0, 4).map(({ id }) => id);
+    const another = chapterQuestions("导论", "all").find(({ id }) => requiresAnswer(id)).id;
+    const sid = crypto.randomUUID();
+    const [correct, wrong] = ids;
+    const draft = { sid, ids: [another, ...ids], mode: "practice", index: 3, selected: [], wrongBookReview: true,
+      results: { [correct]: { correct: true, selected: byId.get(correct).answer }, [wrong]: { correct: false, selected: ["B"] } } };
+    await guestStore.commit([
+      ...[...ids, another].map((id) => ["history", sharedQuestionId(id), { wrong: id !== correct }]),
+      ["draft", sid, draft],
+    ]);
+    await restoreGuestState();
+    showTab("wrong");
+    return { chapter, ids, correct, wrong };
+  });
+  const card = page.locator(`[data-review-chapter="${fixture.chapter}"]`);
+  assert.match(await page.locator("#library-count").textContent(), /原始 5 道 · 当前 4 道/);
+  assert.match(await card.locator(".chapter-review-start").textContent(), /继续第 1 轮（2\/4）/);
+  await card.locator(".chapter-review-start").click();
+  assert.deepEqual(await page.evaluate(() => state.session.ids), fixture.ids);
+  assert.equal(await page.evaluate(() => state.session.ids[state.session.index]), fixture.ids[2]);
+  assert.deepEqual(await page.evaluate(({ correct, wrong }) => [state.session.results[correct].correct, state.session.results[wrong].correct], fixture),
+    [true, false]);
+  await page.locator("#back").click();
+  assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(), ["原始错题 4 道"]);
+  await page.locator("#wrong-restart-original").click();
+  assert.deepEqual(await page.evaluate(() => state.session.ids), fixture.ids);
+  assert.deepEqual(await page.evaluate(() => state.session.results), {});
+  assert.equal(await page.evaluate((id) => historyEntry(id).wrong, fixture.correct), false);
 });

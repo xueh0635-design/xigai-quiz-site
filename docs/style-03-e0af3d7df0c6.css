@@ -90,6 +90,30 @@
 .chapter-study-steps [data-status="passed"] strong { color: var(--world-good-ink); }
 #chapter-study-last-test { margin: 10px 0 0; text-align: center; color: var(--world-muted); font-size: .82rem; }
 
+.wrong-round-history { margin: 0 0 14px; }
+
+.wrong-round-history ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wrong-round-history li {
+  padding: 5px 9px;
+  border: 1px solid var(--world-edge);
+  border-radius: 8px;
+  color: var(--world-muted);
+  font-size: .8rem;
+}
+
+#result[data-review-cleared="true"] .wrong-round-history li:last-child {
+  background: var(--world-good);
+  color: var(--world-good-ink);
+}
+
 #library:has(#chapter-study-status:not([hidden])) .library-actions button {
   min-height: 44px;
   padding-inline: 12px;

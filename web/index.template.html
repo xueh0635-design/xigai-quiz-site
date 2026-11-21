@@ -318,6 +318,9 @@
     <section id="result" class="panel" hidden aria-labelledby="result-title">
       <h2 id="result-title">本次练习完成</h2>
       <p id="score"></p>
+      <section id="result-wrong-history" class="wrong-round-history" aria-label="错题重刷记录" hidden>
+        <ol></ol>
+      </section>
       <p id="chapter-result-next-step" class="chapter-result-next-step" hidden></p>
       <div id="adventure-result" class="adventure-result-hero" hidden>
         <img src="assets/art-42ebdbb61e06f13f.svg" width="360" height="180" alt="">
@@ -365,8 +368,12 @@
         <div id="chapter-study-steps" class="chapter-study-steps"></div>
         <p id="chapter-study-last-test" hidden></p>
       </div>
+      <section id="chapter-wrong-history" class="wrong-round-history" aria-label="错题重刷记录" hidden>
+        <ol></ol>
+      </section>
       <div class="actions library-actions">
         <button id="library-start" class="primary" type="button">开始练习</button>
+        <button id="wrong-restart-original" type="button" hidden>重刷本章原始错题</button>
         <button id="library-configure" type="button">自定义组卷</button>
         <button id="wrong-continue" type="button" hidden>练剩余题</button>
         <button id="wrong-test" type="button" hidden>整章测验</button>
