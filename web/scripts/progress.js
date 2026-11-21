@@ -121,6 +121,7 @@
     let access = null;
     let opener = null;
     let pending = null;
+    let refreshPending = false;
     let tests = [];
 
     function showView(view) {
@@ -152,7 +153,9 @@
         .map((name) => activityBar(name === "未分类" ? name : name + "题", typeData.get(name), owner)));
       tests = data.tests[owner];
       const scopes = Object.keys(scopeNames).filter((scope) => tests.some((entry) => entry.bank === scope));
+      const selectedBank = get("test-bank").value;
       get("test-bank").replaceChildren(...scopes.map((scope) => new Option(scopeNames[scope], scope)));
+      if (scopes.includes(selectedBank)) get("test-bank").value = selectedBank;
       get("test-filter").hidden = !scopes.length;
       get("tests-empty").hidden = Boolean(scopes.length);
       showTestBars();
@@ -165,9 +168,8 @@
       const owner = opener.dataset.deskProgressOwner;
       const request = {};
       pending = request;
-      get("data").hidden = true;
       get("retry").hidden = true;
-      get("status").textContent = "正在加载学习进度…";
+      if (get("data").hidden) get("status").textContent = "正在加载学习进度…";
       try {
         const admin = access === "admin";
         const { data, error } = await rpc(admin ? "quiz_pk_admin_progress" : "quiz_pk_progress_details");
@@ -184,7 +186,13 @@
         get("status").textContent = "暂时无法加载学习进度。";
         get("retry").hidden = false;
       } finally {
-        if (pending === request) pending = null;
+        if (pending === request) {
+          pending = null;
+          if (refreshPending) {
+            refreshPending = false;
+            load();
+          }
+        }
       }
     }
 
@@ -215,16 +223,22 @@
       if (dialog.open) return;
       opener = null;
       pending = null;
+      refreshPending = false;
       tests = [];
       get("data").hidden = true;
       for (const id of ["metrics", "days", "chapter-bars", "type-bars", "test-bars"]) get(id).replaceChildren();
     });
 
     return {
+      refresh() {
+        if (pending) refreshPending = true;
+        else load();
+      },
       setAccess(next) {
         if (access === next) return;
         access = next;
         pending = null;
+        refreshPending = false;
         if (dialog.open) dialog.close();
       },
     };

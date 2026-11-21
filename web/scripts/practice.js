@@ -2607,6 +2607,7 @@ desk = optionalFeature("study desk", () => window.QuizDesk?.connect({
   byId,
   chapters: [...chapterPools].filter(([, pool]) => pool.filter((item) => item.type !== "填空").length >= 10).map(([chapter]) => chapter),
   rpc: (name, params) => sync.deskRpc(name, params),
+  subscribeProgress: (listener) => sync?.deskProgressSubscribe(listener),
   subscribeArena: (pairId, listener) => sync?.arenaSubscribe(pairId, listener),
   avatar: (action, input) => sync.deskAvatar(action, input),
   login: () => $("account-button").click(),
@@ -2630,6 +2631,7 @@ sync = optionalFeature("account", () => window.QuizAccount?.connect({
     quizTutor.accountChanged(account);
     developmentRequests.accountChanged(account);
   },
+  progressUploaded: () => desk?.progressChanged(),
   receive: receiveStudyState,
   guest: restoreGuestState,
 }), null);

@@ -19,6 +19,7 @@ const version = createHash('sha256').update(content).digest('hex');
 export async function database() {
   const db = new PGlite();
   await db.exec(`
+    create publication supabase_realtime;
     create role anon nologin;
     create role authenticated nologin;
     create role service_role nologin bypassrls;

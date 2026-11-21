@@ -7,8 +7,8 @@ android {
         applicationId "io.github.xueh0635.xigai"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode providers.gradleProperty("quizVersionCode").getOrElse("53").toInteger()
-        versionName providers.gradleProperty("quizVersionName").getOrElse("1.1.51")
+        versionCode providers.gradleProperty("quizVersionCode").getOrElse("54").toInteger()
+        versionName providers.gradleProperty("quizVersionName").getOrElse("1.1.52")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

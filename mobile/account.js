@@ -183,13 +183,14 @@ function connect(callbacks) {
       const buffer = unsaved.get(accountId);
       const entries = [...buffer.entries()];
       if (!entries.length) return target.durable;
-      const saved = await target.commit(entries.flatMap(([, values]) => values));
+      const progressChanges = entries.flatMap(([, values]) => values);
+      const saved = await target.commit(progressChanges);
       for (const [key] of entries) buffer.delete(key);
       if (generation === epoch) {
         cache = saved;
         storageFailed = !target.durable;
         if (storageFailed) accountLabel().textContent = "本机未能持久保存，请保持页面打开并联网同步";
-        schedule();
+        schedule(progressChanges.some(([kind]) => kind === "history"));
       }
       return target.durable;
     }).catch(() => {
@@ -203,13 +204,14 @@ function connect(callbacks) {
     return write;
   }
 
-  function schedule() {
+  function schedule(immediate = false) {
     if (inFlight) {
       refreshAgain = true;
       return;
     }
     clearTimeout(scheduled);
-    scheduled = setTimeout(refresh, 550);
+    if (immediate) refresh();
+    else scheduled = setTimeout(refresh, 550);
   }
 
   function refresh() {
@@ -273,6 +275,8 @@ function connect(callbacks) {
           if (!sameAccount()) return;
           if (response.error) throw response.error;
           cache = await target.accept({ ackChanges: batch.map((row) => row.change_id) });
+          if (!sameAccount()) return;
+          if (batch.some(({ kind }) => kind === "history" || kind === "session")) callbacks.progressUploaded?.();
         }
       } catch {
         if (!sameAccount()) return;
@@ -334,6 +338,8 @@ function connect(callbacks) {
       cache = await target.accept({ rows: data.rows, attempts: data.attemptRows,
         ackChanges: data.ack.changes, ackAttempts: data.ack.attempts, cursor: data.next_cursor, v2RetryAt: 0 });
       if (!sameAccount()) return;
+      if (data.ack.attempts.length ||
+          changes[page]?.some(({ kind }) => kind === "history" || kind === "session")) callbacks.progressUploaded?.();
       more = data.has_more;
       page++;
     }
@@ -598,6 +604,21 @@ function connect(callbacks) {
     const result = await client.rpc(name, params);
     return epoch === generation ? result : { error: { message: "pk_auth_required" } };
   }
+  function deskProgressSubscribe(listener) {
+    if (!actor) return null;
+    const epoch = generation;
+    let listening = true;
+    const notify = () => { if (listening && epoch === generation) listener(); };
+    const channel = client.channel("quiz-desk-progress-" + randomId());
+    channel.on("postgres_changes", {
+      event: "*", schema: "public", table: "quiz_desk_progress_ticks",
+    }, notify);
+    channel.subscribe((status) => { if (status === "SUBSCRIBED") notify(); });
+    return () => {
+      listening = false;
+      client.removeChannel(channel).catch(() => {});
+    };
+  }
   function arenaSubscribe(pairId, listener) {
     if (!actor) return null;
     const epoch = generation;
@@ -649,7 +670,7 @@ function connect(callbacks) {
     return !error && epoch === generation ? data : null;
   }
 
-  return { queue, flush: () => localWrites, deskRpc, deskAvatar, arenaSubscribe, tutor, development, enabled: () => Boolean(actor) };
+  return { queue, flush: () => localWrites, deskRpc, deskAvatar, deskProgressSubscribe, arenaSubscribe, tutor, development, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {

@@ -24,7 +24,7 @@
     return node;
   }
 
-  function connect({ byId: questions, chapters, rpc, subscribeArena, avatar, login, openOwnHistory }) {
+  function connect({ byId: questions, chapters, rpc, subscribeProgress, subscribeArena, avatar, login, openOwnHistory }) {
     if (!document.getElementById("desk")) return null;
     const comparison = byId("progress-comparison");
     const detailDialog = byId("progress-dialog");
@@ -33,6 +33,9 @@
     let dashboard = null;
     let active = false;
     let activeRequest = null;
+    let dashboardDirty = false;
+    let progressTimer = null;
+    let stopProgress = null;
     let actionInProgress = false;
     let renderedDashboard = null;
     let selectedPaper = null;
@@ -226,6 +229,10 @@
           activeRequest = null;
           actionInProgress = false;
           render();
+          if (dashboardDirty) {
+            dashboardDirty = false;
+            if (canRefresh()) requestDashboard({ silent: true });
+          }
         }
       }
     }
@@ -233,23 +240,60 @@
     byId("login").onclick = login;
     byId("refresh").onclick = () => requestDashboard();
 
-    function refresh() {
-      if (active && account && !document.hidden) requestDashboard({ silent: true });
+    function canRefresh() {
+      return active && Boolean(account) && !document.hidden;
     }
 
-    window.addEventListener("online", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    setInterval(refresh, 15000);
+    function refresh() {
+      if (!canRefresh()) return;
+      if (activeRequest) dashboardDirty = true;
+      else requestDashboard({ silent: true });
+      progress?.refresh();
+    }
+
+    function progressChanged() {
+      if (!canRefresh() || progressTimer !== null) return;
+      progressTimer = setTimeout(() => {
+        progressTimer = null;
+        refresh();
+      }, 120);
+    }
+
+    function watchProgress() {
+      if (canRefresh()) {
+        stopProgress ||= subscribeProgress?.(progressChanged);
+      } else {
+        stopProgress?.();
+        stopProgress = null;
+        clearTimeout(progressTimer);
+        progressTimer = null;
+      }
+    }
+
+    function resume() {
+      watchProgress();
+      refresh();
+    }
+
+    window.addEventListener("online", resume);
+    window.addEventListener("focus", resume);
+    window.addEventListener("pageshow", resume);
+    document.addEventListener("visibilitychange", resume);
+    setInterval(() => {
+      if (!activeRequest) refresh();
+    }, 15000);
 
     return {
+      progressChanged,
       show(visible) {
         if (visible === active) return;
         active = visible;
         if (active) {
           if (account && !dashboard && !byId("status").textContent) setStatus("正在同步学习进度…");
           render();
-          refresh();
+          resume();
         } else {
+          watchProgress();
           progress?.setAccess(null);
           live?.setContext(account, Boolean(dashboard?.partner), false);
           social?.setContext(account, Boolean(dashboard?.partner), false);
@@ -262,10 +306,15 @@
       },
       accountChanged(next) {
         if (next === account) return;
+        stopProgress?.();
+        stopProgress = null;
+        clearTimeout(progressTimer);
+        progressTimer = null;
         account = next;
         avatars?.reset();
         dashboard = null;
         activeRequest = null;
+        dashboardDirty = false;
         actionInProgress = false;
         renderedDashboard = null;
         selectedPaper = null;
@@ -273,7 +322,7 @@
         renderArchive();
         text("status", account && active ? "正在同步学习进度…" : "");
         render();
-        refresh();
+        resume();
       },
     };
   }
