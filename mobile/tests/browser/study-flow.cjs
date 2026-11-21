@@ -249,13 +249,13 @@ test("every chapter starts its own first round and only its missed questions adv
   assert.deepEqual(await roundIds(), fixture.ids);
   assert.match(await page.locator("#quiz-completion").textContent(), /第 1 轮 · 已答 0 \/ 4/);
 
-  const answer = (correct) => page.evaluate((right) => {
+  const answer = (correct, advance = true) => page.evaluate(({ right, advance }) => {
     const item = current();
     const letters = right ? item.answer : [Object.keys(item.options).find((letter) => !item.answer.includes(letter))];
     for (const letter of letters) choose(letter);
     if (!questionResult(state.session, item.id)) document.getElementById("submit").click();
-    moveQuestion(1);
-  }, correct);
+    if (advance) moveQuestion(1);
+  }, { right: correct, advance });
   await answer(true);
   await back.click();
   assert.match(await review.textContent(), /继续第 1 轮（1\/4）/);
@@ -276,12 +276,14 @@ test("every chapter starts its own first round and only its missed questions adv
   assert.equal(await page.evaluate(() => current().id), fixture.ids[1]);
   await answer(false);
   await answer(true);
-  await answer(false);
-  assert.match(await page.locator("#score").textContent(), /答对 2 \/ 4 道 · 剩 2 道错题/);
-  assert.match(await retry.textContent(), /开始第 2 轮（2 道）/);
+  await answer(false, false);
+  assert.match(await page.locator("#quiz-completion").textContent(), /还错 2 道，即将进入下一轮/);
+  await page.evaluate((id) => { state.history[sharedQuestionId(id)].review = false; }, fixture.ids[3]);
+  await page.waitForFunction(() => state.session.wrongBookRound === 2);
+  assert.deepEqual(await roundIds(), [fixture.ids[1], fixture.ids[3]], "round grading retains every missed question despite a changed library marker");
 
   // An unrelated answer and reload must not restart the chapter review.
-  await page.locator("#again").click();
+  await back.click();
   await page.evaluate((id) => {
     start([id], "practice");
     const item = current();
@@ -292,15 +294,14 @@ test("every chapter starts its own first round and only its missed questions adv
   await page.reload();
   await ready(page);
   await openWrongBook();
-  assert.match(await startChapter.textContent(), /开始第 2 轮（2 道）/);
+  assert.match(await startChapter.textContent(), /继续第 2 轮（0\/2）/);
   await chapterDetails.click();
-  assert.match(await review.textContent(), /开始第 2 轮（2 道）/);
+  assert.match(await review.textContent(), /继续第 2 轮（0\/2）/);
   await review.click();
   assert.deepEqual(await roundIds(), [fixture.ids[1], fixture.ids[3]]);
   await answer(false);
-  await answer(true);
-  assert.match(await retry.textContent(), /开始第 3 轮（1 道）/);
-  await retry.click();
+  await answer(true, false);
+  await page.waitForFunction(() => state.session.wrongBookRound === 3);
   assert.deepEqual(await roundIds(), [fixture.ids[1]]);
   await answer(true);
   assert.equal(await page.locator("#result-title").textContent(), "本轮错题已清空");
