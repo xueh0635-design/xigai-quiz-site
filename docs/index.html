@@ -242,7 +242,7 @@
   <link rel="stylesheet" href="style-11-6a11e1454b9b.css">
   <link rel="stylesheet" href="style-12-a3233b6758bf.css">
   <link rel="stylesheet" href="style-13-d3bb5b5c164c.css">
-  <link rel="stylesheet" href="style-14-59db033cad82.css">
+  <link rel="stylesheet" href="style-14-d7289f8b13e2.css">
 </head>
 <body>
   <header class="top">
@@ -676,6 +676,12 @@
       </div>
       <div class="tutor-composer">
         <p id="quiz-tutor-status" role="status"></p>
+        <div id="quiz-tutor-tools" class="tutor-tools" hidden>
+          <label id="quiz-tutor-model-label" hidden>模型
+            <select id="quiz-tutor-model" aria-label="回答模型"></select>
+          </label>
+          <button id="quiz-tutor-search" class="quiz-tutor-entry" type="button" aria-pressed="false" hidden>联网查证</button>
+        </div>
         <form id="quiz-tutor-form">
           <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="输入你的疑问"></textarea>
           <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
@@ -6442,6 +6448,10 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
   const send = byId("quiz-tutor-send");
   const status = byId("quiz-tutor-status");
   const waiting = byId("quiz-tutor-waiting");
+  const tools = byId("quiz-tutor-tools");
+  const search = byId("quiz-tutor-search");
+  const model = byId("quiz-tutor-model");
+  const modelKey = "xigai-tutor-model";
   const errors = {
     sign_in: "登录已失效，请重新登录。",
     not_allowed: "这个账号尚未开通题目助手。",
@@ -6451,6 +6461,10 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
     too_long: "这段对话太长，请缩短问题再试。",
     bad_question: "没能读到题目，请关闭后重新打开。",
     no_answer: "暂未收到完整回答，请再问一次。",
+    search_unavailable: "联网查证暂时未完成。问题已保留，可以重试。",
+    search_after_answer: "作答后可以联网查证。",
+    invalid_model: "该模型已调整，请重新选择。",
+    model_unavailable: "当前 API 项目暂时无法调用这个模型，可以切换后重试。",
   };
 
   function element(tag, text = "", className = "") {
@@ -6460,14 +6474,31 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
     return node;
   }
 
-  function appendInline(parent, text) {
-    for (const part of text.split(/(\*\*[^*]+\*\*)/g)) {
-      if (part.startsWith("**") && part.endsWith("**")) parent.append(element("strong", part.slice(2, -2)));
-      else parent.append(part);
+  function appendInline(parent, text, sources) {
+    for (const part of text.split(/(\*\*[^*]+\*\*|〔\d+〕)/g)) {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        const strong = element("strong");
+        appendInline(strong, part.slice(2, -2), sources);
+        parent.append(strong);
+        continue;
+      }
+      const match = part.match(/^〔(\d+)〕$/);
+      const source = match && sources[Number(match[1]) - 1];
+      if (!source || !/^https?:\/\//i.test(source.url)) {
+        parent.append(part);
+        continue;
+      }
+      const link = element("a", part, "tutor-citation");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.title = source.title;
+      link.setAttribute("aria-label", "来源 " + match[1] + " · " + source.title);
+      parent.append(link);
     }
   }
 
-  function replyContent(text) {
+  function replyContent(text, sources) {
     const body = element("div", "", "tutor-reply");
     let list;
     let paragraph;
@@ -6485,7 +6516,7 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
           body.append(list);
         }
         const item = element("li");
-        appendInline(item, entry[2]);
+        appendInline(item, entry[2], sources);
         list.append(item);
         paragraph = null;
       } else {
@@ -6494,7 +6525,7 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
           paragraph = element("p");
           body.append(paragraph);
         } else paragraph.append("\n");
-        appendInline(paragraph, line.trim());
+        appendInline(paragraph, line.trim(), sources);
       }
     }
     return body;
@@ -6535,14 +6566,22 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
     const buttons = new Map();
     let account = null;
     let available = false;
+    let searchAvailable = false;
+    let preferredModel = "";
+    try { preferredModel = localStorage.getItem(modelKey) || ""; } catch { /* Keep the default. */ }
     let checked = 0;
     let checking = null;
     let retryTimer;
     let chat = null;
     let pending = null;
 
-    function setAvailable(value) {
+    function setAvailable(value, capabilities) {
       available = value;
+      searchAvailable = capabilities?.webSearch === true;
+      const choices = Array.isArray(capabilities?.models) ? capabilities.models : [];
+      model.replaceChildren(...choices.map(({ id, label }) => new Option(label, id)));
+      model.value = choices.some(choice => choice.id === preferredModel) ? preferredModel : capabilities?.defaultModel || "";
+      byId("quiz-tutor-model-label").hidden = !choices.length;
       for (const [button, context] of buttons) button.hidden = !value || !context;
       renderComposer();
     }
@@ -6558,7 +6597,7 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
       const allowed = result?.data?.available;
       if (typeof allowed === "boolean") {
         clearTimeout(retryTimer);
-        setAvailable(allowed);
+        setAvailable(allowed, result.data);
       } else if (!retry && result?.code !== "sign_in") {
         retryTimer = setTimeout(() => {
           retryTimer = null;
@@ -6573,18 +6612,23 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
       starters.toggleAttribute("data-followup", chat.turns.length > 0);
       if (chat.turns.length) log.after(starters);
       else log.before(starters);
-      log.replaceChildren(...chat.turns.map(({ role, text }) => {
+      log.replaceChildren(...chat.turns.map(({ role, text, searched, sources = [], model: usedModel }) => {
         const row = element("li", "", "tutor-turn");
         row.dataset.role = role;
         const isReply = role === "assistant";
         const name = element("strong", isReply ? "题目助手" : "你", "tutor-turn-name");
-        row.append(name, isReply ? replyContent(text) : element("p", text));
+        row.append(name);
+        const meta = [usedModel, searched && (sources.length ? "已联网查证" : "已联网 · 未取得可引用来源")].filter(Boolean);
+        if (meta.length) row.append(element("p", meta.join(" · "), "tutor-answer-meta"));
+        row.append(isReply ? replyContent(text, sources) : element("p", text));
         if (isReply) {
           const button = element("button", "填入本题笔记", "tutor-note-action");
           button.type = "button";
           button.setAttribute("aria-haspopup", "dialog");
           button.setAttribute("aria-controls", "question-note-dialog");
-          button.onclick = () => fillNote(questionId, text);
+          button.onclick = () => fillNote(questionId, sources.length
+            ? [text, "网络来源", ...sources.map((source, index) => `〔${index + 1}〕${source.title} ${source.url}`)].join("\n")
+            : text);
           row.append(button);
         }
         return row;
@@ -6597,6 +6641,11 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
       send.disabled = busy || !available || !field.value.trim();
       field.readOnly = busy;
       waiting.hidden = !busy;
+      search.hidden = !searchAvailable || !chat?.question.answerVisible;
+      search.disabled = busy || !available;
+      search.setAttribute("aria-pressed", String(Boolean(chat?.search)));
+      model.disabled = busy;
+      tools.hidden = search.hidden && !model.options.length;
       for (const button of prompts.children) button.disabled = busy || !available;
     }
 
@@ -6617,10 +6666,17 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
         status.textContent = message;
       };
       try {
-        const result = await call("POST", { question: active.question, turns: active.turns.slice(-7) }, controller.signal);
+        const turns = active.turns.slice(-7).map(({ role, text }) => ({ role, text }));
+        const result = await call("POST", {
+          question: active.question, turns, search: active.search === true, model: model.value || undefined,
+        }, controller.signal);
         if (controller.signal.aborted || chat !== active) return;
         if (typeof result?.data?.answer === "string" && result.data.answer.trim()) {
-          active.turns.push({ role: "assistant", text: result.data.answer });
+          active.turns.push({
+            role: "assistant", text: result.data.answer, searched: result.data.searched === true,
+            sources: Array.isArray(result.data.sources) ? result.data.sources : [], model: result.data.model,
+          });
+          active.search = false;
         } else {
           restoreDraft(errors[result?.code] || "暂时无法回答。可以编辑后重新发送。");
         }
@@ -6672,6 +6728,16 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
       renderComposer();
       renderTurns(chat.turns.length > 0);
     }
+
+    search.onclick = () => {
+      if (!chat || pending || search.hidden) return;
+      chat.search = !chat.search;
+      renderComposer();
+    };
+    model.onchange = () => {
+      preferredModel = model.value;
+      try { localStorage.setItem(modelKey, preferredModel); } catch { /* Retain the selection for this session. */ }
+    };
 
     function bind(button, question) {
       buttons.set(button, question);

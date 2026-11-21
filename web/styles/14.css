@@ -302,6 +302,46 @@
   :root:not([data-reduced-motion]) .tutor-waiting span { animation: tutor-wait 1.3s ease-in-out infinite; }
 }
 @keyframes tutor-wait { 50% { opacity: .35; } }
+.tutor-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 7px;
+}
+.tutor-tools label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+.tutor-tools select {
+  min-height: 36px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--world-card-alt);
+  color: var(--ink);
+  font: inherit;
+}
+#quiz-tutor-search { min-height: 36px; margin: 0; }
+#quiz-tutor-search[aria-pressed="true"] {
+  background: var(--world-good);
+  color: var(--world-good-ink);
+  border-color: currentColor;
+}
+.tutor-citation {
+  color: var(--accent);
+  font-weight: 750;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+#quiz-tutor-log .tutor-answer-meta {
+  color: var(--muted);
+  font-size: .78rem;
+  overflow-wrap: anywhere;
+}
 .tutor-composer {
   flex: none;
   padding: 10px var(--tutor-pad) 12px;

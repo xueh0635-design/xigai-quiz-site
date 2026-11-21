@@ -455,6 +455,12 @@
       </div>
       <div class="tutor-composer">
         <p id="quiz-tutor-status" role="status"></p>
+        <div id="quiz-tutor-tools" class="tutor-tools" hidden>
+          <label id="quiz-tutor-model-label" hidden>模型
+            <select id="quiz-tutor-model" aria-label="回答模型"></select>
+          </label>
+          <button id="quiz-tutor-search" class="quiz-tutor-entry" type="button" aria-pressed="false" hidden>联网查证</button>
+        </div>
         <form id="quiz-tutor-form">
           <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="输入你的疑问"></textarea>
           <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
