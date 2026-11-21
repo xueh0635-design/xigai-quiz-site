@@ -6016,10 +6016,62 @@ button[data-option-note][data-option-holding]::after {
   font-size: .85rem;
   font-weight: 720;
 }
-.question-tools { display: flex; flex-wrap: wrap; gap: 6px; }
-.question-tools:has(> :not([hidden])) { margin-block: 0 6px; }
-.question-tools > button,
-.tutor-turn .quiz-tutor-entry { min-height: 38px; }
+.question-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.question-tools:has(> :not([hidden])) { margin-block: 8px; }
+.question-tools-practice:has(> :not([hidden])) {
+  justify-content: flex-end;
+  margin-block: 12px 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.question-tools .option-note-tools { margin: 0; }
+.question-tools > .quiz-tutor-entry {
+  min-height: 44px;
+  margin: 0;
+  padding-inline: 9px;
+  border-color: transparent;
+  background: transparent;
+}
+.question-tools-practice .tutor-launch { margin-inline-end: auto; }
+.tutor-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 6px 11px 6px 6px;
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--line));
+  border-radius: 15px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 8%, var(--paper));
+  text-align: start;
+}
+.tutor-launch::after, .tutor-context summary::after, .tutor-evidence summary::after {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: solid var(--accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg);
+  content: "";
+}
+.tutor-launch-label { display: grid; gap: 2px; line-height: 1.18; }
+.tutor-launch-label strong { font-size: .85rem; }
+.tutor-launch-label small { color: var(--muted); font-size: .72rem; }
+.tutor-mark {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 17%, var(--paper));
+  color: var(--accent);
+  font-family: system-ui, sans-serif;
+}
+.tutor-mark::before { content: "✦"; font-size: 1.15rem; transform: translate(-2px, 1px); }
+.tutor-mark::after { position: absolute; top: 2px; right: 5px; content: "✦"; font-size: .56rem; }
+#option-tutor-open { margin-block: 8px; }
 .question-development-shortcut {
   display: inline-grid;
   flex: none;
@@ -6048,7 +6100,7 @@ button[data-option-note][data-option-holding]::after {
 .quiz-tutor-sheet[open] { display: flex; flex-direction: column; }
 .quiz-tutor-sheet [data-sheet-handle] { flex: none; }
 .quiz-tutor-sheet h2 { font-size: 1.06rem; }
-#quiz-tutor-stem, #question-note-stem {
+#question-note-stem {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -6061,16 +6113,12 @@ button[data-option-note][data-option-holding]::after {
   font-size: .85rem;
   line-height: 1.5;
 }
-.tutor-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 9px; }
-.tutor-prompts button { min-height: 38px; padding: 5px 10px; font-size: .82rem; }
 .tutor-scroll {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
 .tutor-log { list-style: none; padding: 0 2px; margin: 0; display: grid; gap: 8px; }
-.tutor-evidence { margin: 0 2px 8px; font-size: .85rem; }
-.tutor-evidence summary { cursor: pointer; }
 .tutor-turn {
   max-width: 94%;
   padding: 8px 11px;
@@ -6082,7 +6130,6 @@ button[data-option-note][data-option-holding]::after {
 .tutor-turn[data-role="user"] { justify-self: end; background: var(--world-good); color: var(--world-good-ink); }
 .tutor-turn strong { font-size: .74rem; }
 .tutor-turn p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 0; font-size: .93rem; }
-#quiz-tutor-form { display: flex; align-items: end; gap: 8px; margin-top: 9px; }
 #quiz-tutor-input, #question-note-text {
   flex: 1;
   min-width: 0;
@@ -6101,10 +6148,174 @@ button[data-option-note][data-option-holding]::after {
 #question-note-text { max-height: none; flex: 0 1 auto; width: 100%; resize: none; }
 #question-note-status { margin: 0; color: var(--muted); font-size: .85rem; }
 #question-note-status:empty { display: none; }
-#quiz-tutor-send { flex: none; min-height: 44px; }
-#quiz-tutor-status { margin: 6px 0 0; color: var(--muted); font-size: .8rem; }
+#quiz-tutor.account-dialog.glass {
+  --tutor-pad: clamp(14px, 4vw, 24px);
+  --tutor-soft: color-mix(in srgb, var(--accent) 8%, var(--paper));
+  --tutor-edge: color-mix(in srgb, var(--accent) 16%, var(--line));
+  width: min(41rem, calc(100% - 20px - 2 * var(--side-inset)));
+  max-height: min(47rem, calc(var(--tutor-visible-height, 100dvh) - 16px - var(--top-inset) - var(--bottom-inset)));
+  border-color: var(--tutor-edge);
+  padding: 0;
+  background: var(--sheet-surface);
+}
+#quiz-tutor .tutor-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-bottom: 1px solid var(--tutor-edge);
+  padding: 20px var(--tutor-pad) 12px;
+  background: linear-gradient(120deg, var(--tutor-soft), var(--sheet-surface) 76%);
+}
+.tutor-heading { display: flex; align-items: center; min-width: 0; gap: 10px; }
+.tutor-heading .tutor-mark { width: 42px; height: 42px; border-radius: 13px; }
+#quiz-tutor .tutor-heading h2 { text-align: start; font-size: 1.12rem; line-height: 1.28; }
+#quiz-tutor-mode { margin: 2px 0 0; color: var(--muted); font-size: .76rem; }
+#quiz-tutor-close {
+  display: grid;
+  grid-column: 2;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--ink);
+  background: var(--paper);
+  border-color: var(--tutor-edge);
+  font-size: 1.55rem;
+  line-height: 1;
+}
+#quiz-tutor-scroll { flex: 1 1 auto; padding: 14px var(--tutor-pad) 12px; }
+.tutor-context, .tutor-evidence {
+  margin: 0 0 10px;
+  border: 1px solid var(--tutor-edge);
+  border-radius: 14px;
+  background: var(--paper);
+  overflow-wrap: anywhere;
+}
+.tutor-context summary, .tutor-evidence summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 44px;
+  padding: 9px 13px;
+  list-style: none;
+  cursor: pointer;
+}
+.tutor-context summary::-webkit-details-marker, .tutor-evidence summary::-webkit-details-marker { display: none; }
+.tutor-context summary::after, .tutor-evidence summary::after { transform: rotate(45deg); }
+.tutor-context[open] summary::after, .tutor-evidence[open] summary::after { transform: rotate(225deg); }
+.tutor-context-copy { display: grid; min-width: 0; gap: 3px; }
+.tutor-context-meta, .tutor-context-focus { color: var(--muted); font-size: .77rem; }
+#quiz-tutor-stem { font-size: .91rem; font-weight: 660; line-height: 1.55; }
+.tutor-context:not([open]) :is(#quiz-tutor-stem, .tutor-context-focus) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.tutor-context:not([open]) .tutor-context-focus { -webkit-line-clamp: 1; }
+.tutor-evidence { background: var(--tutor-soft); color: var(--ink); font-size: .84rem; }
+.tutor-evidence:not([open]) { position: sticky; z-index: 1; top: 0; }
+.tutor-evidence summary { color: var(--accent); font-weight: 700; }
+.tutor-evidence blockquote {
+  margin: 0 12px 12px;
+  padding: 4px 10px;
+  border-inline-start: 2px solid var(--accent);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.tutor-starters h3 { margin: 14px 0 7px; font-size: .82rem; color: var(--muted); }
+.tutor-prompts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tutor-prompts button {
+  display: grid;
+  gap: 4px;
+  min-height: 70px;
+  padding: 10px 12px;
+  border-color: var(--tutor-edge);
+  border-radius: 13px;
+  background: var(--tutor-soft);
+  color: var(--ink);
+  text-align: start;
+  white-space: normal;
+}
+.tutor-prompts strong { color: var(--accent); font-size: .89rem; line-height: 1.4; }
+.tutor-prompts small { color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.tutor-starters[data-followup] { margin-top: 10px; }
+.tutor-starters[data-followup] :is(h3, small) { display: none; }
+.tutor-starters[data-followup] .tutor-prompts { display: flex; flex-wrap: wrap; }
+.tutor-starters[data-followup] button { min-height: 44px; padding-block: 6px; }
+#quiz-tutor-log { padding: 0; gap: 12px; }
+#quiz-tutor-log .tutor-turn { width: fit-content; padding: 10px 13px; }
+#quiz-tutor-log .tutor-turn[data-role="assistant"] {
+  width: 100%;
+  max-width: none;
+  border: 1px solid var(--tutor-edge);
+  border-radius: 15px 15px 15px 5px;
+  background: var(--paper);
+}
+#quiz-tutor-log .tutor-turn[data-role="user"] { max-width: 85%; border-radius: 15px 15px 5px 15px; }
+.tutor-turn-name { display: inline-block; margin-bottom: 4px; }
+.tutor-turn[data-role="assistant"] .tutor-turn-name { color: var(--accent); }
+#quiz-tutor-log .tutor-reply { font-size: .94rem; line-height: 1.78; overflow-wrap: anywhere; }
+#quiz-tutor-log .tutor-reply p { font-size: inherit; margin: 0 0 .6em; }
+#quiz-tutor-log .tutor-reply :is(ol, ul) { margin: .45em 0 .7em; padding-inline-start: 1.5em; }
+#quiz-tutor-log .tutor-reply li + li { margin-block-start: .25em; }
+#quiz-tutor-log .tutor-reply strong { font-size: inherit; }
+#quiz-tutor-log .tutor-reply > :last-child { margin-block-end: 0; }
+#quiz-tutor-log .tutor-note-action {
+  min-height: 44px;
+  margin-top: 7px;
+  padding: 5px 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font-size: .8rem;
+  font-weight: 700;
+}
+.tutor-waiting {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: .82rem;
+}
+.tutor-waiting span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-reduced-motion]) .tutor-waiting span { animation: tutor-wait 1.3s ease-in-out infinite; }
+}
+@keyframes tutor-wait { 50% { opacity: .35; } }
+.tutor-composer {
+  flex: none;
+  padding: 10px var(--tutor-pad) 12px;
+  border-top: 1px solid var(--tutor-edge);
+  background: var(--sheet-surface);
+}
+#quiz-tutor-form { display: flex; align-items: end; gap: 8px; }
+#quiz-tutor-input { min-height: 46px; resize: none; line-height: 1.55; }
+#quiz-tutor-send { flex: none; min-height: 46px; min-width: 65px; }
+#quiz-tutor-status { margin: 0 0 8px; color: var(--muted); font-size: .83rem; overflow-wrap: anywhere; }
 #quiz-tutor-status:empty { display: none; }
-#tutor-development-open { align-self: flex-start; }
+#tutor-development-open {
+  margin-top: 2px;
+  min-height: 38px;
+  padding: 4px 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: .76rem;
+}
+@media (max-width: 700px), (hover: none) and (max-height: 520px) {
+  #quiz-tutor.account-dialog.glass {
+    inset: auto 0 calc(max(6px, var(--bottom-inset)) + var(--tutor-keyboard, 0px));
+    border-radius: 24px;
+  }
+}
+@media (max-width: 355px) {
+  .question-tools-practice { gap: 5px; }
+  .question-tools-practice .tutor-launch { gap: 6px; }
+  .question-tools-practice :is(.quiz-tutor-entry, .option-note-tools button) { padding-inline: 6px; }
+  .tutor-prompts { grid-template-columns: minmax(0, 1fr); }
+}
 #development-mac, #development-status {
   margin: 8px 0;
   color: var(--muted);
@@ -6458,14 +6669,16 @@ button[data-option-note][data-option-holding]::after {
           </div>
         </div>
         <h2 id="question" tabindex="-1"></h2>
-        <div class="question-tools">
-          <button id="quiz-tutor-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>AI 问这题</button>
-          <button id="quiz-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button" hidden>本题笔记</button>
-        </div>
         <div id="options" class="options"></div>
-        <div id="option-note-tools" class="option-note-tools" hidden>
-          <span>可长按任一选项</span>
-          <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button">选项详解</button>
+        <div class="question-tools question-tools-practice">
+          <button id="quiz-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+            <span class="tutor-mark" aria-hidden="true"></span>
+            <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>解题提示</small></span>
+          </button>
+          <div id="option-note-tools" class="option-note-tools" hidden>
+            <button id="option-notes-open" aria-haspopup="dialog" aria-controls="option-notes-dialog" type="button" title="也可长按任一选项打开">选项详解</button>
+          </div>
+          <button id="quiz-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button" hidden>本题笔记</button>
         </div>
       </div>
       <section id="answer-summary" class="lesson-answer" hidden aria-labelledby="answer-heading">
@@ -6580,7 +6793,10 @@ button[data-option-note][data-option-holding]::after {
       </div>
       <button id="meeting-from-history" class="meeting-jump" type="button" aria-haspopup="dialog" aria-controls="meeting-dialog" hidden>看会议时间线 ›</button>
       <div class="question-tools">
-        <button id="history-tutor-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>AI 问这题</button>
+        <button id="history-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <span class="tutor-launch-label"><strong data-tutor-label>问这题</strong><small data-tutor-purpose>追问解析</small></span>
+        </button>
         <button id="history-note-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="question-note-dialog" type="button">本题笔记</button>
       </div>
       <button id="history-question-practice" type="button" class="primary" hidden>复练此题</button>
@@ -6592,8 +6808,11 @@ button[data-option-note][data-option-holding]::after {
       </div>
       <div id="option-notes-tabs" class="option-notes-tabs" role="group" aria-label="切换选项"></div>
       <div id="option-notes-scroll" class="option-notes-scroll" tabindex="0" role="region" aria-label="选项内容">
-        <button id="option-tutor-open" class="quiz-tutor-entry" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>AI 问这项</button>
         <article id="option-notes-content"></article>
+        <button id="option-tutor-open" class="tutor-launch" aria-haspopup="dialog" aria-controls="quiz-tutor" type="button" hidden>
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <span class="tutor-launch-label"><strong data-tutor-label>问这项</strong><small data-tutor-purpose>辨析选项</small></span>
+        </button>
         <details id="option-notes-basis" class="option-notes-basis" hidden>
           <summary>本题依据</summary>
           <div id="option-note-textbook-evidence" class="lesson-textbook" hidden>
@@ -6605,25 +6824,45 @@ button[data-option-note][data-option-holding]::after {
       </div>
     </dialog>
     <dialog id="quiz-tutor" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="quiz-tutor-title">
-      <div data-sheet-handle>
-        <h2 id="quiz-tutor-title">题目助手</h2>
-        <button id="quiz-tutor-close" type="button" autofocus>关闭</button>
+      <div class="tutor-header" data-sheet-handle>
+        <div class="tutor-heading">
+          <span class="tutor-mark" aria-hidden="true"></span>
+          <div>
+            <h2 id="quiz-tutor-title">题目助手</h2>
+            <p id="quiz-tutor-mode"></p>
+          </div>
+        </div>
+        <button id="quiz-tutor-close" type="button" aria-label="关闭题目助手" title="关闭" autofocus><span aria-hidden="true">×</span></button>
       </div>
-      <p id="quiz-tutor-stem"></p>
-      <div id="quiz-tutor-prompts" class="tutor-prompts" role="group" aria-label="快捷提问"></div>
-      <div id="quiz-tutor-scroll" class="tutor-scroll">
-        <details id="quiz-tutor-evidence" class="tutor-evidence lesson-textbook" hidden>
-          <summary id="quiz-tutor-source">教材原文</summary>
+      <div id="quiz-tutor-scroll" class="tutor-scroll" tabindex="0" role="region" aria-label="题目、依据和对话">
+        <details id="quiz-tutor-context" class="tutor-context">
+          <summary>
+            <span class="tutor-context-copy">
+              <span id="quiz-tutor-meta" class="tutor-context-meta"></span>
+              <span id="quiz-tutor-stem"></span>
+              <span id="quiz-tutor-focus" class="tutor-context-focus" hidden></span>
+            </span>
+          </summary>
+        </details>
+        <details id="quiz-tutor-evidence" class="tutor-evidence" hidden>
+          <summary><span id="quiz-tutor-source">教材依据</span></summary>
           <blockquote id="quiz-tutor-quote"></blockquote>
         </details>
+        <div id="quiz-tutor-starters" class="tutor-starters">
+          <h3>快捷提问</h3>
+          <div id="quiz-tutor-prompts" class="tutor-prompts" role="group" aria-label="快捷提问"></div>
+        </div>
         <ul id="quiz-tutor-log" class="tutor-log" aria-label="本题对话" role="log"></ul>
+        <p id="quiz-tutor-waiting" class="tutor-waiting" role="status" hidden>正在生成回答<span aria-hidden="true"></span></p>
       </div>
-      <p id="quiz-tutor-status" role="status"></p>
-      <form id="quiz-tutor-form">
-        <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="哪里没懂？"></textarea>
-        <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
-      </form>
-      <button id="tutor-development-open" class="quiz-tutor-entry" data-development-shortcut aria-haspopup="dialog" aria-controls="development-requests" type="button" hidden>给题库提需求</button>
+      <div class="tutor-composer">
+        <p id="quiz-tutor-status" role="status"></p>
+        <form id="quiz-tutor-form">
+          <textarea id="quiz-tutor-input" rows="1" maxlength="600" aria-label="对当前题目的追问" placeholder="输入你的疑问"></textarea>
+          <button id="quiz-tutor-send" class="primary" type="submit">发送</button>
+        </form>
+        <button id="tutor-development-open" class="quiz-tutor-entry" data-development-shortcut aria-haspopup="dialog" aria-controls="development-requests" type="button" hidden>给题库提需求</button>
+      </div>
     </dialog>
     <dialog id="question-note-dialog" class="account-dialog glass quiz-sheet quiz-tutor-sheet" aria-labelledby="question-note-title">
       <div data-sheet-handle>
@@ -23411,10 +23650,8 @@ window.QuizWrongOptionReasons = {
     const value = item.options[letter];
     const concept = lookup(value);
     const questionStudy = study(item);
-    const tutorButton = document.getElementById("option-tutor-open");
     const correct = item.answer.includes(letter);
-    tutorButton.textContent = revealed && !correct ? `问 AI 为什么不选 ${letter}` : "AI 问这项";
-    tutor?.bind(tutorButton, window.QuizTutor.questionContext(item, {
+    tutor?.bind(document.getElementById("option-tutor-open"), window.QuizTutor.questionContext(item, {
       revealed, focus: letter,
     }));
     const falseChoice = revealed ? distractor(item, letter) : null;
@@ -23610,14 +23847,17 @@ window.QuizWrongOptionReasons = {
   const byId = (id) => document.getElementById(id);
   const dialog = byId("quiz-tutor");
   const sheet = window.QuizSheetMotion.attach(dialog);
+  const context = byId("quiz-tutor-context");
   const stem = byId("quiz-tutor-stem");
   const evidence = byId("quiz-tutor-evidence");
   const prompts = byId("quiz-tutor-prompts");
+  const starters = byId("quiz-tutor-starters");
   const log = byId("quiz-tutor-log");
   const scroll = byId("quiz-tutor-scroll");
   const field = byId("quiz-tutor-input");
   const send = byId("quiz-tutor-send");
   const status = byId("quiz-tutor-status");
+  const waiting = byId("quiz-tutor-waiting");
   const errors = {
     sign_in: "登录已失效，请重新登录。",
     not_allowed: "这个账号尚未开通题目助手。",
@@ -23628,6 +23868,84 @@ window.QuizWrongOptionReasons = {
     bad_question: "没能读到题目，请关闭后重新打开。",
     no_answer: "暂未收到完整回答，请再问一次。",
   };
+
+  function element(tag, text = "", className = "") {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  }
+
+  function appendInline(parent, text) {
+    for (const part of text.split(/(\*\*[^*]+\*\*)/g)) {
+      if (part.startsWith("**") && part.endsWith("**")) parent.append(element("strong", part.slice(2, -2)));
+      else parent.append(part);
+    }
+  }
+
+  function replyContent(text) {
+    const body = element("div", "", "tutor-reply");
+    let list;
+    let paragraph;
+    for (const line of text.split(/\r?\n/)) {
+      if (!line.trim()) {
+        list = paragraph = null;
+        continue;
+      }
+      const entry = line.trim().match(/^(?:(\d{1,2})[.、)]\s+|[-*•]\s+)(.+)$/);
+      if (entry) {
+        const tag = entry[1] ? "ol" : "ul";
+        if (list?.localName !== tag) {
+          list = element(tag);
+          if (entry[1]) list.start = Number(entry[1]);
+          body.append(list);
+        }
+        const item = element("li");
+        appendInline(item, entry[2]);
+        list.append(item);
+        paragraph = null;
+      } else {
+        list = null;
+        if (!paragraph) {
+          paragraph = element("p");
+          body.append(paragraph);
+        } else paragraph.append("\n");
+        appendInline(paragraph, line.trim());
+      }
+    }
+    return body;
+  }
+
+  function promptChoices(question) {
+    const { answerVisible, focus, answer = [], selected } = question;
+    const hasOptions = Object.keys(question.options).length > 1;
+    if (!answerVisible) return [
+      focus
+        ? [`理解 ${focus} 项`, "先弄懂选项里的关键词", `请解释 ${focus} 项的关键词和概念，只给解题提示。`]
+        : ["拆解题干", "找出范围和限定词", "这题在考什么？请指出题干关键词和限定范围，先给提示。"],
+      hasOptions
+        ? ["区分易混选项", "先了解概念的区别", "请讲讲这道题涉及的易混概念，给我一个自己辨别选项的提示。"]
+        : ["复习考点", "回忆相关概念", "请帮我回忆这题相关的概念，先给提示。"],
+    ];
+    const rejected = focus || selected.find((letter) => !answer.includes(letter));
+    return [
+      rejected
+        ? answer.includes(rejected)
+          ? [`为什么选 ${rejected}`, "看看这一项如何扣住题干", `请结合本题解释为什么要选 ${rejected} 项。`]
+          : [`为什么不选 ${rejected}`, "看这一项与题干要求的关系", `为什么本题不选 ${rejected}？请解释这一项和题干要求的关系。`]
+        : ["为什么这样答", "按题干逐步推理", "请结合本题和已有依据解释作答思路。"],
+      hasOptions
+        ? ["辨析其他选项", "比较容易混淆的说法", "请对照题干辨析其他几个易混的选项。"]
+        : ["整理易混考点", "归纳这题里容易记错的概念", "请归纳这道题容易混淆的概念和记忆线索。"],
+    ];
+  }
+
+  function trackKeyboard() {
+    const visual = window.visualViewport;
+    if (!dialog.open || !visual) return;
+    dialog.style.setProperty("--tutor-visible-height", `${Math.round(visual.height)}px`);
+    dialog.style.setProperty("--tutor-keyboard", `${Math.max(0, Math.round(innerHeight - visual.height - visual.offsetTop))}px`);
+  }
 
   function connect(call, fillNote) {
     const buttons = new Map();
@@ -23641,6 +23959,7 @@ window.QuizWrongOptionReasons = {
     function setAvailable(value) {
       available = value;
       for (const [button, context] of buttons) button.hidden = !value || !context;
+      renderComposer();
     }
 
     async function refresh() {
@@ -23658,22 +23977,21 @@ window.QuizWrongOptionReasons = {
       }
     }
 
-    function renderTurns() {
+    function renderTurns(toEnd) {
       const questionId = chat.question.id;
+      starters.hidden = Boolean(pending);
+      starters.toggleAttribute("data-followup", chat.turns.length > 0);
+      if (chat.turns.length) log.after(starters);
+      else log.before(starters);
       log.replaceChildren(...chat.turns.map(({ role, text }) => {
-        const row = document.createElement("li");
-        row.className = "tutor-turn";
+        const row = element("li", "", "tutor-turn");
         row.dataset.role = role;
-        const name = document.createElement("strong");
-        name.textContent = role === "user" ? "你" : "题目助手";
-        const message = document.createElement("p");
-        message.textContent = text;
-        row.append(name, message);
-        if (role === "assistant") {
-          const button = document.createElement("button");
-          button.className = "quiz-tutor-entry";
+        const isReply = role === "assistant";
+        const name = element("strong", isReply ? "题目助手" : "你", "tutor-turn-name");
+        row.append(name, isReply ? replyContent(text) : element("p", text));
+        if (isReply) {
+          const button = element("button", "填入本题笔记", "tutor-note-action");
           button.type = "button";
-          button.textContent = "填入本题笔记";
           button.setAttribute("aria-haspopup", "dialog");
           button.setAttribute("aria-controls", "question-note-dialog");
           button.onclick = () => fillNote(questionId, text);
@@ -23681,42 +23999,49 @@ window.QuizWrongOptionReasons = {
         }
         return row;
       }));
-      scroll.scrollTop = scroll.scrollHeight;
+      scroll.scrollTop = toEnd ? scroll.scrollHeight : 0;
     }
 
-    function setBusy(busy) {
-      send.disabled = busy;
+    function renderComposer() {
+      const busy = Boolean(pending);
+      send.disabled = busy || !available || !field.value.trim();
       field.readOnly = busy;
-      for (const button of prompts.children) button.disabled = busy;
-      dialog.setAttribute("aria-busy", String(busy));
+      waiting.hidden = !busy;
+      for (const button of prompts.children) button.disabled = busy || !available;
     }
 
     async function ask(text) {
-      if (pending || !chat || !text || !available) return;
+      if (pending || !chat || !text || !available || !dialog.open) return;
       const active = chat;
       const controller = new AbortController();
       pending = controller;
-      chat.turns.push({ role: "user", text });
+      active.turns.push({ role: "user", text });
+      active.draft = "";
       field.value = "";
-      status.textContent = "正在结合这道题回答…";
-      setBusy(true);
-      renderTurns();
+      status.textContent = "";
+      renderComposer();
+      renderTurns(true);
+      const restoreDraft = (message) => {
+        active.turns.pop();
+        field.value = active.draft = text;
+        status.textContent = message;
+      };
       try {
         const result = await call("POST", { question: active.question, turns: active.turns.slice(-7) }, controller.signal);
         if (controller.signal.aborted || chat !== active) return;
-        if (typeof result?.data?.answer === "string" && result.data.answer) {
+        if (typeof result?.data?.answer === "string" && result.data.answer.trim()) {
           active.turns.push({ role: "assistant", text: result.data.answer });
-          status.textContent = "";
         } else {
-          active.turns.pop();
-          field.value = text;
-          status.textContent = errors[result?.code] || "暂时无法回答，请稍后重试。";
+          restoreDraft(errors[result?.code] || "暂时无法回答。可以编辑后重新发送。");
         }
-        renderTurns();
+      } catch {
+        if (controller.signal.aborted || chat !== active) return;
+        restoreDraft("连接中断。问题已保留，可以重新发送。");
       } finally {
         if (pending === controller) {
           pending = null;
-          setBusy(false);
+          renderComposer();
+          renderTurns(active.turns.length > 0);
         }
       }
     }
@@ -23724,40 +24049,48 @@ window.QuizWrongOptionReasons = {
     function open(question) {
       if (!available || dialog.open) return;
       if (chat?.question.id !== question.id || chat.question.answerVisible !== question.answerVisible) {
-        chat = { question, turns: [] };
+        chat = { question, turns: [], draft: "" };
       }
       else chat.question = question;
+      context.open = false;
       stem.textContent = question.stem;
-      stem.title = question.stem;
-      evidence.hidden = !question.textbook;
+      byId("quiz-tutor-meta").textContent = [question.chapter, `${question.type}题`].filter(Boolean).join(" · ");
+      byId("quiz-tutor-mode").textContent = question.answerVisible ? "复盘解析" : "解题提示";
+      const focused = byId("quiz-tutor-focus");
+      const value = question.options[question.focus];
+      focused.hidden = !value;
+      focused.textContent = value ? `${question.focus} 项 · ${value}` : "";
+      evidence.hidden = !question.textbook && !question.explanation;
       evidence.open = false;
-      byId("quiz-tutor-source").textContent = [
-        ({ related: "教材相关段落", difference: "教材原文 · 与题库表述有差异" })[question.textbookMatch] || "教材原文",
+      byId("quiz-tutor-source").textContent = question.textbook ? [
+        ({ related: "教材相关段落", difference: "教材原文（表述有差异）" })[question.textbookMatch] || "教材依据",
         question.textbookPage,
-      ].filter(Boolean).join(" · ");
-      byId("quiz-tutor-quote").textContent = question.textbook || "";
-      const suggestions = question.focus
-        ? [question.answerVisible && !question.answer?.includes(question.focus)
-            ? `为什么本题不选 ${question.focus}？请结合教材解释这一项和题干要求的关系。`
-            : `怎么理解 ${question.focus} 项？`, "这道题在考什么？"]
-        : [question.answerVisible ? "结合教材讲讲为什么这样选" : "给我一点解题思路", "这道题在考什么？"];
-      prompts.replaceChildren(...suggestions.map((text) => {
-        const button = document.createElement("button");
+      ].filter(Boolean).join(" · ") : "本题解析";
+      byId("quiz-tutor-quote").textContent = question.textbook || question.explanation || "";
+      prompts.replaceChildren(...promptChoices(question).map(([title, detail, text]) => {
+        const button = element("button");
         button.type = "button";
-        button.textContent = text;
+        button.append(element("strong", title), element("small", detail));
         button.onclick = () => ask(text);
         return button;
       }));
       status.textContent = "";
-      field.value = "";
+      field.value = chat.draft;
+      field.placeholder = question.answerVisible ? "继续追问这道题" : "想从哪里找提示？";
       dialog.showModal();
-      renderTurns();
+      trackKeyboard();
+      renderComposer();
+      renderTurns(chat.turns.length > 0);
     }
 
     function bind(button, question) {
       buttons.set(button, question);
       button.hidden = !available || !question;
       button.onclick = question ? () => open(question) : null;
+      if (question) {
+        button.querySelector("[data-tutor-label]").textContent = question.focus ? `问 ${question.focus} 项` : "问这题";
+        button.querySelector("[data-tutor-purpose]").textContent = question.answerVisible ? "追问解析" : "解题提示";
+      }
       void refresh();
     }
 
@@ -23765,8 +24098,8 @@ window.QuizWrongOptionReasons = {
       if (!pending) return;
       pending.abort();
       pending = null;
-      if (chat?.turns.at(-1)?.role === "user") chat.turns.pop();
-      setBusy(false);
+      if (chat?.turns.at(-1)?.role === "user") chat.draft = chat.turns.pop().text;
+      renderComposer();
     }
 
     function accountChanged(id) {
@@ -23785,10 +24118,22 @@ window.QuizWrongOptionReasons = {
       event.preventDefault();
       void ask(field.value.trim());
     };
+    field.addEventListener("input", () => {
+      if (chat) chat.draft = field.value;
+      renderComposer();
+    });
     byId("quiz-tutor-close").onclick = sheet.close;
-    dialog.addEventListener("close", resetPending);
+    dialog.addEventListener("close", () => {
+      if (dialog.open) return;
+      resetPending();
+      dialog.style.removeProperty("--tutor-visible-height");
+      dialog.style.removeProperty("--tutor-keyboard");
+    });
+    window.visualViewport?.addEventListener("resize", trackKeyboard);
+    window.visualViewport?.addEventListener("scroll", trackKeyboard);
     window.addEventListener("focus", refresh);
     window.addEventListener("online", refresh);
+    renderComposer();
     return { bind, accountChanged };
   }
 
