@@ -1,23 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
+import { createQuizStore, attemptPayload } from "./quiz-store.mjs";
+import { mergeChapterTests, plainSession, stateFromCache } from "./study-state.mjs";
+
+window.QuizPersistence = { createStore: createQuizStore, mergeChapterTests, plainSession, stateFromCache };
 
 const config = window.QuizCloud;
 const byId = (id) => document.getElementById(id);
 const accountLabel = () => byId("account-label");
 const accountKey = (id) => "xigai-account-v1:" + id;
-const keyFor = (record) => record.kind + ":" + record.record_key;
-
-function readCache(id) {
-  try {
-    return JSON.parse(localStorage.getItem(accountKey(id))) || { records: {}, pending: {} };
-  } catch {
-    return { records: {}, pending: {} };
-  }
-}
-
-function isNewer(row, other) {
-  return !other || row.revision > other.revision ||
-    (row.revision === other.revision && row.change_id > other.change_id);
-}
+const legacyKinds = new Set(["history", "star", "note", "session"]);
 
 function attachRecovery(dialog, loginForm, canStart, restoreLogin) {
   const form = byId("account-recovery-form");
@@ -159,47 +150,57 @@ function connect(callbacks) {
     auth: { storageKey: "xigai-supabase-auth-v1", detectSessionInUrl: false },
   });
   let actor = null;
+  let scopeReady = true;
   let cache = null;
+  let store = null;
+  let storeReady = Promise.resolve(null);
+  let unsubscribe;
+  let localWrites = Promise.resolve();
+  const unsaved = new Map();
+  let storageFailed = false;
   let generation = 0;
   let scheduled;
   let inFlight = null;
   let refreshAgain = false;
   let enrolled = false;
 
-  function persist() {
-    if (!actor) return;
-    try {
-      localStorage.setItem(accountKey(actor.id), JSON.stringify(cache));
-    } catch {
-      accountLabel().textContent = "本机存储已满，待同步更改仅保留在当前页面";
-    }
-  }
-
   function giveState(reset) {
-    const result = { history: {}, stars: {}, notes: {}, session: null };
-    let latest = null;
-    for (const row of Object.values(cache.records)) {
-      if (row.kind === "history") result.history[row.record_key] = row.payload;
-      if (row.kind === "star") result.stars[row.record_key] = row.payload;
-      if (row.kind === "note" && typeof row.payload === "string" && row.payload) result.notes[row.record_key] = row.payload;
-      if (row.kind === "session" && row.payload && isNewer(row, latest)) latest = row;
-    }
-    result.session = latest?.payload || null;
-    callbacks.receive(result, reset);
+    callbacks.receive(stateFromCache(cache), reset);
   }
 
   function queue(changes) {
-    if (!actor) return;
-    for (const [kind, record_key, payload] of changes) {
-      const id = kind + ":" + record_key;
-      const previous = cache.records[id];
-      const revision = Math.max(Date.now(), (previous?.revision || 0) + 1);
-      const row = { kind, record_key, revision, change_id: callbacks.randomId(), payload: structuredClone(payload) };
-      cache.records[id] = row;
-      cache.pending[id] = row;
-    }
-    persist();
-    schedule();
+    if (!actor || !scopeReady) return Promise.resolve(false);
+    const epoch = generation;
+    const accountId = actor.id;
+    const ready = storeReady;
+    const input = structuredClone(changes);
+    const token = {};
+    if (!unsaved.has(accountId)) unsaved.set(accountId, new Map());
+    if (input.length) unsaved.get(accountId).set(token, input);
+    const write = localWrites.catch(() => {}).then(async () => {
+      const target = await ready;
+      if (!target) return false;
+      const buffer = unsaved.get(accountId);
+      const entries = [...buffer.entries()];
+      if (!entries.length) return target.durable;
+      const saved = await target.commit(entries.flatMap(([, values]) => values));
+      for (const [key] of entries) buffer.delete(key);
+      if (generation === epoch) {
+        cache = saved;
+        storageFailed = !target.durable;
+        if (storageFailed) accountLabel().textContent = "本机未能持久保存，请保持页面打开并联网同步";
+        schedule();
+      }
+      return target.durable;
+    }).catch(() => {
+      if (generation === epoch) {
+        storageFailed = true;
+        accountLabel().textContent = "保存失败，本次更改尚未入库，请保持页面打开并重试";
+      }
+      return false;
+    });
+    localWrites = write;
+    return write;
   }
 
   function schedule() {
@@ -233,6 +234,12 @@ function connect(callbacks) {
     const profile = actor;
     const sameAccount = () => generation === epoch;
     try {
+      if (unsaved.get(profile.id)?.size) await queue([]);
+      await localWrites;
+      const target = await storeReady;
+      if (!sameAccount() || !target) return;
+      cache = await target.read();
+      if (!sameAccount()) return;
       accountLabel().textContent = "同步中…";
       if (!enrolled) {
         const membership = await client.from("quiz_members").select("account_id").eq("account_id", profile.id).maybeSingle();
@@ -244,17 +251,28 @@ function connect(callbacks) {
         }
         enrolled = true;
       }
+      if (Date.now() >= cache.v2RetryAt) {
+        try {
+          await refreshV2(target, sameAccount, profile.id);
+          return;
+        } catch (error) {
+          if (!sameAccount()) return;
+          if (error?.message === "quiz_cursor_ahead") {
+            cache = await target.accept({ resetCursor: true });
+            await refreshV2(target, sameAccount, profile.id);
+            return;
+          }
+          if (error?.code !== "PGRST202" && error?.code !== "42883") throw error;
+          cache = await target.accept({ v2RetryAt: Date.now() + 5 * 60 * 1000 });
+        }
+      }
       let uploadFailed = false;
       try {
-        for (const batch of pendingBatches(Object.values(cache.pending))) {
+        for (const batch of pendingBatches(Object.values(cache.pending).filter((row) => legacyKinds.has(row.kind)))) {
           const response = await client.rpc("merge_account_quiz_state", { expected_account: profile.id, changes: batch });
           if (!sameAccount()) return;
           if (response.error) throw response.error;
-          for (const sent of batch) {
-            const tag = keyFor(sent);
-            if (cache.pending[tag]?.change_id === sent.change_id) delete cache.pending[tag];
-          }
-          persist();
+          cache = await target.accept({ ackChanges: batch.map((row) => row.change_id) });
         }
       } catch {
         if (!sameAccount()) return;
@@ -274,46 +292,114 @@ function connect(callbacks) {
         rows.push(...response.data);
         if (response.data.length < size) break;
       }
-      let changed = false;
-      for (const row of rows) {
-        const tag = keyFor(row);
-        if (isNewer(row, cache.records[tag])) {
-          cache.records[tag] = row;
-          changed = true;
-        }
-      }
-      persist();
-      if (changed) giveState(false);
-      accountLabel().textContent = uploadFailed ? "已读取云端记录 · 本机更改待上传"
-        : Object.keys(cache.pending).length ? "有更改待同步" : "进度已同步";
-    } catch {
-      if (sameAccount()) accountLabel().textContent = "未能读取云端记录 · 本机记录已保留";
+      cache = await target.accept({ rows });
+      if (!sameAccount()) return;
+      giveState(false);
+      const pendingEvents = await target.pendingAttempts();
+      accountLabel().textContent = !target.durable || storageFailed ? "云端连接已恢复 · 本机保存不可用，请保持页面打开"
+        : uploadFailed ? "已读取云端记录 · 本机更改待上传"
+        : pendingEvents.length || Object.keys(cache.pending).some((tag) => !legacyKinds.has(cache.pending[tag].kind))
+          ? "进度已同步 · 新版学习记录已保存在本机，等待服务升级"
+          : Object.keys(cache.pending).length ? "有更改待同步" : "进度已同步";
+    } catch (error) {
+      if (sameAccount()) accountLabel().textContent = storageFailed || !scopeReady || unsaved.get(profile.id)?.size
+        ? "同步未完成，本机仍有未保存更改，请保持页面打开并重试"
+        : error?.message === "quiz_catalog_unavailable" ? "题库版本等待云端升级 · 本机作答已保留"
+        : "未能读取云端记录 · 本机记录已保留";
     }
   }
 
-  function switchAccount(user) {
-    if (user?.id === actor?.id) return;
+  async function refreshV2(target, sameAccount, accountId) {
+    const pending = Object.values(cache.pending);
+    const events = await target.pendingAttempts();
+    const changes = [...pendingBatches(pending)];
+    const attempts = [...pendingBatches(events.map(attemptPayload))];
+    let page = 0;
+    let more = true;
+    while (more || page < changes.length || page < attempts.length) {
+      const requestCursor = cache.cursor;
+      const request = client.rpc("quiz_sync_v2", {
+        expected_account: accountId, changes: changes[page] || [], attempts: attempts[page] || [],
+        cursor: requestCursor, page_size: 200,
+      });
+      const response = await (typeof request.abortSignal === "function"
+        ? request.abortSignal(AbortSignal.timeout(15000)) : request);
+      if (!sameAccount()) return;
+      if (response.error) throw response.error;
+      const data = response.data;
+      if (data?.version !== 2 || !Array.isArray(data.rows) || !Array.isArray(data.attemptRows) ||
+          !Array.isArray(data.ack?.changes) || !Array.isArray(data.ack?.attempts) ||
+          !Number.isSafeInteger(data.next_cursor) || data.next_cursor < requestCursor || typeof data.has_more !== "boolean" ||
+          (data.has_more && data.next_cursor <= requestCursor)) throw new Error("invalid_sync_response");
+      cache = await target.accept({ rows: data.rows, attempts: data.attemptRows,
+        ackChanges: data.ack.changes, ackAttempts: data.ack.attempts, cursor: data.next_cursor, v2RetryAt: 0 });
+      if (!sameAccount()) return;
+      more = data.has_more;
+      page++;
+    }
+    giveState(false);
+    const remaining = (await target.pendingAttempts()).length + Object.keys(cache.pending).length;
+    accountLabel().textContent = unsaved.get(accountId)?.size ? "有更改尚未保存和上传，请保持页面打开并重试"
+      : !target.durable || storageFailed ? "云端已同步 · 本机保存不可用，请保持页面打开"
+      : remaining ? "有更改待同步" : "进度已同步";
+  }
+
+  async function switchAccount(user) {
+    if (user?.id === actor?.id) return storeReady;
     generation += 1;
+    const epoch = generation;
+    scopeReady = false;
+    unsubscribe?.();
+    unsubscribe = null;
+    const previousStore = store;
+    if (previousStore) localWrites.finally(() => previousStore.close());
     actor = user || null;
     enrolled = false;
+    storageFailed = false;
     callbacks.accountChanged?.(actor?.id ?? null);
     if (actor) {
       recovery?.reset();
-      cache = readCache(actor.id);
+      const accountId = actor.id;
       byId("account-button").textContent = "账号";
       byId("account-email").textContent = actor.email || "";
       byId("account-form").hidden = true;
       byId("account-active").hidden = false;
       accountLabel().textContent = "等待同步…";
-      giveState(true);
-      schedule();
+      storeReady = createQuizStore({ scope: "account:" + accountId, legacyKey: accountKey(accountId),
+        randomId: callbacks.randomId }).then(async (next) => {
+        if (epoch !== generation) return next;
+        store = next;
+        cache = await next.read();
+        if (epoch !== generation) return next;
+        giveState(true);
+        scopeReady = true;
+        storageFailed = !next.durable;
+        if (storageFailed) accountLabel().textContent = "本机保存不可用，请联网后继续";
+        unsubscribe = next.subscribe(async () => {
+          try {
+            await localWrites;
+            const value = await next.read();
+            if (epoch === generation) { cache = value; giveState(false); }
+          } catch {
+            if (epoch === generation) accountLabel().textContent = "本机记录读取失败，请保持页面打开并重试";
+          }
+        });
+        schedule();
+        return next;
+      });
+      return storeReady;
     } else {
       cache = null;
+      store = null;
       byId("account-button").textContent = "登录";
       byId("account-form").hidden = false;
       byId("account-active").hidden = true;
       accountLabel().textContent = "";
-      callbacks.guest();
+      storeReady = Promise.resolve(callbacks.guest()).then(() => {
+        if (epoch === generation) scopeReady = true;
+        return null;
+      });
+      await storeReady;
     }
   }
 
@@ -363,6 +449,13 @@ function connect(callbacks) {
     if (nativeUI) {
       nativePending = true;
       try {
+        let capabilityTimer;
+        const capabilities = await Promise.race([
+          nativeUI.postMessage({ kind: "capabilities" }),
+          new Promise((_, reject) => { capabilityTimer = setTimeout(() => reject(new Error("native_capabilities_timeout")), 1500); }),
+        ]).finally(() => clearTimeout(capabilityTimer));
+        if (capabilities?.schemaVersion !== 1 || capabilities.account !== true ||
+            (recovery && capabilities.passwordRecovery !== true)) throw new Error("native_capabilities_unsupported");
         const result = await nativeUI.postMessage({
           kind: "account", email: actor ? actor.email || "" : null, recovery: Boolean(recovery),
         });
@@ -394,7 +487,7 @@ function connect(callbacks) {
     try {
       const response = await client.auth.signOut({ scope: "local" });
       if (!response.error) {
-        switchAccount(null);
+        await switchAccount(null);
         return null;
       }
     } catch {
@@ -433,7 +526,7 @@ function connect(callbacks) {
         }
         return { message: registrationStatus === 409 ? "这个邮箱已注册，暂时无法登录，请稍后重试。" : "暂时无法登录，请稍后重试。" };
       }
-      switchAccount(response.data.user);
+      await switchAccount(response.data.user);
       return null;
     } catch {
       return { message: "连接失败，请稍后重试。" };
@@ -487,7 +580,9 @@ function connect(callbacks) {
 
   client.auth.onAuthStateChange((_event, session) => {
     // Auth callbacks must not await another call on the same client.
-    setTimeout(() => switchAccount(session?.user || null), 0);
+    setTimeout(() => switchAccount(session?.user || null).catch(() => {
+      accountLabel().textContent = "本机记录未能打开，请保持页面打开并重试";
+    }), 0);
   });
   addEventListener("online", refresh);
   addEventListener("focus", refresh);
@@ -554,7 +649,7 @@ function connect(callbacks) {
     return !error && epoch === generation ? data : null;
   }
 
-  return { queue, deskRpc, deskAvatar, arenaSubscribe, tutor, development, enabled: () => Boolean(actor) };
+  return { queue, flush: () => localWrites, deskRpc, deskAvatar, arenaSubscribe, tutor, development, enabled: () => Boolean(actor) };
 }
 
 function* pendingBatches(records) {

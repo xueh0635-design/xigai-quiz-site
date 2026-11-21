@@ -1,24 +1,119 @@
-name: iPhone simulator
+name: Repository validation
 
 on:
   push:
-    paths:
-      - 'docs/index.html'
-      - 'mobile/**'
-      - '.github/workflows/ios-simulator.yml'
+    branches: [main]
+    paths-ignore:
+      - 'docs/android-update.json'
+  pull_request:
   workflow_dispatch:
+    inputs:
+      run_ios:
+        description: Run iPhone smoke tests and qualify this run for publishing
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: iphone-simulator
+  group: repository-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-practice:
-    runs-on: macos-26
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm --prefix mobile ci
+      - run: npm --prefix mobile run verify
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm --prefix mobile ci
+      - name: Test cold migrations and database authorization locally
+        run: node --test backend/tests/database.test.mjs
+
+  browser-flow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm --prefix mobile ci
+      - name: Install the pinned Chromium test runtime
+        working-directory: mobile
+        run: npx --no-install playwright install --with-deps chromium
+      - run: npm --prefix mobile run build:web
+      - name: Test offline study and shared IndexedDB across tabs
+        run: node --test mobile/tests/browser/*.cjs
+
+  android-build:
+    runs-on: ubuntu-latest
     timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Prepare the committed Android bundle
+        run: |
+          npm --prefix mobile ci
+          node tools/copy-web.cjs mobile/www
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Generate Android project
+        working-directory: mobile
+        run: |
+          npx --no-install cap add android
+          node android-native/install.cjs
+      - name: Build the release artifact from this exact commit
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon :app:assembleRelease -PquizSourceCommit="$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-release-${{ github.sha }}
+          path: mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  ios-smoke:
+    if: github.event_name != 'workflow_dispatch' || inputs.run_ios
+    runs-on: macos-26
+    timeout-minutes: 40
     env:
       APP_ID: io.github.xueh0635.xigai
     steps:
@@ -32,8 +127,7 @@ jobs:
         working-directory: mobile
         run: |
           npm ci
-          mkdir -p www
-          cp ../docs/index.html www/index.html
+          node ../tools/copy-web.cjs www
           python3 tests/inject-smoke.py www/index.html
           npx --no-install cap add ios
           node ios-native/install.cjs
@@ -71,3 +165,23 @@ jobs:
           path: |
             ${{ runner.temp }}/xigai-check
             ${{ runner.temp }}/xigai-build.log
+
+  release-gate:
+    name: release-gate
+    if: always() && (github.event_name != 'workflow_dispatch' || inputs.run_ios)
+    needs: [verify, database, browser-flow, android-build, ios-smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every release check to succeed
+        env:
+          CHECK_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          checks = json.loads(os.environ['CHECK_RESULTS'])
+          failed = [name for name, check in checks.items() if check['result'] != 'success']
+          if failed:
+              sys.exit('Release checks did not pass: ' + ', '.join(failed))
+          print('All source, database, browser, Android and iPhone checks passed for this commit.')
+          PY

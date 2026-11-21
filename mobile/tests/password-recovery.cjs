@@ -5,7 +5,7 @@ const test = require("node:test");
 const { runInNewContext } = require("node:vm");
 
 const source = readFileSync(resolve(__dirname, "../account.js"), "utf8");
-const accountWithMockClient = source.replace(/^import .* from "@supabase\/supabase-js";\r?\n/m, "");
+const accountWithMockClient = require("./helpers/account-source.cjs").accountSource();
 assert.notEqual(accountWithMockClient, source);
 
 const email = "learner@example.test";

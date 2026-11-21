@@ -52,7 +52,9 @@ public class MainActivity extends BridgeActivity {
         });
         if (getBridge() == null) return;
         WebView webView = getBridge().getWebView();
-        webView.getSettings().setSupportZoom(false);
+        webView.getSettings().setSupportZoom(true);
+        webView.getSettings().setBuiltInZoomControls(true);
+        webView.getSettings().setDisplayZoomControls(false);
         webView.setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
             @Override
             public void onPermissionRequest(PermissionRequest request) {

@@ -1,0 +1,6 @@
+# Generated bundles include literal whitespace inside third-party JavaScript
+# strings. Their integrity is checked by rebuilding, not whitespace rewriting.
+docs/index.html linguist-generated=true -whitespace
+docs/style-*.css linguist-generated=true
+docs/assets/* linguist-generated=true
+docs/web-manifest.json linguist-generated=true

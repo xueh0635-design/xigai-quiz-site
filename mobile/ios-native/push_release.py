@@ -16,6 +16,8 @@ import sys
 from tempfile import TemporaryDirectory
 from zipfile import BadZipFile, ZipFile
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from release_artifacts import WEB_MANIFEST, git_web_bundle, read_web_bundle, sha256, verify_apk_web, verify_web_directory
 from release_queue import ReleaseQueue, apk_digest, descriptor
 
 
@@ -24,7 +26,8 @@ LOCAL = Path.home() / "Library/Application Support/Xigai Quiz"
 REPO = "xueh0635-design/xigai-quiz-site"
 BUNDLE = "io.github.xueh0635.xigai"
 ASSET = "xigai-quiz-android.apk"
-WEB = "docs/index.html"
+# Existing releases through 1.1.51 predate Web manifests and the CI artifact gate.
+LEGACY_MAX_VERSION_CODE = 53
 IOS_SOURCES = (
     "mobile/package.json",
     "mobile/package-lock.json",
@@ -103,33 +106,56 @@ def read_installed(working, device, filename):
     return apps[0]
 
 
-def prepare_mobile(working, source_ref, apk, log):
-    html = shell("git", "show", f"{source_ref}:{WEB}")
-    with ZipFile(apk) as published:
-        if published.read("assets/public/index.html") != html:
-            raise UpdatePending("APK 内的页面与已发布的代码不一致，保留 iPhone 现有版本。")
+def committed_web_bundle(commit, code):
+    present = shell("git", "ls-tree", "--name-only", commit, "--", f"docs/{WEB_MANIFEST}").strip()
+    if present:
+        # A malformed or incomplete existing manifest must never select legacy mode.
+        return git_web_bundle(commit, lambda spec: shell("git", "show", spec)), False
+    if code > LEGACY_MAX_VERSION_CODE:
+        raise UpdatePending("此发布缺少完整 Web 制品清单，不能构建 iPhone 版本。")
+    html = shell("git", "show", f"{commit}:docs/index.html")
+    manifest = json.dumps({"schemaVersion": 1, "catalogVersion": f"legacy-{commit}",
+                           "files": {"index.html": sha256(html)}}, sort_keys=True).encode()
+    return read_web_bundle({WEB_MANIFEST: manifest, "index.html": html}.__getitem__), True
+
+
+def prepare_mobile(working, source_ref, apk, log, code, name):
+    bundle, legacy = committed_web_bundle(source_ref, code)
+    if legacy:
+        with ZipFile(apk) as published:
+            if published.read("assets/public/index.html") != bundle.files["index.html"]:
+                raise UpdatePending("历史 APK 内的页面与发布标签不一致，保留 iPhone 现有版本。")
+        print("兼容历史发布：已核对原有单文件页面。新版本使用完整 Web 清单与 CI 制品核验。")
+    else:
+        verify_apk_web(apk, bundle, source_ref, code=code, version=name)
     archive = shell("git", "archive", "--format=zip", source_ref, *IOS_SOURCES)
     with ZipFile(BytesIO(archive)) as sources:
         sources.extractall(working)
     mobile = working / "mobile"
     web = mobile / "www"
-    web.mkdir()
-    (web / "index.html").write_bytes(html)
+    bundle.write(web)
     shell("npm", "ci", "--prefer-offline", "--no-audit", "--no-fund", cwd=mobile, log=log)
     shell("npx", "--no-install", "cap", "add", "ios", cwd=mobile, log=log)
     shell("node", "ios-native/install.cjs", cwd=mobile, log=log)
     project = mobile / "ios/App"
-    return project / "App.xcodeproj", html
+    info_file = project / "App/Info.plist"
+    info = plistlib.loads(info_file.read_bytes())
+    info["QuizSourceCommit"] = source_ref
+    info["QuizWebManifestSha256"] = bundle.manifest_sha256
+    info_file.write_bytes(plistlib.dumps(info))
+    return project / "App.xcodeproj", bundle
 
 
-def verify_app(app, html, device, team, code, name):
+def verify_app(app, bundle, commit, device, team, code, name):
     info = plistlib.loads((app / "Info.plist").read_bytes())
     if (info["CFBundleIdentifier"], info["CFBundleShortVersionString"], info["CFBundleVersion"]) != (
         BUNDLE, name, str(code)
     ):
         raise UpdatePending("iOS 构建的应用标识或版本与发布版不一致。")
-    if (app / "public/index.html").read_bytes() != html:
-        raise UpdatePending("iOS 构建内的页面与发布版不一致。")
+    if (info.get("QuizSourceCommit") != commit
+            or info.get("QuizWebManifestSha256") != bundle.manifest_sha256):
+        raise UpdatePending("iOS 构建来源与发布提交或 Web 清单不一致。")
+    verify_web_directory(bundle, app / "public")
     shell("codesign", "--verify", "--deep", "--strict", app, timeout=30)
     profile = plistlib.loads(shell("security", "cms", "-D", "-i", app / "embedded.mobileprovision"))
     entitlements = profile["Entitlements"]
@@ -198,7 +224,7 @@ def build_app(working, apk, target, device, team, packages):
     if "apkSha256" in target and apk_digest(apk) != target["apkSha256"]:
         raise UpdatePending("发布包摘要与待安装版本不一致。")
     with (LOCAL / "iphone-release.log").open("wb") as log:
-        project, html = prepare_mobile(working, commit, apk, log)
+        project, bundle = prepare_mobile(working, commit, apk, log, code, name)
         derived = working / "DerivedData"
         shell("xcodebuild", "-project", project, "-scheme", "App", "-configuration", "Debug",
               "-destination", f"platform=iOS,id={device}", "-derivedDataPath", derived,
@@ -207,7 +233,7 @@ def build_app(working, apk, target, device, team, packages):
               "CODE_SIGN_STYLE=Automatic", "-allowProvisioningUpdates",
               "-allowProvisioningDeviceRegistration", "build", log=log, timeout=900)
     app = derived / "Build/Products/Debug-iphoneos/App.app"
-    verify_app(app, html, device, team, code, name)
+    verify_app(app, bundle, commit, device, team, code, name)
     return app, commit
 
 
@@ -237,8 +263,8 @@ def install(config, apk, target, *, force, current):
                 if tag_commit(tag) != commit:
                     raise UpdatePending("暂存的构建与已发布的代码不一致。")
                 candidate = cache / "App.app"
-                html = shell("git", "show", f"{commit}:{WEB}")
-                verify_app(candidate, html, device, team, code, name)
+                bundle, _ = committed_web_bundle(commit, code)
+                verify_app(candidate, bundle, commit, device, team, code, name)
                 app = candidate
             except (KeyError, OSError, TypeError, ValueError, plistlib.InvalidFileException,
                     subprocess.SubprocessError, UpdatePending):

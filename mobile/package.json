@@ -3,8 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "sync": "cap sync",
-    "build:sync": "esbuild account.js --bundle --minify --format=iife --outfile=../.build/quiz-account.js"
+    "build:web": "node ../tools/build-web.cjs",
+    "build:sync": "npm run build:web",
+    "check:bundle": "node ../tools/build-web.cjs --check",
+    "check:content": "node ../tools/validate-content.cjs",
+    "copy:web": "node ../tools/copy-web.cjs",
+    "sync": "npm run build:web && npm run copy:web && cap sync",
+    "test": "node --test tests/*.cjs ../tests/*.test.cjs",
+    "test:release": "python3 -m unittest discover -s tests -p 'test_*.py'",
+    "test:database": "node --test ../backend/tests/database.test.mjs",
+    "verify": "npm run check:content && npm test && npm run test:release && npm run check:bundle"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
@@ -14,6 +22,10 @@
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.2",
-    "esbuild": "0.28.1"
+    "@electric-sql/pglite": "0.5.17",
+    "@playwright/test": "1.65.1",
+    "esbuild": "0.28.1",
+    "fake-indexeddb": "6.2.8",
+    "supabase": "3.2.0"
   }
 }

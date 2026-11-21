@@ -11,15 +11,8 @@ class QuizWebViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         guard let webView else { return }
         bridge?.registerPluginInstance(QuizHapticsPlugin())
-        webView.scrollView.pinchGestureRecognizer?.isEnabled = false
-        // WebKit can also magnify on a double-tap or when an input gains focus.
-        webView.configuration.userContentController.addUserScript(WKUserScript(source: """
-            (() => {
-                if (location.protocol !== 'capacitor:' || location.host !== 'localhost') return;
-                const viewport = document.querySelector('meta[name="viewport"]');
-                if (viewport) viewport.content += ',maximum-scale=1,user-scalable=no';
-            })();
-            """, injectionTime: .atDocumentEnd, forMainFrameOnly: true, in: .defaultClient))
+        // Reading controls must remain usable alongside one-finger question swipes.
+        webView.scrollView.pinchGestureRecognizer?.isEnabled = true
         let delegate = QuizMediaUIDelegate(forwarding: webView.uiDelegate)
         mediaDelegate = delegate
         webView.uiDelegate = delegate
@@ -202,9 +195,14 @@ final class QuizBridgeViewController: QuizWebViewController {
     fileprivate func handle(_ message: WKScriptMessage, reply: @escaping (Any?, String?) -> Void) {
         let origin = message.frameInfo.securityOrigin
         guard message.webView === webView, message.frameInfo.isMainFrame,
-              origin.protocol == "capacitor", origin.host == "localhost",
+              origin.protocol == "capacitor", origin.host == "localhost", origin.port == 0,
               let body = message.body as? [String: Any], let kind = body["kind"] as? String else {
             reply(nil, "Native UI requires the bundled quiz page.")
+            return
+        }
+
+        if kind == "capabilities" {
+            reply(["schemaVersion": 1, "account": true, "passwordRecovery": true] as [String: Any], nil)
             return
         }
 
@@ -270,11 +268,18 @@ final class QuizBridgeViewController: QuizWebViewController {
                 reply(["value": value as Any? ?? NSNull()], nil)
             }
         case "account":
-            QuizNativeSheets.presentAccount(on: presenter, email: body["email"] as? String) { [weak self] action, email, password in
+            QuizNativeSheets.presentAccount(
+                on: presenter, email: body["email"] as? String,
+                recoveryAvailable: body["recovery"] as? Bool == true
+            ) { [weak self] action, email, password in
                 guard let self else { return "账号服务暂不可用，请重试。" }
                 return await self.performAccountAction(action, email: email, password: password)
-            } completion: {
-                reply(true, nil)
+            } completion: { recoveryEmail in
+                if let recoveryEmail {
+                    reply(["recoveryEmail": recoveryEmail], nil)
+                } else {
+                    reply(true, nil)
+                }
             }
         default:
             reply(nil, "Unknown native UI request.")

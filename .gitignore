@@ -1,0 +1,12 @@
+mobile/node_modules/
+mobile/www/
+mobile/android/
+mobile/ios/
+.build/
+backend/supabase/.temp/
+backend/supabase/.branches/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example

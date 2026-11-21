@@ -4,7 +4,7 @@
 
 练习页顶部可切换「全部题库」「思政云」「学习通」，也可以点「只刷常考题」，按章节练习两库共有的 218 道题。同一道题的不同来源版本只出现一次，优先选用最近答过的版本。答题页和个人题目列表会标注「常考」。「我的旅程」可进入已答题、错题及收藏列表。
 
-`docs/index.html` 是可独立运行的发布文件。原始截图和教材保存在本机。
+源码按职责保存在 `web/`、`content/` 和 `mobile/`；`docs/` 是可重建的静态发布目录。部署或打包时必须携带整个目录及 `web-manifest.json`，不能只复制 `index.html`。原始截图和教材仍保存在维护者本机，仓库不包含这些来源文件。
 
 答题页全屏支持右滑回上一题、左滑到下一题，也可以点翻题按钮。在本章内可回看已提交的作答、判分和解析，未提交的选项和填空会保留。
 
@@ -22,7 +22,17 @@
 
 ## 模拟器构建
 
-在 `mobile` 中执行 `npm ci`，把 `docs/index.html` 复制到 `mobile/www/index.html`，再按目标平台执行 `npx cap add ios` 或 `npx cap add android`。已有平台目录时执行 `npx cap sync`。
+使用 Node.js 22 或更新的兼容版本。在仓库根目录执行：
+
+```sh
+npm --prefix mobile ci
+npm --prefix mobile run build:web
+npm --prefix mobile run verify
+npm --prefix mobile run test:database
+npm --prefix mobile run copy:web
+```
+
+再进入 `mobile`，按目标平台执行 `npx --no-install cap add ios` 或 `npx --no-install cap add android`。已有平台目录时执行 `npm run sync`，这会重新构建、校验并复制完整 Web 目录，再运行 Capacitor 同步。
 
 iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用 Xcode 打开 `ios/App/App.xcodeproj`。iOS 26 及以上使用苹果系统的液态玻璃底栏和弹层。Android 工程生成后，从 `mobile` 执行 `node android-native/install.cjs`，再用 Android Studio 打开 `android`。
 
@@ -32,7 +42,15 @@ iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用
 
 在应用里打开「我的 → 应用更新」可以检查新版、打开 GitHub 发布页并开启更新通知。开启后，系统约每两小时安排一次后台检查，实际时间依设备的联网和省电设置而定。通知会打开对应的 GitHub Release 页面。
 
-发布后续版本时，先把源码和网页推送到 `main`。构建 APK 时提高 `quizVersionCode` 并设置 `quizVersionName`，例如在 `mobile/android` 执行 `./gradlew :app:assembleRelease -PquizVersionCode=18 -PquizVersionName=1.1.16`。用同一个 Android 签名密钥签署 release APK，从仓库根目录运行 `python3 mobile/android-native/publish.py 已签名.apk 发布说明.md`。脚本先校验签名和版本，再发布 APK 并更新客户端读取的版本清单。APK 与发布清单会通过同一 GitHub 仓库提供。
+发布后续版本时，先在 `mobile/android-native/app/build.gradle` 提高 `quizVersionCode` 和 `quizVersionName` 的默认值，提交源码、Web 产物及版本号到 `main`。等这个提交的完整 `release-gate` 成功后，从 Actions 下载 `android-release-<提交 SHA>` 中的 `app-release-unsigned.apk`，用同一个 Android 签名密钥执行 zipalign/签名。不要在本机重新构建替换该产物，也不要提前修改 `docs/android-update.json`。
+
+从与该源码提交一致的干净仓库运行：
+
+```sh
+python3 mobile/android-native/publish.py 已签名.apk 发布说明.md
+```
+
+发布器会验证签名、版本、源码 SHA、完整 Web 资源哈希、该提交的成功 CI 检查，以及 APK 与 CI 制品的非签名内容一致性。校验通过后才发布 APK 并更新客户端版本清单；缺失、失败或跳过的检查都不能放行。签名密钥只保存在维护者自己的签名环境。
 
 ## 同步更新已配对的 iPhone
 
@@ -49,4 +67,19 @@ iOS 工程生成后，从 `mobile` 执行 `node ios-native/install.cjs`，再用
 
 新 Mac 的一次性设置是在上述应用支持目录中把发布仓库克隆为 `release-repo`，再运行其中的 `python3 mobile/ios-native/install_queue_agent.py`。需要立即给当前手机重新签名时，仍可在同步了 `main` 的发布仓库运行 `python3 mobile/ios-native/push_release.py`。
 
-日常开发可以先用 Xcode 模拟器验证。跑真机时把 Xcode 顶栏的运行目标切换到已配对的 iPhone，再按 `⌘R`。如果修改的是内嵌网页，先更新 `mobile/www/index.html` 并从 `mobile` 执行 `npx cap copy ios`。
+日常开发可以先用 Xcode 模拟器验证。跑真机时把 Xcode 顶栏的运行目标切换到已配对的 iPhone，再按 `⌘R`。修改内嵌网页后，从 `mobile` 执行 `npm run sync`；不要手工覆盖单个 HTML 文件。
+
+
+## 源码、题库与校验
+
+- `web/index.template.html`：页面结构；`web/styles/`：样式；`web/scripts/`：按功能拆分的现有脚本。
+- `content/`：题目、会议时间线、错误选项解析。内容修改后运行 `npm --prefix mobile run check:content`。
+- `mobile/account.js` 与存储模块：账号、离线持久化、同步协议；原生覆层位于 `mobile/ios-native/`、`mobile/android-native/`。
+- `backend/supabase/`：数据库迁移与云函数；本地 SQL 验证使用 PGlite，不连接生产数据库。
+- `docs/`：`npm --prefix mobile run build:web` 生成的静态产物。提交时一并提交；CI 会重建并逐字节检查，拒绝源码与发布文件漂移。
+
+题库标识由 `content/questions.json` 的 SHA-256 生成。题目原始条目、去重后的题目与可判分题目是不同概念；完成度只统计去重后的可练习客观题。修改题目答案或身份规则时，必须同步更新后端题库版本迁移，并运行数据库测试。历史答题事实保留当时的题库版本。
+
+CI 分别执行源码与内容校验、数据库权限/迁移测试、真实浏览器测试、Android 构建和 iOS 模拟器流程；全部成功才产生 `release-gate`。手动跳过 iOS 的运行不能用于正式发布。
+
+详细的源码边界、兼容策略与上线顺序见 [工程维护说明](engineering/architecture-reliability.md)。

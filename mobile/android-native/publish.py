@@ -12,12 +12,17 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from release_artifacts import ArtifactError, git_web_bundle, verify_apk_web, verify_same_apk_payload
+
 
 ROOT = Path(__file__).resolve().parents[2]
 REPO = "xueh0635-design/xigai-quiz-site"
 MANIFEST = "docs/android-update.json"
 PACKAGE = "io.github.xueh0635.xigai"
 ASSET = "xigai-quiz-android.apk"
+CI_APK = "app-release-unsigned.apk"
+RELEASE_GATE = "release-gate"
 # Public certificate fingerprint shared by earlier installs and release APKs.
 SIGNER = "224cf6da0371f5dccba807926d05220144b3ffe51bc461a1f7ee774050ea97b4"
 AUTH_GIT = ("git", "-c", "http.version=HTTP/1.1", "-c", "credential.helper=", "-c",
@@ -48,6 +53,38 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def git_blob(spec):
+    return subprocess.run(["git", "show", spec], cwd=ROOT, check=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30).stdout
+
+
+def release_gate(commit):
+    endpoint = f"repos/{REPO}/commits/{commit}/check-runs?check_name={RELEASE_GATE}&filter=latest&per_page=100"
+    response = json.loads(run("gh", "api", endpoint, capture=True))
+    checks = [check for check in response.get("check_runs", [])
+              if check.get("name") == RELEASE_GATE and check.get("head_sha") == commit
+              and check.get("app", {}).get("slug") == "github-actions"]
+    if not checks:
+        raise ValueError(f"提交 {commit[:12]} 尚无 {RELEASE_GATE} 检查；请先完成 CI。")
+    latest = max(checks, key=lambda check: check.get("id", 0))
+    if latest.get("status") != "completed" or latest.get("conclusion") != "success":
+        raise ValueError(f"提交 {commit[:12]} 的 {RELEASE_GATE} 尚未通过，不能发布。")
+    match = re.fullmatch(rf"https://github\.com/{re.escape(REPO)}/actions/runs/(\d+)(?:/job/\d+)?", latest.get("details_url", ""))
+    if not match:
+        raise ValueError("无法核对通过检查的 GitHub Actions 运行记录。")
+    return {"checkRunId": latest["id"], "workflowRunId": int(match[1]), "checkUrl": latest["details_url"]}
+
+
+def verify_ci_artifact(apk, commit, gate):
+    with TemporaryDirectory(prefix="quiz-ci-artifact-") as directory:
+        run("gh", "run", "download", str(gate["workflowRunId"]), "--repo", REPO,
+            "--name", f"android-release-{commit}", "--dir", directory)
+        unsigned = Path(directory) / CI_APK
+        if not unsigned.is_file():
+            raise ValueError("CI 未提供正式 APK 制品，请重新运行完整检查。")
+        verify_same_apk_payload(apk, unsigned)
+
+
 def enqueue_configured_iphone(apk):
     if sys.platform != "darwin":
         return
@@ -69,6 +106,9 @@ def publish(apk, notes, build_tools):
 
     if run("git", "branch", "--show-current", capture=True).strip() != "main":
         raise ValueError("请切换到发布仓库的 main 分支。")
+    changed = run("git", "diff", "HEAD", "--name-only", capture=True).splitlines()
+    if any(path != MANIFEST for path in changed) or (changed and metadata != previous):
+        raise ValueError("发布需要干净的源码；只允许重试相同版本的更新公告。")
     run(*AUTH_GIT, "fetch", "origin", "main")
     target = run("git", "rev-parse", "origin/main", capture=True).strip()
     head = run("git", "rev-parse", "HEAD", capture=True).strip()
@@ -85,18 +125,33 @@ def publish(apk, notes, build_tools):
         release = json.loads(remote.stdout)
         if release["isDraft"] or release["isPrerelease"]:
             raise ValueError("同名发布仍是草稿或预发布，需要先完成正式发布。")
+        # A retry keeps the original tag's source, even after its announcement commit.
+        run(*AUTH_GIT, "fetch", "--no-tags", "origin", f"refs/tags/{tag}")
+        source = run("git", "rev-parse", "FETCH_HEAD^{commit}", capture=True).strip()
+    elif "release not found" in remote.stderr.lower():
+        source = target
+    else:
+        raise RuntimeError(remote.stderr.strip() or "无法读取 GitHub Release。")
+
+    bundle = git_web_bundle(source, git_blob)
+    provenance = verify_apk_web(apk, bundle, source, code=code, version=version)
+    gate = release_gate(source)
+    verify_ci_artifact(apk, source, gate)
+
+    if remote.returncode == 0:
         with TemporaryDirectory() as directory:
             run("gh", "release", "download", tag, "--repo", REPO, "--pattern", ASSET, "--dir", directory)
             if digest(apk) != digest(Path(directory) / ASSET):
                 raise ValueError("同版本已发布不同 APK，请提高版本号。")
-    elif "release not found" in remote.stderr.lower():
+    else:
         with TemporaryDirectory() as directory:
             asset = Path(directory) / ASSET
             copyfile(apk, asset)
-            run("gh", "release", "create", tag, asset, "--repo", REPO, "--target", target,
+            receipt = Path(directory) / "xigai-quiz-build.json"
+            receipt.write_text(json.dumps({**provenance, "apkSha256": digest(apk), **gate},
+                                          ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            run("gh", "release", "create", tag, asset, receipt, "--repo", REPO, "--target", source,
                 "--title", f"习概题库 Android {version}", "--notes-file", notes, "--latest")
-    else:
-        raise RuntimeError(remote.stderr.strip() or "无法读取 GitHub Release。")
 
     if metadata != previous:
         manifest.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n")
@@ -117,7 +172,7 @@ def main():
     args = parser.parse_args()
     try:
         publish(args.apk.resolve(strict=True), args.notes.resolve(strict=True), args.build_tools.expanduser().resolve())
-    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (ArtifactError, OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"{error}\n")
 
 
