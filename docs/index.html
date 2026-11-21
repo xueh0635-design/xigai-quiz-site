@@ -7272,8 +7272,9 @@ const tutorContext = (...args) => window.QuizTutor?.questionContext?.(...args) |
 optionalFeature("option tutor", () => optionNotes.useTutor(quizTutor), null);
 const developmentRequests = optionalFeature("development requests", () => window.QuizDevelopmentRequests.connect((...args) => sync?.development?.(...args)),
   { accountChanged() {} });
+const supplementChapter = "新增（必刷）";
 const chapterTopics = {
-  "新增（必刷）": "综合考点",
+  [supplementChapter]: "思政云单独收录 · 独立进度",
   "导论": "理论的形成、内容与地位",
   "第一章": "新时代坚持和发展中国特色社会主义",
   "第二章": "中国式现代化与中华民族伟大复兴",
@@ -7294,6 +7295,10 @@ const chapterTopics = {
   "第十七章": "全面从严治党",
   "结语": "学以致用",
 };
+function chapterLabel(chapter) {
+  return chapter === supplementChapter ? "独立补充题" : chapter;
+}
+
 const chapterPools = new Map();
 for (const item of questions) {
   if (!chapterPools.has(item.chapter)) chapterPools.set(item.chapter, []);
@@ -7709,7 +7714,7 @@ function selectBank(bank) {
   const chapterSelect = $("chapter");
   const previous = chapterSelect.value;
   const chapters = [...chapterPools.keys()].filter((chapter) => chapterQuestions(chapter).length);
-  chapterSelect.replaceChildren(makeOption("全部章节", ""), ...chapters.map((chapter) => makeOption(chapter, chapter)));
+  chapterSelect.replaceChildren(makeOption("全部章节", ""), ...chapters.map((chapter) => makeOption(chapterLabel(chapter), chapter)));
   chapterSelect.value = chapters.includes(previous) ? previous : "";
   updateAvailability();
 }
@@ -7722,11 +7727,11 @@ function setup() {
   $("stat-starred").onclick = () => showTab("starred", true);
   $("chapter").append(makeOption("全部章节", ""));
   for (const name of new Set(allQuestions.map((item) => item.chapter))) {
-    $("chapter").append(makeOption(name, name));
+    $("chapter").append(makeOption(chapterLabel(name), name));
     const pool = chapterPools.get(name);
     if (pool?.length) $("chapter-list").append(makeChapterCard(name, pool.length));
   }
-  if (questions.some((item) => item.chapter === "新增（必刷）")) $("chapter").value = "新增（必刷）";
+  if (chapterPools.has(supplementChapter)) $("chapter").value = supplementChapter;
   for (const kind of ["单选", "多选", "判断", "填空"]) {
     const label = document.createElement("label");
     const input = document.createElement("input");
@@ -7761,7 +7766,7 @@ function setup() {
     link.target = "_blank";
     link.rel = "noopener";
     link.title = item.review_reasons.join("、");
-    link.textContent = `${item.chapter} · 第 ${item.number} 题`;
+    link.textContent = `${chapterLabel(item.chapter)} · 第 ${item.number} 题`;
     $("review-list").append(link);
   }
 
@@ -7850,7 +7855,7 @@ function makeChapterCard(chapter, total) {
   description.className = "chapter-description";
   const title = document.createElement("span");
   title.className = "chapter-name";
-  title.textContent = chapter;
+  title.textContent = chapterLabel(chapter);
   description.append(title);
   if (chapterTopics[chapter]) {
     const topic = document.createElement("span");
@@ -8183,7 +8188,7 @@ function renderWrongChapters(list) {
     button.dataset.reviewChapter = plan.chapter;
     button.dataset.pending = String(Boolean(plan.wrong.length));
     const heading = document.createElement("strong");
-    heading.textContent = plan.chapter;
+    heading.textContent = chapterLabel(plan.chapter);
     const detail = document.createElement("small");
     detail.textContent = plan.total ? `已练 ${plan.answered} / ${plan.total} 道` : "填空题回看";
     const badge = document.createElement("span");
@@ -8238,7 +8243,7 @@ function renderLibrary() {
   const done = scope === "done";
   const plan = wrong && wrongChapter ? chapterStudy(wrongChapter, wrongBank) : null;
   const list = $("library-list");
-  $("library-title").textContent = plan ? `${plan.chapter} · 错题复练` : wrong ? "错题本" : title;
+  $("library-title").textContent = plan ? `${chapterLabel(plan.chapter)} · 错题复练` : wrong ? "错题本" : title;
   $("library-back").hidden = !profileLibrary && !plan;
   $("library-back").textContent = plan ? "返回错题本" : "返回我的旅程";
   $("wrong-bank-field").hidden = !wrong || Boolean(plan) || $("wrong-bank").options.length < 2;
@@ -8268,7 +8273,7 @@ function renderLibrary() {
     const meta = document.createElement("span");
     meta.className = "library-meta";
     const result = done ? (historyEntry(item.id).wrong ? " · 答错" : " · 答对") : "";
-    meta.textContent = `${item.chapter} · ${item.type}题${result}`;
+    meta.textContent = `${chapterLabel(item.chapter)} · ${item.type}题${result}`;
     appendCommonQuestionBadge(meta, item);
     button.append(stem, meta);
     button.onclick = done || wrong ? () => showHistoryQuestion(item, wrong)
@@ -8344,7 +8349,7 @@ function showHistoryQuestion(item, practice = false) {
   const dialog = $("history-question");
   dialog.dataset.questionId = item.id;
   dialog.dataset.practice = String(practice);
-  $("history-question-meta").textContent = `${item.chapter} · ${item.type}题`;
+  $("history-question-meta").textContent = `${chapterLabel(item.chapter)} · ${item.type}题`;
   appendCommonQuestionBadge($("history-question-meta"), item);
   $("history-question-title").textContent = item.stem;
   const rows = Object.entries(item.options).map(([letter, text]) => {
@@ -8425,7 +8430,7 @@ function renderRouteStops(chapters, selected) {
     pin.className = "route-pin";
     pin.setAttribute("aria-hidden", "true");
     const label = document.createElement("strong");
-    label.textContent = row.chapter;
+    label.textContent = chapterLabel(row.chapter);
     const count = document.createElement("span");
     count.className = "route-stop-count";
     count.textContent = !row.total ? "看填空" : !row.remaining.length ? "已练完" : `${row.answered} / ${row.total}`;
@@ -8478,7 +8483,7 @@ function renderLearningRoute(chapters, currentChapter, resume) {
   const next = $("route-next");
   const chapter = currentChapter?.chapter;
   const upcoming = currentChapter && nextUnfinishedChapter(chapters, currentChapter);
-  $("course-title").textContent = chapter || "学习路线";
+  $("course-title").textContent = chapterLabel(chapter) || "学习路线";
   $("adventure-target").textContent = chapter ? chapterTopics[chapter] || "" : "当前题库暂无习题";
   $("route-progress").hidden = !currentChapter?.total;
   $("route-all-chapters").hidden = !chapter;
@@ -8518,7 +8523,7 @@ function renderLearningRoute(chapters, currentChapter, resume) {
     start.onclick = () => openChapterReview(chapter, selectedBank);
     if (upcoming) {
       next.hidden = false;
-      next.textContent = `去${upcoming.chapter}`;
+      next.textContent = `去${chapterLabel(upcoming.chapter)}`;
       next.onclick = () => startRouteChapter(upcoming);
     }
   } else {
@@ -8526,7 +8531,7 @@ function renderLearningRoute(chapters, currentChapter, resume) {
     start.onclick = () => startChapterTest(chapter, selectedBank);
     if (upcoming) {
       next.hidden = false;
-      next.textContent = `去${upcoming.chapter}`;
+      next.textContent = `去${chapterLabel(upcoming.chapter)}`;
       next.onclick = () => startRouteChapter(upcoming);
     }
   }
@@ -8589,8 +8594,8 @@ function updateAvailability() {
     const kind = session.routePlan?.kind;
     const label = kind === "test" ? " · 整章测验" : kind === "review" ? " · 错题复练" : "";
     $("resume-detail").textContent = chapter
-      ? `${chapter} · ${bankLabels[bank]}${label}`
-      : `${session.meetingPractice ? "会议专题" : current().chapter} · ${session.index + 1} / ${session.ids.length}`;
+      ? `${chapterLabel(chapter)} · ${bankLabels[bank]}${label}`
+      : `${session.meetingPractice ? "会议专题" : chapterLabel(current().chapter)} · ${session.index + 1} / ${session.ids.length}`;
   }
   if (!$("library").hidden) renderLibrary();
   if (!$("quiz").hidden && current()) renderQuestionFlags(current().id);
@@ -8702,7 +8707,7 @@ function renderRelated(ids, session) {
     stem.textContent = item.stem;
     const detail = document.createElement("span");
     detail.className = "related-meta";
-    detail.textContent = `${item.chapter} · ${item.type}题`;
+    detail.textContent = `${chapterLabel(item.chapter)} · ${item.type}题`;
     button.append(stem, detail);
     button.onclick = () => {
       const previousIndex = session.ids.indexOf(id);
@@ -8832,7 +8837,7 @@ function previewQuestionPosition(session, number) {
   const slider = $("question-position");
   slider.setAttribute("aria-valuetext", label);
   slider.style.setProperty("--question-position", `${total > 1 ? (number - 1) / (total - 1) * 100 : 100}%`);
-  $("where").textContent = `${takingChapterTest(session) ? "测验 · " : ""}${chapter ?? ""} · ${number} / ${total}`;
+  $("where").textContent = `${takingChapterTest(session) ? "测验 · " : ""}${chapterLabel(chapter) ?? ""} · ${number} / ${total}`;
 }
 
 function renderQuestion() {
@@ -9154,7 +9159,7 @@ function completeRound(changes = []) {
   for (const button of [retry, test, advance, $("again")]) button.classList.toggle("primary", button === primary);
   $("adventure-result").hidden = !adventure || !route;
   if (adventure && route) {
-    $("adventure-result-stops").textContent = `${route.chapter} · ${route.answered} / ${route.total} 道已答`;
+    $("adventure-result-stops").textContent = `${chapterLabel(route.chapter)} · ${route.answered} / ${route.total} 道已答`;
     $("adventure-result-streak").textContent = `最高连中 ${longestStreak(round, session)} 题`;
   }
   $("review-round").textContent = testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
