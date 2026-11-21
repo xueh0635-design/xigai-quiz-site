@@ -336,11 +336,11 @@
       <form method="dialog">
         <h2 id="wrong-share-title">错题本分享</h2>
         <p id="wrong-share-summary"></p>
-        <label id="wrong-share-field" hidden>分享链接 <input id="wrong-share-url" readonly></label>
+        <label>分享码 <textarea id="wrong-share-code" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></label>
         <p id="wrong-share-status" role="status"></p>
         <div class="actions">
-          <button id="wrong-share-copy" type="button" hidden>复制链接</button>
-          <button id="wrong-share-start" type="button" class="primary" hidden>开始练习</button>
+          <button id="wrong-share-copy" type="button" hidden>复制分享码</button>
+          <button id="wrong-share-save" type="button" class="primary" hidden>导入错题本</button>
           <button>关闭</button>
         </div>
       </form>
@@ -352,7 +352,12 @@
         <p id="library-count" role="status"></p>
         <button id="wrong-book-review" class="primary" type="button" hidden>重刷全部错题</button>
         <button id="wrong-share" type="button" hidden>分享错题本</button>
+        <button id="wrong-import" type="button" hidden>导入分享码</button>
       </div>
+      <section id="wrong-imported" hidden>
+        <h3>已导入的错题本</h3>
+        <div id="wrong-imported-list" class="actions"></div>
+      </section>
       <div id="wrong-bank-field" class="wrong-bank-field" hidden>
         <label for="wrong-bank">题库</label>
         <select id="wrong-bank"></select>

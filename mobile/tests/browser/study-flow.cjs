@@ -161,9 +161,8 @@ test("optional assistant and feedback initialization failures do not prevent off
   assert.deepEqual(errors, []);
 });
 
-test("wrong-book review and shared links use only the sender's marked questions", async (t) => {
+test("wrong-book codes import a separate persistent practice set", async (t) => {
   const sender = await (await context(t)).newPage();
-  await sender.addInitScript(() => Object.defineProperty(navigator, "share", { value: undefined }));
   await sender.goto(origin + "/docs/index.html");
   await ready(sender);
   const ids = await sender.evaluate(() => {
@@ -174,16 +173,25 @@ test("wrong-book review and shared links use only the sender's marked questions"
     return items.map((item) => item.id);
   });
   await sender.locator("#wrong-share").click();
-  const url = new URL(await sender.locator("#wrong-share-url").inputValue());
+  await sender.locator("#wrong-share-dialog[open]").waitFor();
+  const code = await sender.locator("#wrong-share-code").inputValue();
+  assert.match(code, /^XQ1-/);
   await sender.locator("#wrong-share-dialog button").last().click();
   await sender.locator("#wrong-book-review").click();
   assert.deepEqual(await sender.evaluate(() => state.session.ids), [ids[0]]);
-  assert.equal(await sender.evaluate(() => state.session.wrongBookReview), true);
 
   const recipient = await (await context(t)).newPage();
-  await recipient.goto(origin + "/docs/index.html" + url.hash);
+  await recipient.goto(origin + "/docs/index.html");
   await ready(recipient);
-  await recipient.locator("#wrong-share-start").click();
+  await recipient.evaluate(() => showTab("wrong"));
+  await recipient.locator("#wrong-import").click();
+  await recipient.locator("#wrong-share-code").fill(code);
+  await recipient.locator("#wrong-share-save").click();
+  await recipient.waitForFunction(() => document.querySelector("#wrong-share-status").textContent.includes("已导入 1 道题"));
+  await recipient.reload();
+  await ready(recipient);
+  await recipient.evaluate(() => showTab("wrong"));
+  await recipient.locator("#wrong-imported-list button").click();
   assert.deepEqual(await recipient.evaluate(() => state.session.ids), [ids[0]]);
   assert.deepEqual(await recipient.evaluate(() => Object.keys(state.history)), []);
 });

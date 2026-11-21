@@ -557,11 +557,11 @@
       <form method="dialog">
         <h2 id="wrong-share-title">错题本分享</h2>
         <p id="wrong-share-summary"></p>
-        <label id="wrong-share-field" hidden>分享链接 <input id="wrong-share-url" readonly></label>
+        <label>分享码 <textarea id="wrong-share-code" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea></label>
         <p id="wrong-share-status" role="status"></p>
         <div class="actions">
-          <button id="wrong-share-copy" type="button" hidden>复制链接</button>
-          <button id="wrong-share-start" type="button" class="primary" hidden>开始练习</button>
+          <button id="wrong-share-copy" type="button" hidden>复制分享码</button>
+          <button id="wrong-share-save" type="button" class="primary" hidden>导入错题本</button>
           <button>关闭</button>
         </div>
       </form>
@@ -573,7 +573,12 @@
         <p id="library-count" role="status"></p>
         <button id="wrong-book-review" class="primary" type="button" hidden>重刷全部错题</button>
         <button id="wrong-share" type="button" hidden>分享错题本</button>
+        <button id="wrong-import" type="button" hidden>导入分享码</button>
       </div>
+      <section id="wrong-imported" hidden>
+        <h3>已导入的错题本</h3>
+        <div id="wrong-imported-list" class="actions"></div>
+      </section>
       <div id="wrong-bank-field" class="wrong-bank-field" hidden>
         <label for="wrong-bank">题库</label>
         <select id="wrong-bank"></select>
@@ -8253,79 +8258,151 @@ function shareableWrongQuestions() {
   return [...new Map(marked.map((item) => [sharedQuestionId(item.id), item])).values()];
 }
 
-function showWrongShare(ids, link = "") {
-  const outgoing = Boolean(link);
-  $("wrong-share-title").textContent = outgoing ? "分享错题本" : "收到的错题本";
-  $("wrong-share-summary").textContent = outgoing
-    ? `分享 ${ids.length} 道题。链接只包含题目列表。`
-    : ids.length ? `可练习 ${ids.length} 道题。答题记录存到你自己的账号或本机。`
-      : "当前题库无法打开这条链接里的题目。";
-  $("wrong-share-field").hidden = $("wrong-share-copy").hidden = !outgoing;
-  $("wrong-share-url").value = link;
-  $("wrong-share-status").textContent = "";
-  $("wrong-share-start").hidden = outgoing || !ids.length;
-  $("wrong-share-start").onclick = () => {
-    if (accountSwitching) {
-      $("wrong-share-status").textContent = "正在载入学习记录，请稍后再试。";
-      return;
+const wrongCodePrefix = "XQ1-";
+const wrongCodeLimit = 40000;
+
+async function encodeWrongCode(ids) {
+  const input = new Blob([JSON.stringify(ids)]);
+  const compressed = await new Response(input.stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer();
+  const bytes = new Uint8Array(compressed);
+  const encoded = btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
+  return wrongCodePrefix + encoded.replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+async function decodeWrongCode(code) {
+  if (code.length > wrongCodeLimit || !/^XQ1-[A-Za-z0-9_-]+$/.test(code)) throw new Error("分享码格式不正确。");
+  const data = atob(code.slice(wrongCodePrefix.length).replaceAll("-", "+").replaceAll("_", "/"));
+  const bytes = Uint8Array.from(data, (char) => char.charCodeAt(0));
+  const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate")).getReader();
+  const decoder = new TextDecoder();
+  let length = 0;
+  let payload = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    length += value.byteLength;
+    if (length > 150000) {
+      await reader.cancel();
+      throw new Error("分享码内容过长。");
     }
-    $("wrong-share-dialog").close();
-    start(ids, "practice");
-  };
+    payload += decoder.decode(value, { stream: true });
+  }
+  const parsed = JSON.parse(payload + decoder.decode());
+  if (!Array.isArray(parsed) || parsed.some((id) => typeof id !== "string")) throw new Error("分享码内容不完整。");
+  return [...new Set(parsed)];
+}
+
+function wrongImportKey() {
+  return "xigai-imported-wrong-books-v1:" + (activeAccountId || "guest");
+}
+
+function importedWrongBooks(key = wrongImportKey()) {
+  try {
+    const entries = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(entries) ? entries.filter((book) => typeof book?.id === "string" && Array.isArray(book.ids)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function showWrongCodeDialog(code = "", count = 0) {
+  const outgoing = Boolean(code);
+  $("wrong-share-title").textContent = outgoing ? "分享错题本" : "导入错题本";
+  $("wrong-share-summary").textContent = outgoing
+    ? `共 ${count} 道题。把分享码发给对方，对方可在 App 的「错题」里导入。`
+    : "粘贴收到的分享码，题目会保存到「已导入的错题本」。";
+  $("wrong-share-status").textContent = "";
+  $("wrong-share-copy").hidden = !outgoing;
+  $("wrong-share-save").hidden = outgoing;
+  $("wrong-share-code").readOnly = outgoing;
+  $("wrong-share-code").value = code;
   $("wrong-share-dialog").showModal();
 }
 
 $("wrong-share").onclick = async () => {
   const ids = shareableWrongQuestions().map(({ id }) => id);
-  if (!ids.length) return;
-  const groups = new Map();
-  for (const id of ids) {
-    const match = /^(.*-)([0-9]+)$/.exec(id);
-    const prefix = match?.[1] ?? "";
-    if (!groups.has(prefix)) groups.set(prefix, []);
-    groups.get(prefix).push(match?.[2] ?? id);
-  }
-  const url = new URL("https://xueh0635-design.github.io/xigai-quiz-site/");
-  url.hash = new URLSearchParams({ wrong: JSON.stringify([...groups]) }).toString();
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: "习概题库 · 错题本", url: url.href });
-      return;
-    } catch (error) {
-      if (error.name === "AbortError") return;
+  if (!ids.length || accountSwitching) return;
+  const key = wrongImportKey();
+  try {
+    const code = await encodeWrongCode(ids);
+    if (!accountSwitching && key === wrongImportKey() && !$("wrong-share-dialog").open) showWrongCodeDialog(code, ids.length);
+  } catch {
+    if (!$("wrong-share-dialog").open) {
+      showWrongCodeDialog();
+      $("wrong-share-status").textContent = "生成分享码失败，请重试。";
     }
   }
-  showWrongShare(ids, url.href);
 };
+
+$("wrong-import").onclick = () => showWrongCodeDialog();
 
 $("wrong-share-copy").onclick = async () => {
-  const input = $("wrong-share-url");
+  const field = $("wrong-share-code");
   try {
-    await navigator.clipboard.writeText(input.value);
-    $("wrong-share-status").textContent = "链接已复制";
+    await navigator.clipboard.writeText(field.value);
+    $("wrong-share-status").textContent = "分享码已复制";
   } catch {
-    input.select();
-    $("wrong-share-status").textContent = "请复制选中的链接";
+    field.focus();
+    field.select();
+    $("wrong-share-status").textContent = "请复制选中的分享码";
   }
 };
 
-function receiveWrongShare() {
-  const payload = new URLSearchParams(location.hash.slice(1)).get("wrong");
-  if (payload === null || $("wrong-share-dialog").open) return;
-  const ids = new Set();
+$("wrong-share-save").onclick = async () => {
+  if (accountSwitching) return;
+  const key = wrongImportKey();
+  const code = $("wrong-share-code").value.trim();
+  const button = $("wrong-share-save");
+  button.disabled = true;
   try {
-    if (payload.length <= 100000) {
-      for (const [prefix, suffixes] of JSON.parse(payload)) {
-        if (typeof prefix !== "string" || !Array.isArray(suffixes)) continue;
-        for (const suffix of suffixes) {
-          if (typeof suffix === "string" && byId.has(prefix + suffix)) ids.add(prefix + suffix);
-        }
-      }
+    let shared;
+    try {
+      shared = await decodeWrongCode(code);
+    } catch {
+      $("wrong-share-status").textContent = "分享码无效，请复制完整的分享码。";
+      return;
     }
+    if (accountSwitching || key !== wrongImportKey() || !$("wrong-share-dialog").open) return;
+    const ids = shared.filter((id) => byId.has(id) && requiresAnswer(id));
+    if (!ids.length) {
+      $("wrong-share-status").textContent = "当前版本没有这份错题本里的题，请更新 App 后再试。";
+      return;
+    }
+    const books = importedWrongBooks(key);
+    const signature = JSON.stringify([...ids].sort());
+    if (books.some((book) => JSON.stringify([...book.ids].sort()) === signature)) {
+      $("wrong-share-status").textContent = "这份错题本已经导入。";
+      return;
+    }
+    localStorage.setItem(key, JSON.stringify([{ id: randomId(), ids }, ...books]));
+    renderImportedWrongBooks(true);
+    $("wrong-share-status").textContent = ids.length === shared.length
+      ? `已导入 ${ids.length} 道题。` : `已导入 ${ids.length} 道题，另有 ${shared.length - ids.length} 道题需要更新题库。`;
   } catch {
-    ids.clear();
+    $("wrong-share-status").textContent = "保存失败，请检查本机存储后重试。";
+  } finally {
+    button.disabled = false;
   }
-  showWrongShare([...ids]);
+};
+
+function renderImportedWrongBooks(visible) {
+  const books = visible ? importedWrongBooks() : [];
+  $("wrong-imported").hidden = !books.length;
+  $("wrong-imported-list").replaceChildren(...books.map((book, index) => {
+    const ids = book.ids.filter((id) => byId.has(id) && requiresAnswer(id));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = `共享错题本 ${books.length - index} · ${ids.length} 道题`;
+    button.disabled = !ids.length;
+    button.onclick = () => {
+      const draft = matchingDraft((session) => session.importedWrongBook === book.id && session.index < session.ids.length);
+      if (draft) {
+        if (draft !== state.session) activateDraft(draft);
+        resumeQuestion();
+      } else start(ids, "practice", { importedWrongBook: book.id });
+    };
+    return button;
+  }));
 }
 
 function wrongBookDraft() {
@@ -8354,6 +8431,8 @@ function renderLibrary() {
   const wrongCount = wrong && !plan ? shareableWrongQuestions().length : 0;
   const wrongDraft = wrong && !plan && wrongBookDraft();
   $("wrong-share").hidden = !wrongCount;
+  $("wrong-import").hidden = !wrong || Boolean(plan);
+  renderImportedWrongBooks(wrong && !plan);
   $("wrong-book-review").hidden = !wrongCount && !wrongDraft;
   $("wrong-book-review").textContent = wrongDraft ? "继续重刷错题" : `重刷全部错题（${wrongCount}）`;
   $("library-back").hidden = !profileLibrary && !plan;
@@ -9974,6 +10053,8 @@ sync = optionalFeature("account", () => window.QuizAccount?.connect({
   accountChanged(account) {
     accountScopeRevision++;
     activeAccountId = account;
+    $("wrong-share-dialog").close();
+    $("wrong-share-code").value = "";
     setAccountSwitching(true);
     editingNote = null;
     questionNoteText.value = "";
@@ -10000,8 +10081,6 @@ $("profile-account").hidden = $("account-button").hidden;
   tabDock.inert = accountSwitching;
   document.documentElement.dataset.studyReady = "true";
   window.dispatchEvent(new Event("quiz-study-ready"));
-  receiveWrongShare();
-  window.addEventListener("hashchange", receiveWrongShare);
 }
 initializeStudy().catch((error) => {
   pageContent.inert = accountSwitching;
