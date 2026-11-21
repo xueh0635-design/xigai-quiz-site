@@ -19,11 +19,14 @@
   const search = byId("quiz-tutor-search");
   const model = byId("quiz-tutor-model");
   const modelKey = "xigai-tutor-model";
+  const usage = byId("quiz-tutor-usage");
+  const budget = byId("quiz-tutor-budget");
+  const budgetKey = "xigai-tutor-budget-usd";
   const errors = {
     sign_in: "登录已失效，请重新登录。",
     not_allowed: "这个账号尚未开通题目助手。",
     inactive: "题目助手暂未开通。",
-    limit: "提问次数已达上限，请稍后再试。",
+    limit: "暂时无法发送，请稍后再试。",
     provider_quota: "OpenAI 额度暂不可用。",
     too_long: "这段对话太长，请缩短问题再试。",
     bad_question: "没能读到题目，请关闭后重新打开。",
@@ -135,16 +138,37 @@
     let available = false;
     let searchAvailable = false;
     let preferredModel = "";
-    try { preferredModel = localStorage.getItem(modelKey) || ""; } catch { /* Keep the default. */ }
+    try {
+      preferredModel = localStorage.getItem(modelKey) || "";
+      budget.value = localStorage.getItem(budgetKey) || "";
+    } catch { /* Keep the defaults. */ }
+    let totals = null;
     let checked = 0;
     let checking = null;
     let retryTimer;
     let chat = null;
     let pending = null;
 
+    function renderUsage(receipt) {
+      totals = receipt;
+      usage.hidden = !totals || !Number.isFinite(totals.costNanos);
+      if (usage.hidden) return;
+      const amount = totals.costNanos / 1e9;
+      const reference = Number(budget.value);
+      const percent = reference > 0 ? amount / reference * 100 : 0;
+      byId("quiz-tutor-meter").style.setProperty("--usage-percent", Math.min(percent, 100) + "%");
+      const money = amount > 0 && amount < .0001 ? "< $0.0001" : "$" + amount.toFixed(4);
+      byId("quiz-tutor-cost").textContent = money + (reference > 0 ? ` · ${percent.toFixed(1)}%` : "");
+    }
+    budget.oninput = () => renderUsage(totals);
+    budget.onchange = () => {
+      try { localStorage.setItem(budgetKey, budget.value); } catch { /* Keep the reference for this session. */ }
+    };
+
     function setAvailable(value, capabilities) {
       available = value;
       searchAvailable = capabilities?.webSearch === true;
+      if (capabilities?.usage || !value) renderUsage(capabilities?.usage);
       const choices = Array.isArray(capabilities?.models) ? capabilities.models : [];
       model.replaceChildren(...choices.map(({ id, label }) => new Option(label, id)));
       model.value = choices.some(choice => choice.id === preferredModel) ? preferredModel : capabilities?.defaultModel || "";
@@ -239,6 +263,9 @@
         }, controller.signal);
         if (controller.signal.aborted || chat !== active) return;
         if (typeof result?.data?.answer === "string" && result.data.answer.trim()) {
+          if (result.data.usage && (!totals || result.data.usage.requests >= totals.requests)) {
+            renderUsage(result.data.usage);
+          }
           active.turns.push({
             role: "assistant", text: result.data.answer, searched: result.data.searched === true,
             sources: Array.isArray(result.data.sources) ? result.data.sources : [], model: result.data.model,

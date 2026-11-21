@@ -302,6 +302,52 @@
   :root:not([data-reduced-motion]) .tutor-waiting span { animation: tutor-wait 1.3s ease-in-out infinite; }
 }
 @keyframes tutor-wait { 50% { opacity: .35; } }
+.tutor-usage {
+  margin-bottom: 9px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: .8rem;
+  background: var(--world-card-alt);
+}
+.tutor-usage summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+.tutor-meter {
+  position: relative;
+  flex: none;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--usage-percent, 0%), var(--line) 0);
+}
+.tutor-meter::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: var(--world-card-alt);
+}
+.tutor-usage-label { color: var(--ink); }
+#quiz-tutor-cost { margin-left: 4px; font-variant-numeric: tabular-nums; }
+.tutor-usage input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.tutor-usage p { margin: 6px 0; }
+.tutor-usage a { color: var(--accent); }
 .tutor-tools {
   display: flex;
   align-items: center;

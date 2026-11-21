@@ -454,6 +454,16 @@
         <p id="quiz-tutor-waiting" class="tutor-waiting" role="status" hidden>正在生成回答<span aria-hidden="true"></span></p>
       </div>
       <div class="tutor-composer">
+        <details id="quiz-tutor-usage" class="tutor-usage" hidden>
+          <summary>
+            <span id="quiz-tutor-meter" class="tutor-meter" aria-hidden="true"></span>
+            <span class="tutor-usage-label">API 用量 <span id="quiz-tutor-cost"></span></span>
+          </summary>
+          <label for="quiz-tutor-budget">参考额度（美元）</label>
+          <input id="quiz-tutor-budget" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="填写后显示已用比例">
+          <p>统计接入计量后这套题库的预估花费。参考额度用于显示比例。</p>
+          <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI 官方用量</a>
+        </details>
         <p id="quiz-tutor-status" role="status"></p>
         <div id="quiz-tutor-tools" class="tutor-tools" hidden>
           <label id="quiz-tutor-model-label" hidden>模型

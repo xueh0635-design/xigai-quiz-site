@@ -242,7 +242,7 @@
   <link rel="stylesheet" href="style-11-6a11e1454b9b.css">
   <link rel="stylesheet" href="style-12-a3233b6758bf.css">
   <link rel="stylesheet" href="style-13-d3bb5b5c164c.css">
-  <link rel="stylesheet" href="style-14-d7289f8b13e2.css">
+  <link rel="stylesheet" href="style-14-3bdce4d516aa.css">
 </head>
 <body>
   <header class="top">
@@ -675,6 +675,16 @@
         <p id="quiz-tutor-waiting" class="tutor-waiting" role="status" hidden>正在生成回答<span aria-hidden="true"></span></p>
       </div>
       <div class="tutor-composer">
+        <details id="quiz-tutor-usage" class="tutor-usage" hidden>
+          <summary>
+            <span id="quiz-tutor-meter" class="tutor-meter" aria-hidden="true"></span>
+            <span class="tutor-usage-label">API 用量 <span id="quiz-tutor-cost"></span></span>
+          </summary>
+          <label for="quiz-tutor-budget">参考额度（美元）</label>
+          <input id="quiz-tutor-budget" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="填写后显示已用比例">
+          <p>统计接入计量后这套题库的预估花费。参考额度用于显示比例。</p>
+          <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI 官方用量</a>
+        </details>
         <p id="quiz-tutor-status" role="status"></p>
         <div id="quiz-tutor-tools" class="tutor-tools" hidden>
           <label id="quiz-tutor-model-label" hidden>模型
@@ -6470,11 +6480,14 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
   const search = byId("quiz-tutor-search");
   const model = byId("quiz-tutor-model");
   const modelKey = "xigai-tutor-model";
+  const usage = byId("quiz-tutor-usage");
+  const budget = byId("quiz-tutor-budget");
+  const budgetKey = "xigai-tutor-budget-usd";
   const errors = {
     sign_in: "登录已失效，请重新登录。",
     not_allowed: "这个账号尚未开通题目助手。",
     inactive: "题目助手暂未开通。",
-    limit: "提问次数已达上限，请稍后再试。",
+    limit: "暂时无法发送，请稍后再试。",
     provider_quota: "OpenAI 额度暂不可用。",
     too_long: "这段对话太长，请缩短问题再试。",
     bad_question: "没能读到题目，请关闭后重新打开。",
@@ -6586,16 +6599,37 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
     let available = false;
     let searchAvailable = false;
     let preferredModel = "";
-    try { preferredModel = localStorage.getItem(modelKey) || ""; } catch { /* Keep the default. */ }
+    try {
+      preferredModel = localStorage.getItem(modelKey) || "";
+      budget.value = localStorage.getItem(budgetKey) || "";
+    } catch { /* Keep the defaults. */ }
+    let totals = null;
     let checked = 0;
     let checking = null;
     let retryTimer;
     let chat = null;
     let pending = null;
 
+    function renderUsage(receipt) {
+      totals = receipt;
+      usage.hidden = !totals || !Number.isFinite(totals.costNanos);
+      if (usage.hidden) return;
+      const amount = totals.costNanos / 1e9;
+      const reference = Number(budget.value);
+      const percent = reference > 0 ? amount / reference * 100 : 0;
+      byId("quiz-tutor-meter").style.setProperty("--usage-percent", Math.min(percent, 100) + "%");
+      const money = amount > 0 && amount < .0001 ? "< $0.0001" : "$" + amount.toFixed(4);
+      byId("quiz-tutor-cost").textContent = money + (reference > 0 ? ` · ${percent.toFixed(1)}%` : "");
+    }
+    budget.oninput = () => renderUsage(totals);
+    budget.onchange = () => {
+      try { localStorage.setItem(budgetKey, budget.value); } catch { /* Keep the reference for this session. */ }
+    };
+
     function setAvailable(value, capabilities) {
       available = value;
       searchAvailable = capabilities?.webSearch === true;
+      if (capabilities?.usage || !value) renderUsage(capabilities?.usage);
       const choices = Array.isArray(capabilities?.models) ? capabilities.models : [];
       model.replaceChildren(...choices.map(({ id, label }) => new Option(label, id)));
       model.value = choices.some(choice => choice.id === preferredModel) ? preferredModel : capabilities?.defaultModel || "";
@@ -6690,6 +6724,9 @@ window.QuizWrongOptionReasons = {"新增（必刷）-2":{"A":{"option":"坚持�
         }, controller.signal);
         if (controller.signal.aborted || chat !== active) return;
         if (typeof result?.data?.answer === "string" && result.data.answer.trim()) {
+          if (result.data.usage && (!totals || result.data.usage.requests >= totals.requests)) {
+            renderUsage(result.data.usage);
+          }
           active.turns.push({
             role: "assistant", text: result.data.answer, searched: result.data.searched === true,
             sources: Array.isArray(result.data.sources) ? result.data.sources : [], model: result.data.model,

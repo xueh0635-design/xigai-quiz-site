@@ -1,11 +1,12 @@
 type Environment = { get(name: string): string | undefined };
 type Fields = Record<string, unknown>;
 const models = [
-  { id: "gpt-5-mini", label: "GPT-5 mini" },
-  { id: "gpt-5.4-nano", label: "GPT-5.4 nano" },
-  { id: "gpt-5.4-mini", label: "GPT-5.4 mini" },
+  { id: "gpt-5-mini", label: "GPT-5 mini", rates: [250, 25, 2000] },
+  { id: "gpt-5.4-nano", label: "GPT-5.4 nano", rates: [200, 20, 1250] },
+  { id: "gpt-5.4-mini", label: "GPT-5.4 mini", rates: [750, 75, 4500] },
 ];
 const defaultModel = models[0].id;
+const searchCost = 10_000_000;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -143,6 +144,19 @@ export function createTutor(env: Environment, fetcher = fetch) {
   const serviceKey = env.get("SUPABASE_SERVICE_ROLE_KEY");
   const openaiKey = env.get("OPENAI_API_KEY")?.trim();
   const allowed = new Set((env.get("QUIZ_TUTOR_USER_IDS") || "").split(",").map((id) => id.trim().toLowerCase()).filter(Boolean));
+  async function usage(userId: string, cost?: number) {
+    try {
+      const result = await fetcher(`${projectUrl}/rest/v1/rpc/quiz_tutor_usage`, {
+        method: "POST",
+        headers: { apikey: serviceKey!, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ tutor_user: userId, request_cost: cost }),
+        signal: AbortSignal.timeout(3000),
+      });
+      return result.ok ? fields(await result.json()) : null;
+    } catch {
+      return null;
+    }
+  }
 
   return async (request: Request) => {
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -162,7 +176,10 @@ export function createTutor(env: Environment, fetcher = fetch) {
       if (!auth.ok) return reply({ code: "unavailable" }, 503);
       const userId = clipped(fields(await auth.json()).id, 36).toLowerCase();
       if (!allowed.has(userId)) return status ? reply({ available: false }) : reply({ code: "not_allowed" }, 403);
-      if (status) return reply({ available: true, webSearch: true, models, defaultModel });
+      if (status) return reply({
+        available: true, webSearch: true, models: models.map(({ id, label }) => ({ id, label })),
+        defaultModel, usage: await usage(userId),
+      });
 
       const maxBodyBytes = 48000;
       if (Number(request.headers.get("content-length")) > maxBodyBytes) return reply({ code: "too_long" }, 413);
@@ -188,15 +205,6 @@ export function createTutor(env: Environment, fetcher = fetch) {
       const searching = input.question.answerVisible &&
         (manualSearch || searchRequest.test(input.turns.at(-1)?.text || ""));
 
-      const limit = await fetcher(`${projectUrl}/rest/v1/rpc/reserve_quiz_tutor_turn`, {
-        method: "POST",
-        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ tutor_user: userId }),
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!limit.ok) return reply({ code: "unavailable" }, 503);
-      if (await limit.json() !== true) return reply({ code: "limit" }, 429);
-
       const response = await fetcher("https://api.openai.com/v1/responses", {
         method: "POST",
         headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
@@ -220,8 +228,19 @@ export function createTutor(env: Environment, fetcher = fetch) {
       if (!response.ok) return fields(output.error).code === "insufficient_quota"
         ? reply({ code: "provider_quota" }, 503) : reply({ code: searching ? "search_unavailable" : "unavailable" }, 502);
       const result = tutorAnswer(output, searching);
+      const meter = fields(output.usage);
+      const inputTokens = meter.input_tokens;
+      const outputTokens = meter.output_tokens;
+      let totals = null;
+      if (typeof inputTokens === "number" && typeof outputTokens === "number") {
+        const cached = Number(fields(meter.input_tokens_details).cached_tokens) || 0;
+        const rate = models.find(choice => choice.id === model)!.rates;
+        const searches = Array.isArray(output.output) ? output.output.map(fields).filter(item => item.type === "web_search_call" && item.status === "completed").length : 0;
+        // Rates are nano-dollars per token or search call. Store integer totals.
+        totals = await usage(userId, (inputTokens - cached) * rate[0] + cached * rate[1] + outputTokens * rate[2] + searchCost * searches);
+      }
       if (searching && !result.searched) return reply({ code: "search_unavailable" }, 502);
-      return result.answer ? reply({ ...result, model: clipped(output.model, 100) || model }) : reply({ code: "no_answer" }, 502);
+      return result.answer ? reply({ ...result, model: clipped(output.model, 100) || model, usage: totals }) : reply({ code: "no_answer" }, 502);
     } catch {
       return reply({ code: "unavailable" }, 503);
     }
