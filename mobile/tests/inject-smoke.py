@@ -39,6 +39,12 @@ window.addEventListener("load", async () => {
   try {
     const bank = window.QuizData;
     check(Array.isArray(bank) && bank.length > 0, "question bank");
+    for (const item of bank) {
+      for (const letter of Object.keys(item.options)) {
+        if (item.answer.includes(letter)) continue;
+        check(optionNotes.distractor(item, letter)?.reason?.trim(), `missing distractor reason ${item.id}/${letter}`);
+      }
+    }
     check(!field("account-button").hidden, "account access");
     const glass = getComputedStyle(document.querySelector(".masthead"));
     check((glass.backdropFilter || glass.webkitBackdropFilter || "").includes("blur"), "navigation material");
@@ -151,7 +157,8 @@ window.addEventListener("load", async () => {
     check(position(2) && field("distractor-notes").hidden, "left swipe clears old distractors");
     select(["C", "D"]);
     field("submit").click();
-    check(field("distractor-notes").querySelectorAll("li").length === 2, "multiple distractors");
+    check(field("distractor-notes").querySelectorAll("li").length ===
+      Object.keys(other.options).filter((letter) => !other.answer.includes(letter)).length, "all distractors explained");
     check(text("submit") === "查看结果", "round can be closed");
     swipe(1);
     check(!field("result").hidden, "last question can be swiped to results");
@@ -159,7 +166,22 @@ window.addEventListener("load", async () => {
     check(text("history-distractor-notes").includes("邓小平理论"), "history has the same distractor notes");
     field("history-question").close();
 
+    const leadership = bank.find((item) => item.id === "章节自测-第三章-多选-6");
+    check(leadership, "leadership example");
+    start([leadership.id], "practice");
+    check(field("distractor-notes").hidden, "option reasons hidden before answering");
+    select(["A", "B", "C", "D"]);
+    field("submit").click();
+    const wrong = field("distractor-notes").querySelector("li");
+    check(wrong?.textContent.includes("B · 误选") && wrong.textContent.includes("勇于自我革命"),
+      "example explains the substituted concept");
+    wrong.querySelector("button").click();
+    check(field("option-notes-dialog").open && text("option-notes-content").includes("勇于自我革命"),
+      "specific option detail matches the answer panel");
+    field("option-notes-dialog").close();
+
     start([example.id, other.id], "chapter-test");
+    check(field("distractor-notes").hidden, "chapter test keeps option reasons hidden before submission");
     select(example.answer);
     await wait(950);
     check(position(1) && field("answer-summary").hidden, "test saves selection without grading");
