@@ -201,6 +201,7 @@ function draftSnapshot(session) {
 function rememberSession(session) {
   const draft = draftSnapshot(session);
   if (!draft) return null;
+  if (draft.wrongBookReview && !draft.routePlan?.chapter) return null;
   state.drafts ??= {};
   if (draft.wrongBookReview && state.drafts[draft.sid]?.updatedAt > draft.updatedAt) return null;
   const complete = !draft.wrongBookReview && (draft.testSubmitted || draft.index >= draft.ids.length);
@@ -315,8 +316,8 @@ function openProfileLibrary(scope) {
 
 function returnFromQuestion() {
   const session = state.session;
-  if (session?.wrongBookReview) {
-    openChapterReview(session.routePlan?.chapter || null, bankForSession(session));
+  if (session?.wrongBookReview && session.routePlan?.chapter) {
+    openChapterReview(session.routePlan.chapter, bankForSession(session));
   } else if (session?.meetingPractice && meetingTimeline) {
     showTab("practice", true);
     meetingTimeline.open({ resume: true });
@@ -689,7 +690,7 @@ function sessionQuestionKey(session, id) {
 }
 
 function canResumeSession(session = state.session) {
-  if (session?.wrongBookFinished) return false;
+  if (session?.wrongBookReview && (session.wrongBookFinished || !session.routePlan?.chapter)) return false;
   if (byId.has(session?.ids?.[session.index])) return true;
   if (!isChapterPractice(session)) return false;
   return chapterQuestions(chapterForSession(session), bankForSession(session))
@@ -935,35 +936,55 @@ function makeWrongRow(item, questionButton) {
 }
 
 function renderWrongChapters(list) {
-  const chapters = [...chapterPools.keys()].map((chapter) => chapterStudy(chapter, wrongBank))
-    .filter((plan) => plan.answered || plan.marked.length || plan.test)
+  const chapters = [...chapterPools.keys()].map((chapter) => {
+    const plan = chapterStudy(chapter, wrongBank);
+    return { ...plan, reviewLabel: wrongBookReviewLabel(chapter, wrongBank, plan.wrong.length) };
+  })
+    .filter((plan) => plan.answered || plan.marked.length || plan.test || plan.reviewLabel)
     .sort((first, second) => Number(Boolean(second.wrong.length)) - Number(Boolean(first.wrong.length)));
   const pending = chapters.filter((plan) => plan.wrong.length);
   const mistakes = pending.reduce((count, plan) => count + plan.wrong.length, 0);
   $("library-count").textContent = mistakes ? `${pending.length} 章 · ${mistakes} 道待复练`
     : chapters.length ? "暂无待复练题，可以查看已练章节。" : "答错的题会按章节收录。";
-  const focused = document.activeElement.dataset.reviewChapter;
+  const focused = document.activeElement;
+  const focusedChapter = focused?.closest("[data-review-chapter]")?.dataset.reviewChapter;
   const rows = chapters.map((plan) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "library-item chapter-review-row";
-    button.dataset.reviewChapter = plan.chapter;
-    button.dataset.pending = String(Boolean(plan.wrong.length));
+    const row = document.createElement("div");
+    row.className = "library-item chapter-review-row";
+    row.dataset.reviewChapter = plan.chapter;
     const passed = chapterWrongReviewPassed(plan);
-    button.dataset.passed = String(passed);
+    row.dataset.passed = String(passed);
+    const details = document.createElement("button");
+    details.type = "button";
+    details.className = "chapter-review-detail";
+    details.setAttribute("aria-label", `查看${plan.chapter}错题与进度`);
+    details.onclick = () => openChapterReview(plan.chapter, plan.bank);
     const heading = document.createElement("strong");
     heading.textContent = plan.chapter;
     const detail = document.createElement("small");
     detail.textContent = plan.total ? `已练 ${plan.answered} / ${plan.total} 道` : "填空题回看";
-    const badge = document.createElement("span");
-    badge.className = "chapter-review-count";
-    badge.textContent = plan.wrong.length ? `${plan.wrong.length} 道待复练 ›` : passed ? "已通过 ›" : "查看进度 ›";
-    button.append(heading, detail, badge);
-    button.onclick = () => openChapterReview(plan.chapter, plan.bank);
-    return button;
+    details.append(heading, detail);
+    row.append(details);
+    if (plan.reviewLabel) {
+      const start = document.createElement("button");
+      start.type = "button";
+      start.className = "chapter-review-start";
+      start.textContent = plan.reviewLabel;
+      start.setAttribute("aria-label", `${plan.chapter}，${plan.reviewLabel}`);
+      start.onclick = () => startWrongBookReview(plan.chapter, plan.bank);
+      row.append(start);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "chapter-review-count";
+      badge.textContent = passed ? "已通过" : "查看进度 ›";
+      row.append(badge);
+    }
+    return row;
   });
   list.replaceChildren(...rows);
-  rows.find((row) => row.dataset.reviewChapter === focused)?.focus({ preventScroll: true });
+  const replacement = rows.find((row) => row.dataset.reviewChapter === focusedChapter);
+  const start = focused?.matches(".chapter-review-start") && replacement?.querySelector(".chapter-review-start");
+  (start || replacement?.querySelector(".chapter-review-detail"))?.focus({ preventScroll: true });
 }
 
 function chapterWrongReviewPassed(plan) {
@@ -1159,14 +1180,10 @@ function renderImportedWrongBooks(visible) {
   }));
 }
 
-function wrongBookIds(bank) {
-  return bankQuestions(bank, questions, "wrong").map(({ id }) => id).filter(requiresAnswer);
-}
-
 function wrongBookDraft(chapter, bank, wrongCount) {
   const draft = matchingDraft((session) => session.wrongBookReview && bankForSession(session) === bank &&
-    (session.routePlan?.chapter || null) === chapter);
-  if (draft || !chapter) return draft;
+    session.routePlan?.chapter === chapter);
+  if (draft) return draft;
   // An older multi-question chapter review can continue as the first round.
   return matchingDraft((session) => session.routePlan?.kind === "review" && !session.routePlan.single &&
     session.routePlan.chapter === chapter && bankForSession(session) === bank && (session.ids.length > 1 || wrongCount <= 1));
@@ -1185,7 +1202,8 @@ function wrongBookRemaining(session) {
 }
 
 function startWrongBookReview(chapter, bank) {
-  const ids = chapter ? chapterStudy(chapter, bank).wrong : wrongBookIds(bank);
+  if (!chapterPools.has(chapter)) return;
+  const ids = chapterStudy(chapter, bank).wrong;
   const draft = wrongBookDraft(chapter, bank, ids.length);
   if (draft && !wrongBookFinished(draft)) {
     if (!draft.wrongBookReview) activateDraft({ ...draft, wrongBookReview: true });
@@ -1196,7 +1214,7 @@ function startWrongBookReview(chapter, bank) {
   const remaining = draft ? wrongBookRemaining(draft) : [];
   start(remaining.length ? remaining : ids, "practice", {
     bankScope: bank,
-    routePlan: chapter ? { chapter, kind: "review" } : undefined,
+    routePlan: { chapter, kind: "review" },
     wrongBookReview: true,
     wrongBookRound: remaining.length ? wrongBookRoundNumber(draft) + 1 : 1,
   });
@@ -1206,21 +1224,15 @@ function reviewNextRoundLabel(session, count) {
   return `开始第 ${wrongBookRoundNumber(session) + 1} 轮（${count} 道）`;
 }
 
-function renderWrongBookReviewButton(button, chapter, bank, count) {
+function wrongBookReviewLabel(chapter, bank, count) {
   const draft = wrongBookDraft(chapter, bank, count);
-  const resume = draft && !wrongBookFinished(draft);
-  const remaining = draft && !resume ? wrongBookRemaining(draft).length : 0;
-  button.hidden = !count && !resume && !remaining;
-  button.disabled = false;
-  if (resume) {
+  if (draft && !wrongBookFinished(draft)) {
     const answered = draft.ids.filter((id) => draft.results?.[id]).length;
-    button.textContent = `继续第 ${wrongBookRoundNumber(draft)} 轮（${answered}/${draft.ids.length}）`;
-  } else if (remaining) {
-    button.textContent = reviewNextRoundLabel(draft, remaining);
-  } else {
-    button.textContent = chapter ? `重刷本章 ${count} 道错题` : `${bank === "all" ? "重刷全部错题" : "重刷本题库错题"}（${count} 道）`;
+    return `继续第 ${wrongBookRoundNumber(draft)} 轮（${answered}/${draft.ids.length}）`;
   }
-  button.onclick = () => startWrongBookReview(chapter, bank);
+  const remaining = draft ? wrongBookRemaining(draft).length : 0;
+  if (remaining) return reviewNextRoundLabel(draft, remaining);
+  return count ? `开始第 1 轮（${count} 道）` : "";
 }
 
 function renderLibrary() {
@@ -1234,8 +1246,6 @@ function renderLibrary() {
   $("wrong-share").hidden = !wrong || Boolean(plan) || !shareableWrongQuestions().length;
   $("wrong-import").hidden = !wrong || Boolean(plan);
   renderImportedWrongBooks(wrong && !plan);
-  $("wrong-book-review").hidden = true;
-  if (wrong && !plan) renderWrongBookReviewButton($("wrong-book-review"), null, wrongBank, wrongBookIds(wrongBank).length);
   $("library-back").hidden = !profileLibrary && !plan;
   $("library-back").textContent = plan ? "返回错题本" : "返回我的旅程";
   $("wrong-bank-field").hidden = !wrong || Boolean(plan) || $("wrong-bank").options.length < 2;
@@ -1276,7 +1286,11 @@ function renderLibrary() {
     items.length ? `共 ${items.length} 道` : `共 0 道。${empty}`;
   const startButton = $("library-start");
   if (plan) {
-    renderWrongBookReviewButton(startButton, plan.chapter, plan.bank, plan.wrong.length);
+    const label = wrongBookReviewLabel(plan.chapter, plan.bank, plan.wrong.length);
+    startButton.hidden = !label;
+    startButton.disabled = false;
+    startButton.textContent = label;
+    startButton.onclick = () => startWrongBookReview(plan.chapter, plan.bank);
     renderChapterStudy(plan);
   } else {
     startButton.hidden = done;
@@ -1617,7 +1631,7 @@ function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
       repeatChapter: chapterOptions.repeatChapter, reuseSharedHistory: chapterOptions.reuseSharedHistory,
       wrongBookReview: chapterOptions.wrongBookReview, wrongBookRound: chapterOptions.wrongBookRound } : chapterOptions;
   const previous = rememberSession(state.session);
-  const sid = options.wrongBookReview ? `wrong-book:${chapterOptions.bankScope}:${options.routePlan?.chapter || ""}` : randomId();
+  const sid = options.wrongBookReview ? `wrong-book:${chapterOptions.bankScope}:${options.routePlan.chapter}` : randomId();
   state.session = { sid, ids: queue, mode, index, results: {}, selected: [], ...options,
     chapterStudy: { tests: state.chapterTests || {} } };
   showStartedQuestion(previous ? [previous] : []);
@@ -1855,7 +1869,7 @@ function renderQuestion() {
   view("quiz");
   $("quiz").classList.toggle("adventure-round", adventure);
   if (session.meetingPractice) $("back").textContent = "返回时间线";
-  if (session.wrongBookReview) $("back").textContent = session.routePlan?.chapter ? "返回本章错题" : "返回错题本";
+  if (session.wrongBookReview) $("back").textContent = "返回本章错题";
   const slider = $("question-position");
   slider.disabled = total < 2;
   slider.max = total;
@@ -2132,7 +2146,7 @@ function completeRound(changes = []) {
   const passed = cleared && route && chapterWrongReviewPassed(route);
   $("result").dataset.reviewCleared = String(Boolean(cleared));
   $("result-title").textContent = wrongBook ? (passed ? `${chapter} · 已通过`
-    : cleared ? "本轮错题已清空" : `第 ${wrongBookRoundNumber(session)} 轮重刷完成`)
+    : cleared ? "本轮错题已清空" : `${chapter} · 第 ${wrongBookRoundNumber(session)} 轮完成`)
     : !round.length ? "填空题查看完成" : testMode ? wrong.length ? "整章测验完成" : "整章测验通过"
     : reviewing ? "本轮错题复练完成" : route && !route.remaining.length ? "本章练习完成"
     : memoryMode ? "本次背诵完成" : "本次练习完成";
@@ -2144,7 +2158,7 @@ function completeRound(changes = []) {
   retry.hidden = memoryMode || !round.length || Boolean((route || wrongBook) && !retryCount);
   retry.disabled = !retryCount;
   retry.textContent = wrongBook ? reviewNextRoundLabel(session, retryCount) : route ? `复练 ${retryCount} 道错题` : "重练本次错题";
-  retry.onclick = wrongBook ? () => startWrongBookReview(chapter || null, bank) : route ? () => startWrongChapter(chapter, bank)
+  retry.onclick = wrongBook ? () => startWrongBookReview(chapter, bank) : route ? () => startWrongChapter(chapter, bank)
     : () => start(wrong, "practice", { bankScope: bank, meetingPractice: session.meetingPractice });
   const review = $("result-chapter-review");
   review.hidden = !route || wrongBook;
@@ -2171,7 +2185,7 @@ function completeRound(changes = []) {
   }
   $("review-round").textContent = wrongBook ? "回看本轮" : testMode ? "回看试卷" : isChapterPractice(session) ? "回看本章" : "回看本次";
   const library = libraryTabs[profileLibrary || selectedTab];
-  $("again").textContent = wrongBook ? (chapter ? "返回本章错题" : "返回错题本")
+  $("again").textContent = wrongBook ? "返回本章错题"
     : session.meetingPractice ? "返回时间线" : library ? `返回${library.title}` : "返回路线";
   $("again").onclick = returnFromQuestion;
   view("result");

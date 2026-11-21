@@ -44,7 +44,8 @@ export function sessionDrafts(row, records = {}) {
       // so a fresh random change ID cannot lose to its prior server version.
       revision = Math.max(revision, previous.revision + 1);
     } else if (previous && (previous.revision >= revision || (index && !updatedAt))) continue;
-    const complete = !draft.wrongBookReview && (draft.testSubmitted || draft.index >= draft.ids.length);
+    const chapterReview = draft.wrongBookReview && draft.routePlan?.chapter;
+    const complete = !chapterReview && (draft.testSubmitted || draft.index >= draft.ids.length);
     result.push({ kind: "draft", record_key: draft.sid,
       payload: complete ? null : { ...draft, updatedAt: revision, ...(!index ? { _resumeSource: source } : {}) }, revision });
   }

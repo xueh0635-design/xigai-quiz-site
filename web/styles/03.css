@@ -18,15 +18,25 @@
   min-height: 68px;
   text-align: start;
   padding: 12px 14px;
+  border: 1px solid var(--world-edge);
   border-radius: 16px;
 }
 
+.chapter-review-row .chapter-review-detail {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+}
+
 .chapter-review-row strong { font-size: 1rem; }
-.chapter-review-row small { grid-column: 1; color: var(--world-muted); font-size: .79rem; }
+.chapter-review-row small { color: var(--world-muted); font-size: .79rem; }
 .chapter-review-count {
   align-self: center;
-  grid-column: 2;
-  grid-row: 1 / 3;
   padding: 5px 8px;
   border-radius: 9px;
   background: var(--world-card);
@@ -34,9 +44,16 @@
   font-size: .79rem;
 }
 
-.chapter-review-row[data-pending="true"] .chapter-review-count {
+.chapter-review-row button.chapter-review-start {
+  min-height: 44px;
+  padding: 5px 9px;
+  border-radius: 10px;
+  border-color: transparent;
   background: var(--world-bad);
   color: var(--world-bad-ink);
+  font-size: .82rem;
+  font-weight: 650;
+  white-space: nowrap;
 }
 
 #library-list .chapter-review-row[data-passed="true"] {

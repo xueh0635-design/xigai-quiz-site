@@ -177,7 +177,7 @@ test("wrong-book codes import a separate persistent practice set", async (t) => 
   const code = await sender.locator("#wrong-share-code").inputValue();
   assert.match(code, /^XQ1-/);
   await sender.locator("#wrong-share-dialog button").last().click();
-  await sender.locator("#wrong-book-review").click();
+  await sender.locator(".chapter-review-start").click();
   assert.deepEqual(await sender.evaluate(() => state.session.ids), [ids[0]]);
 
   const recipient = await (await context(t)).newPage();
@@ -196,7 +196,7 @@ test("wrong-book codes import a separate persistent practice set", async (t) => 
   assert.deepEqual(await recipient.evaluate(() => Object.keys(state.history)), []);
 });
 
-test("chapter review narrows each round and keeps its own progress for the selected bank", async (t) => {
+test("every chapter starts its own first round and only its missed questions advance", async (t) => {
   const page = await (await context(t)).newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -211,18 +211,26 @@ test("chapter review narrows each round and keeps its own progress for the selec
     const keys = new Set(pool.map(({ id }) => sharedQuestionId(id)));
     const otherBank = chapterQuestions(chapter, "xuexitong").find(({ id }) => requiresAnswer(id) && !keys.has(sharedQuestionId(id))).id;
     const later = pool.find(({ id, type }) => type === "单选" && !ids.includes(id)).id;
+    const oldReview = { sid: "wrong-book:all:", ids: [later, ...ids, sameBank], mode: "practice", index: 1,
+      results: { [later]: { correct: true, selected: byId.get(later).answer } }, selected: [],
+      bankScope: "all", wrongBookReview: true, wrongBookRound: 1 };
     await guestStore.commit([
       ...pool.map(({ id, answer }) => ["history", sharedQuestionId(id), { wrong: ids.includes(id), selected: answer }]),
       ["history", sharedQuestionId(otherBank), { wrong: true }],
       ["history", sharedQuestionId(sameBank), { wrong: true }],
       ["star", sameBank, true],
       ["note", sameBank, "保留的笔记"],
+      ["draft", oldReview.sid, oldReview],
+      ["session", "resume", oldReview],
     ]);
     await restoreGuestState();
     return { chapter, bank, ids, sameBank, otherBank, later };
   });
   const bank = page.locator("#wrong-bank");
   const chapter = page.locator(`[data-review-chapter="${fixture.chapter}"]`);
+  const startChapter = chapter.locator(".chapter-review-start");
+  const chapterDetails = chapter.locator(".chapter-review-detail");
+  const startSecondChapter = page.locator('[data-review-chapter="第二章"] .chapter-review-start');
   const review = page.locator("#library-start");
   const retry = page.locator("#retry");
   const back = page.locator("#back");
@@ -232,14 +240,12 @@ test("chapter review narrows each round and keeps its own progress for the selec
   };
   const roundIds = () => page.evaluate(() => state.session.ids);
 
+  assert.equal(await page.locator("#resume").isVisible(), false, "a legacy whole-book draft does not surface as the route resume");
   await openWrongBook();
-  await page.locator("#wrong-book-review").click();
-  assert.deepEqual(new Set(await roundIds()), new Set([...fixture.ids, fixture.sameBank]));
-  await back.click();
-  assert.equal(await bank.inputValue(), fixture.bank);
-  await chapter.click();
-  assert.match(await review.textContent(), /重刷本章 4 道/);
-  await review.click();
+  assert.equal(await page.locator("#wrong-book-review").count(), 0);
+  assert.match(await startSecondChapter.textContent(), /开始第 1 轮（1 道）/);
+  assert.match(await startChapter.textContent(), /开始第 1 轮（4 道）/);
+  await startChapter.click();
   assert.deepEqual(await roundIds(), fixture.ids);
   assert.match(await page.locator("#quiz-completion").textContent(), /第 1 轮 · 已答 0 \/ 4/);
 
@@ -254,15 +260,19 @@ test("chapter review narrows each round and keeps its own progress for the selec
   await back.click();
   assert.match(await review.textContent(), /继续第 1 轮（1\/4）/);
   await page.locator("#library-back").click();
+  assert.match(await startChapter.textContent(), /继续第 1 轮（1\/4）/);
+  await startSecondChapter.click();
+  assert.deepEqual(await roundIds(), [fixture.sameBank]);
+  assert.match(await page.locator("#quiz-completion").textContent(), /第 1 轮 · 已答 0 \/ 1/);
+  await back.click();
+  await page.locator("#library-back").click();
   await bank.selectOption("xuexitong");
-  await chapter.click();
-  await review.click();
+  await startChapter.click();
   assert.deepEqual(await roundIds(), [fixture.otherBank]);
   await back.click();
   await page.locator("#library-back").click();
   await bank.selectOption(fixture.bank);
-  await chapter.click();
-  await review.click();
+  await startChapter.click();
   assert.equal(await page.evaluate(() => current().id), fixture.ids[1]);
   await answer(false);
   await answer(true);
@@ -282,7 +292,8 @@ test("chapter review narrows each round and keeps its own progress for the selec
   await page.reload();
   await ready(page);
   await openWrongBook();
-  await chapter.click();
+  assert.match(await startChapter.textContent(), /开始第 2 轮（2 道）/);
+  await chapterDetails.click();
   assert.match(await review.textContent(), /开始第 2 轮（2 道）/);
   await review.click();
   assert.deepEqual(await roundIds(), [fixture.ids[1], fixture.ids[3]]);
@@ -295,7 +306,7 @@ test("chapter review narrows each round and keeps its own progress for the selec
   assert.equal(await page.locator("#result-title").textContent(), "本轮错题已清空");
   assert.equal(await retry.isVisible(), false);
   await page.locator("#again").click();
-  assert.match(await review.textContent(), /重刷本章 1 道/);
+  assert.match(await review.textContent(), /开始第 1 轮（1 道）/);
   await review.click();
   assert.deepEqual(await roundIds(), [fixture.later]);
   await answer(true);
@@ -306,6 +317,8 @@ test("chapter review narrows each round and keeps its own progress for the selec
   assert.equal(await review.isVisible(), false);
   await page.locator("#library-back").click();
   assert.equal(await chapter.getAttribute("data-passed"), "true");
+  assert.equal(await startChapter.count(), 0);
+  assert.match(await startSecondChapter.textContent(), /继续第 1 轮（0\/1）/);
   assert.deepEqual(await page.evaluate(({ sameBank, otherBank }) => ({
     otherWrong: inWrongLibrary(otherBank), otherChapterWrong: inWrongLibrary(sameBank),
     star: isStarred(sameBank), note: state.notes[sameBank],
