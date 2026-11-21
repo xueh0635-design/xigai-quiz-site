@@ -91,6 +91,46 @@ test("legacy server sync restores archived and unfinished wrong reviews to an em
   assert.equal(reinstalled.received.at(-1).session, null, "a downloaded review does not replace the global resume pointer");
 });
 
+test("a synced cancellation hides a blank replay while retaining separate runs and work from another device", async (t) => {
+  const cloud = new Map();
+  const rpc = async (name, input) => {
+    if (name === "quiz_sync_v2") return { error: { code: "PGRST202" } };
+    for (const row of input.changes) {
+      const key = row.kind + ":" + row.record_key;
+      const previous = cloud.get(key);
+      if (!previous || row.revision > previous.revision ||
+          (row.revision === previous.revision && row.change_id > previous.change_id)) cloud.set(key, row);
+    }
+    return { error: null };
+  };
+  const options = { cloudRows: () => [...cloud.values()] };
+  const original = await fixture(t, rpc, options);
+  const { wrongReviewCancellationKey } = await import("../study-state.mjs");
+  const previousSid = "wrong-book:all:第一章";
+  const blank = { sid: previousSid + ":replay", ids: ["q1"], index: 0, wrongBookReview: true,
+    routePlan: { chapter: "第一章", kind: "review" } };
+  const previous = { ...blank, sid: previousSid, index: 1, wrongBookRoundCounts: [0], results: { q1: { correct: true } } };
+  const key = wrongReviewCancellationKey(blank.sid);
+  const cancellation = { sid: key, ids: [], wrongBookReview: true, cancelledWrongReview: blank.sid };
+  await original.sync.queue([["draft", previous.sid, previous], ["draft", blank.sid, blank], ["session", "resume", blank]]);
+  await original.refresh();
+  await original.sync.queue([["draft", key, cancellation]]);
+  await original.refresh();
+
+  const reinstalled = await fixture(t, rpc, options);
+  await reinstalled.refresh();
+  assert.equal(reinstalled.received.at(-1).session, null);
+  assert.deepEqual(structuredClone(reinstalled.received.at(-1).drafts), { [previous.sid]: previous });
+  assert.ok(cloud.has("draft:" + blank.sid), "the cancellation never overwrites the original draft");
+
+  const withSelection = { ...blank, selected: ["B"] };
+  await original.sync.queue([["draft", blank.sid, withSelection]]);
+  await original.refresh();
+  await reinstalled.refresh();
+  assert.deepEqual(structuredClone(reinstalled.received.at(-1).drafts[blank.sid]), withSelection);
+  assert.deepEqual(structuredClone(reinstalled.received.at(-1).drafts[previous.sid]), previous);
+});
+
 test("lost acknowledgement retries the same event id and clears outbox only after an explicit acknowledgement", async (t) => {
   const events = new Map(); let loseReply = true;
   const app = await fixture(t, async (_name, input) => {

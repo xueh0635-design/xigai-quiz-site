@@ -367,6 +367,34 @@ test("every chapter starts its own first round and only its missed questions adv
   for (let i = 1; i < fixture.ids.length; i++) await answer(true);
   await page.locator("#again").click();
 
+  const cancel = page.getByRole("button", { name: "撤销本次复练", exact: true });
+  const previousCounts = await page.locator("#chapter-wrong-history li").allTextContents();
+  const previousSid = await page.evaluate(() => state.session.sid);
+  await replay.click();
+  const cancelledSid = await page.evaluate(() => state.session.sid);
+  await back.click();
+  assert.equal(await cancel.isVisible(), true);
+  await cancel.click();
+  assert.equal(await cancel.isVisible(), false);
+  assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(), previousCounts);
+  await page.evaluate(() => guestWrites);
+  await page.reload();
+  await ready(page);
+  await openWrongBook();
+  await chapterDetails.click();
+  assert.equal(await page.evaluate(({ chapter, bank, cancelledSid, previousSid }) => {
+    const sids = wrongBookReviews(chapter, bank).map(({ sid }) => sid);
+    return !sids.includes(cancelledSid) && sids.includes(previousSid);
+  }, { chapter: fixture.chapter, bank: fixture.bank, cancelledSid, previousSid }), true);
+  assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(), previousCounts);
+  await replay.click();
+  await answer(true);
+  await back.click();
+  assert.equal(await cancel.isVisible(), false, "an answered replay cannot be cancelled");
+  await review.click();
+  for (let i = 1; i < fixture.ids.length; i++) await answer(true);
+  await page.locator("#again").click();
+
   await page.locator("#library-back").click();
   assert.equal(await chapter.getAttribute("data-passed"), "true");
   assert.equal(await startChapter.count(), 0);

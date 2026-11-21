@@ -5,6 +5,18 @@ export const recordKey = (row) => row.kind + ":" + row.record_key;
 export const isNewer = (row, other) => !other || row.revision > other.revision ||
   (row.revision === other.revision && row.change_id > other.change_id);
 
+export const wrongReviewCancellationKey = (sid) => "wrong-review-cancellation:" + sid;
+
+export function wrongReviewHasWork(session) {
+  return session.wrongBookRound > 1 || Boolean(session.wrongBookFinished) ||
+    Object.keys(session.results || {}).length > 0 || Boolean(session.selected?.length) ||
+    Object.values(session.drafts || {}).some((selection) => selection?.length > 0);
+}
+
+export function isCancelledWrongReview(session, cancellations) {
+  return session?.wrongBookReview === true && cancellations?.[session.sid] === true && !wrongReviewHasWork(session);
+}
+
 export function mergeChapterTests(first, second) {
   const result = { ...object(first) };
   for (const [key, value] of Object.entries(object(second))) {
@@ -29,6 +41,8 @@ export function sessionDrafts(row, records = {}) {
   for (const [index, candidate] of [row.payload, row.payload.chapterStudy?.pausedPractice].entries()) {
     const draft = plainSession(candidate);
     if (!draft) continue;
+    const cancellation = records["draft:" + wrongReviewCancellationKey(draft.sid)];
+    if (draft.wrongBookReview && cancellation?.payload?.cancelledWrongReview === draft.sid && !wrongReviewHasWork(draft)) continue;
     const previous = records["draft:" + draft.sid];
     const updatedAt = Number(draft.updatedAt) || 0;
     // Legacy clients advance the resume revision without updating (or adding)
@@ -97,6 +111,7 @@ export function guestCache(value) {
 
 export function stateFromCache(cache) {
   const result = { history: {}, stars: {}, notes: {}, session: null, drafts: {}, chapterTests: {} };
+  const cancellations = {};
   let latest;
   for (const row of Object.values(cache.records)) {
     if (row.deleted) continue;
@@ -105,8 +120,12 @@ export function stateFromCache(cache) {
     if (row.kind === "note" && typeof row.payload === "string" && row.payload) result.notes[row.record_key] = row.payload;
     if (row.kind === "session" && row.payload && isNewer(row, latest)) latest = row;
     if (row.kind === "draft") {
-      const draft = plainSession(row.payload);
-      if (draft) result.drafts[row.record_key] = draft;
+      const sid = row.payload?.cancelledWrongReview;
+      if (typeof sid === "string" && row.record_key === wrongReviewCancellationKey(sid)) cancellations[sid] = true;
+      else {
+        const draft = plainSession(row.payload);
+        if (draft) result.drafts[row.record_key] = draft;
+      }
     }
     if (row.kind === "test" && row.payload?.chapter && row.payload?.bank) {
       const key = row.payload.bank + ":" + row.payload.chapter;
@@ -132,5 +151,10 @@ export function stateFromCache(cache) {
       result.session = null;
     }
   }
+  result.wrongReviewCancellations = cancellations;
+  for (const [sid, draft] of Object.entries(result.drafts)) {
+    if (isCancelledWrongReview(draft, cancellations)) delete result.drafts[sid];
+  }
+  if (isCancelledWrongReview(result.session, cancellations)) result.session = null;
   return result;
 }

@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { createQuizStore, attemptPayload } from "./quiz-store.mjs";
-import { mergeChapterTests, plainSession, stateFromCache } from "./study-state.mjs";
+import { isCancelledWrongReview, mergeChapterTests, plainSession, stateFromCache, wrongReviewCancellationKey, wrongReviewHasWork } from "./study-state.mjs";
 
-window.QuizPersistence = { createStore: createQuizStore, mergeChapterTests, plainSession, stateFromCache };
+window.QuizPersistence = { createStore: createQuizStore, isCancelledWrongReview, mergeChapterTests, plainSession, stateFromCache,
+  wrongReviewCancellationKey, wrongReviewHasWork };
 
 const config = window.QuizCloud;
 const byId = (id) => document.getElementById(id);

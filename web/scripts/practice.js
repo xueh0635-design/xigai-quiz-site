@@ -229,7 +229,8 @@ function activateDraft(draft) {
 
 function matchingDrafts(predicate) {
   const candidates = [state.session, ...Object.values(state.drafts || {})].filter((session) =>
-    session && Array.isArray(session.ids) && predicate(session) && session.ids.every((id) => byId.has(id)));
+    session && Array.isArray(session.ids) && predicate(session) && session.ids.every((id) => byId.has(id)) &&
+    !persistence?.isCancelledWrongReview?.(session, state.wrongReviewCancellations));
   return candidates.sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 }
 
@@ -695,6 +696,7 @@ function sessionQuestionKey(session, id) {
 }
 
 function canResumeSession(session = state.session) {
+  if (persistence?.isCancelledWrongReview?.(session, state.wrongReviewCancellations)) return false;
   if (session?.wrongBookReview && (!session.routePlan?.chapter || wrongBookFinished(session))) return false;
   if (byId.has(session?.ids?.[session.index])) return true;
   if (!isChapterPractice(session)) return false;
@@ -1202,6 +1204,29 @@ function wrongBookReviews(chapter, bank) {
   return reviews.filter(({ sid }) => !seen.has(sid) && seen.add(sid));
 }
 
+function canCancelWrongReview(draft, chapter, bank) {
+  return draft?.sid?.startsWith(`wrong-book:${bank}:${chapter}:`) &&
+    persistence && !persistence.wrongReviewHasWork(draft) && !wrongBookFinished(draft);
+}
+
+function cancelWrongReview(sid, chapter, bank) {
+  if (accountSwitching) return;
+  const draft = wrongBookReviews(chapter, bank).find((run) => run.sid === sid);
+  if (!canCancelWrongReview(draft, chapter, bank)) return;
+  const key = persistence.wrongReviewCancellationKey(sid);
+  // Save the cancellation separately, so answers from another device remain available.
+  // The reserved bank keeps this record out of older clients' chapter lists.
+  const cancellation = { sid: key, ids: [], wrongBookReview: true, cancelledWrongReview: sid,
+    bankScope: "review-cancellation", routePlan: { chapter, kind: "review-cancellation" } };
+  (state.wrongReviewCancellations ??= {})[sid] = true;
+  if (state.session?.sid === sid) state.session = null;
+  if (deferredResume?.sid === sid) deferredResume = null;
+  save([["draft", key, cancellation]]);
+  updateAvailability();
+  const resume = $("library-start");
+  (resume.hidden ? $("chapter-review-replay") : resume).focus({ preventScroll: true });
+}
+
 function wrongBookDraft(chapter, bank, wrongCount) {
   const draft = wrongBookReviews(chapter, bank)[0];
   if (draft) return draft;
@@ -1412,6 +1437,9 @@ function renderChapterReviewHistory(plan, review) {
     const saved = needsSnapshot && rememberSession({ ...draft, wrongBookReview: true, wrongBookOriginalIds: originalIds });
     startWrongBookRound(chapter, bank, replayIds, replayIds, null, { separate: true, changes: saved ? [saved] : [] });
   };
+  const cancel = $("chapter-review-cancel");
+  cancel.hidden = !canCancelWrongReview(draft, chapter, bank);
+  cancel.onclick = cancel.hidden ? null : () => cancelWrongReview(draft.sid, chapter, bank);
 
   const currentTitle = $("chapter-review-run-title");
   currentTitle.hidden = runs.length <= 1;
@@ -1441,6 +1469,13 @@ function renderChapterReviewHistory(plan, review) {
       resume.onclick = () => continueWrongBookReview(chapter, bank, run, ids);
       details.append(resume);
     }
+    if (canCancelWrongReview(run, chapter, bank)) {
+      const cancelPrevious = document.createElement("button");
+      cancelPrevious.type = "button";
+      cancelPrevious.textContent = "撤销本次复练";
+      cancelPrevious.onclick = () => cancelWrongReview(run.sid, chapter, bank);
+      details.append(cancelPrevious);
+    }
     return [details];
   }));
   previous.hidden = runs.length <= 1;
@@ -1467,6 +1502,7 @@ function renderLibrary() {
   $("chapter-wrong-history").hidden = true;
   $("chapter-review-previous").hidden = true;
   $("chapter-review-replay").hidden = true;
+  $("chapter-review-cancel").hidden = true;
   $("library-start").classList.add("primary");
   if (wrong && !plan) {
     for (const id of ["library-start", "library-configure", "library-swipe-hint", "library-removal", "library-more"]) $(id).hidden = true;
