@@ -52,14 +52,20 @@ window.addEventListener("load", async () => {
     check(document.documentElement.scrollWidth <= window.innerWidth + 1, "layout");
     check(!field("advanced-settings").open, "default chapter layout");
 
+    const supplement = field("chapter-list").querySelector('[data-chapter="新增（必刷）"]');
+    check(supplement?.querySelector(".chapter-name")?.textContent === "独立补充题" &&
+      supplement.querySelector(".chapter-topic")?.textContent === "思政云单独收录 · 独立进度",
+      "the independent supplement explains its source and progress");
+    check([...field("chapter").options].find((option) => option.value === supplement.dataset.chapter)?.textContent ===
+      "独立补充题", "the picker keeps the supplement chapter key and displays its label");
     const route = field("adventure-start");
     check(!route.hidden && !route.disabled, "chapter route");
     const answeredCount = () => Number(field("stat-done").firstElementChild.textContent);
     const before = answeredCount();
     route.click();
     const chapterCount = state.session.ids.length;
-    const chapterName = text("where").split(" · ")[0];
-    check(!field("quiz").hidden && text("where").includes(chapterName) &&
+    const chapterName = current()?.chapter;
+    check(chapterName && !field("quiz").hidden && text("where").startsWith(chapterLabel(chapterName) + " · ") &&
       chapterCount > 1 && text("where").endsWith("1 / " + chapterCount),
       "chapter practice started");
     check(document.querySelectorAll(".quiz-actions button").length === 1 && !field("previous") && !field("next"),
