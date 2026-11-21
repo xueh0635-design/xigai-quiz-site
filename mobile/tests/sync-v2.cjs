@@ -22,6 +22,7 @@ async function fixture(t, rpc, options = {}) {
       return options.recoveryEmail === undefined ? true : { recoveryEmail: options.recoveryEmail };
     } } } } };
   const client = {
+    functions: { invoke: options.invokeFunction },
     auth: { onAuthStateChange() {}, async signOut() { return { error: null }; },
       async signInWithPassword() { return { data: { user: { id: "fixture", email: "fixture@example.test" } }, error: null }; } },
     from() { return { select() { return this; }, eq() { return this; }, order() { return this; },
@@ -31,7 +32,7 @@ async function fixture(t, rpc, options = {}) {
   };
   runInNewContext(accountSource(), { window, document: { getElementById: field, addEventListener() {}, visibilityState: "visible" },
     createClient: () => client, indexedDB, QuizDurableStorage: options.storageAdapter, localStorage: { getItem() { return null; } },
-    structuredClone, crypto: webcrypto, TextEncoder, Response, AbortSignal,
+    structuredClone, crypto: webcrypto, TextEncoder, Response, AbortController, AbortSignal: options.abortSignal || AbortSignal,
     addEventListener() {}, setTimeout(callback, delay) { if (options.nativeTimeout && delay === 1500) queueMicrotask(callback); },
     clearTimeout() {}, setInterval() {},
   });
@@ -176,4 +177,25 @@ test("a capable native account sheet can hand password recovery back to the isol
   assert.equal(app.field("account-recovery-email").value, "learner@example.test");
   assert.deepEqual(app.nativeCalls.map((value) => value.kind), ["capabilities", "account"]);
   assert.equal(app.requests.length, 0);
+});
+
+
+test("topic assistant status and follow-up work in a WebView without AbortSignal.timeout", async (t) => {
+  const requests = [];
+  const app = await fixture(t, async () => ({ error: { code: "PGRST202" } }), {
+    abortSignal: {},
+    async invokeFunction(name, options) {
+      assert.equal(name, "quiz-tutor");
+      requests.push(options);
+      return { error: null, data: options.method === "GET" ? { available: true } : { answer: "B 项解析" } };
+    },
+  });
+  const status = await app.sync.tutor("GET");
+  assert.equal(status.data.available, true);
+  assert.equal(requests[0].signal.aborted, false);
+  const request = new AbortController();
+  const reply = await app.sync.tutor("POST", { question: { focus: "B" } }, request.signal);
+  assert.equal(reply.data.answer, "B 项解析");
+  assert.equal(requests[1].body.question.focus, "B");
+  assert.equal(requests[1].signal, request.signal);
 });

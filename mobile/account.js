@@ -646,9 +646,12 @@ function connect(callbacks) {
   async function tutor(method, body, signal) {
     if (!actor) return { code: "sign_in" };
     const epoch = generation;
+    // Older Android WebViews provide AbortController without AbortSignal.timeout().
+    const controller = signal ? null : new AbortController();
+    const timeout = controller && setTimeout(() => controller.abort(), 8000);
     try {
       const { data, error } = await client.functions.invoke("quiz-tutor", {
-        method, ...(body ? { body } : {}), signal: signal || AbortSignal.timeout(8000),
+        method, ...(body ? { body } : {}), signal: signal || controller.signal,
       });
       if (epoch !== generation) return { code: "sign_in" };
       if (!error) return { data };
@@ -658,6 +661,8 @@ function connect(callbacks) {
       }
     } catch {
       return { code: "unavailable" };
+    } finally {
+      if (controller) clearTimeout(timeout);
     }
     return { code: "unavailable" };
   }

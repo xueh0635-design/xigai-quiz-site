@@ -109,7 +109,8 @@
     let account = null;
     let available = false;
     let checked = 0;
-    let checking = false;
+    let checking = null;
+    let retryTimer;
     let chat = null;
     let pending = null;
 
@@ -119,18 +120,23 @@
       renderComposer();
     }
 
-    async function refresh() {
-      if (!account || checking || Date.now() - checked < 45000) return;
-      const owner = account;
-      checking = true;
+    async function refresh(retry = false) {
+      if (!account || checking || document.hidden || (!retry && Date.now() - checked < 45000)) return;
+      const probe = {};
+      checking = probe;
       checked = Date.now();
-      try {
-        const result = await call("GET");
-        if (account === owner) setAvailable(result?.data?.available === true);
-      } catch {
-        if (account === owner) setAvailable(false);
-      } finally {
-        if (account === owner) checking = false;
+      const result = await Promise.resolve().then(() => call("GET")).catch(() => null);
+      if (checking !== probe) return;
+      checking = null;
+      const allowed = result?.data?.available;
+      if (typeof allowed === "boolean") {
+        clearTimeout(retryTimer);
+        setAvailable(allowed);
+      } else if (!retry && result?.code !== "sign_in") {
+        retryTimer = setTimeout(() => {
+          retryTimer = null;
+          void refresh(true);
+        }, 3500);
       }
     }
 
@@ -264,7 +270,8 @@
       resetPending();
       account = id;
       chat = null;
-      checking = false;
+      checking = null;
+      clearTimeout(retryTimer);
       checked = 0;
       setAvailable(false);
       if (dialog.open) dialog.close();
@@ -288,8 +295,9 @@
     });
     window.visualViewport?.addEventListener("resize", trackKeyboard);
     window.visualViewport?.addEventListener("scroll", trackKeyboard);
-    window.addEventListener("focus", refresh);
-    window.addEventListener("online", refresh);
+    window.addEventListener("focus", () => refresh());
+    window.addEventListener("online", () => refresh(true));
+    document.addEventListener("visibilitychange", () => refresh(true));
     renderComposer();
     return { bind, accountChanged };
   }
