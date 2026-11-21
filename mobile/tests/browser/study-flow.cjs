@@ -328,6 +328,45 @@ test("every chapter starts its own first round and only its missed questions adv
   await page.locator("#again").click();
   assert.match(await page.locator('#chapter-study-steps [data-status="passed"]').last().textContent(), /错题复练已通过/);
   assert.equal(await review.isVisible(), false);
+
+  const replay = page.getByRole("button", { name: "重刷本章", exact: true });
+  await replay.click();
+  assert.deepEqual(await roundIds(), fixture.ids, "replay always starts from the original chapter set");
+  assert.match(await page.locator("#quiz-completion").textContent(), /第 1 轮 · 已答 0 \/ 4/);
+  const replaySid = await page.evaluate(() => state.session.sid);
+  await answer(true);
+  await back.click();
+  await replay.click();
+  assert.notEqual(await page.evaluate(() => state.session.sid), replaySid, "two replays have independent drafts");
+  assert.deepEqual(await roundIds(), fixture.ids);
+  await answer(false);
+  for (let i = 1; i < fixture.ids.length; i++) await answer(true);
+  assert.deepEqual(await roundIds(), [fixture.ids[0]]);
+  await answer(true);
+  await page.locator("#again").click();
+  await page.evaluate(() => guestWrites);
+  await page.reload();
+  await ready(page);
+  await openWrongBook();
+  await chapterDetails.click();
+  assert.equal(await page.locator("#chapter-review-run-title").textContent(), "第 4 次复练");
+  assert.deepEqual(await page.locator("#chapter-wrong-history li").allTextContents(),
+    ["原始错题 4 道", "第 1 轮后剩 1 道", "第 2 轮后剩 0 道"]);
+  const originalRun = page.locator("#chapter-review-previous details").nth(0);
+  await originalRun.locator("summary").click();
+  for (const [index, expected] of snapshots.entries()) {
+    await originalRun.locator("ol button").nth(index).click();
+    assert.deepEqual(await dialog.locator("[data-question-id]").evaluateAll((buttons) => buttons.map((button) => button.dataset.questionId)), expected);
+    await dialog.getByRole("button", { name: "返回", exact: true }).click();
+  }
+  const pausedRun = page.locator("#chapter-review-previous details").nth(2);
+  await pausedRun.locator("summary").click();
+  await pausedRun.getByRole("button", { name: "继续第 1 轮（1/4）" }).click();
+  assert.equal(await page.evaluate(() => state.session.sid), replaySid);
+  assert.equal(await page.evaluate(() => current().id), fixture.ids[1]);
+  for (let i = 1; i < fixture.ids.length; i++) await answer(true);
+  await page.locator("#again").click();
+
   await page.locator("#library-back").click();
   assert.equal(await chapter.getAttribute("data-passed"), "true");
   assert.equal(await startChapter.count(), 0);

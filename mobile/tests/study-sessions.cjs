@@ -37,7 +37,7 @@ function model() {
     hasAnswered: () => false,
   };
   const names = ["chapterForSession", "bankForSession", "isChapterPractice", "requiresAnswer", "canResumeSession",
-    "draftSnapshot", "rememberSession", "saveSession", "activateDraft", "matchingDraft", "chapterPracticeDraft",
+    "draftSnapshot", "rememberSession", "saveSession", "activateDraft", "matchingDrafts", "matchingDraft", "chapterPracticeDraft",
     "chapterRoundDraft", "chapterRoundInProgress", "startChapterTest", "start", "shuffled", "recordAnswer",
     "takingChapterTest", "testSelections", "submitChapterTest", "clearRoundAnswer", "applyQuestionRedos",
     "setAccountSwitching", "restoreGuestState", "receiveStudyState"];

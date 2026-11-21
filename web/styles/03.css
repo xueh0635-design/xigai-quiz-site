@@ -91,6 +91,21 @@
 #chapter-study-last-test { margin: 10px 0 0; text-align: center; color: var(--world-muted); font-size: .82rem; }
 
 .wrong-round-history { margin: 0 0 14px; }
+#chapter-review-run-title { margin: 0 0 8px; font-size: .92rem; }
+
+#chapter-review-previous { margin-block: 14px; }
+#chapter-review-previous details {
+  margin-block: 6px;
+  padding-inline: 12px;
+  border: 1px solid var(--world-edge);
+  border-radius: 10px;
+}
+#chapter-review-previous summary {
+  min-height: 44px;
+  padding-block: 10px;
+  cursor: pointer;
+}
+#chapter-review-previous details > button { margin-block-end: 12px; }
 
 .wrong-round-history ol {
   display: flex;

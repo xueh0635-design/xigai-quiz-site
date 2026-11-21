@@ -227,10 +227,14 @@ function activateDraft(draft) {
   saveSession(previous ? [previous] : []);
 }
 
-function matchingDraft(predicate) {
+function matchingDrafts(predicate) {
   const candidates = [state.session, ...Object.values(state.drafts || {})].filter((session) =>
     session && Array.isArray(session.ids) && predicate(session) && session.ids.every((id) => byId.has(id)));
-  return candidates.sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))[0];
+  return candidates.sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+}
+
+function matchingDraft(predicate) {
+  return matchingDrafts(predicate)[0];
 }
 
 function view(name) {
@@ -1191,9 +1195,15 @@ function renderImportedWrongBooks(visible) {
   }));
 }
 
-function wrongBookDraft(chapter, bank, wrongCount) {
-  const draft = matchingDraft((session) => session.wrongBookReview && bankForSession(session) === bank &&
+function wrongBookReviews(chapter, bank) {
+  const reviews = matchingDrafts((session) => session.wrongBookReview && bankForSession(session) === bank &&
     session.routePlan?.chapter === chapter);
+  const seen = new Set();
+  return reviews.filter(({ sid }) => !seen.has(sid) && seen.add(sid));
+}
+
+function wrongBookDraft(chapter, bank, wrongCount) {
+  const draft = wrongBookReviews(chapter, bank)[0];
   if (draft) return draft;
   // An older multi-question chapter review can continue as the first round.
   return matchingDraft((session) => session.routePlan?.kind === "review" && !session.routePlan.single &&
@@ -1283,8 +1293,10 @@ function wrongBookClearedAt(session, originalIds) {
   return cleared;
 }
 
-function startWrongBookRound(chapter, bank, ids, originalIds = ids, previous = null) {
+function startWrongBookRound(chapter, bank, ids, originalIds = ids, previous = null, { separate = false, changes = [] } = {}) {
+  const base = `wrong-book:${bank}:${chapter}`;
   start(ids, "practice", {
+    sid: previous?.sid || (separate ? `${base}:${randomId()}` : base),
     bankScope: bank,
     routePlan: { chapter, kind: "review" },
     wrongBookReview: true,
@@ -1292,12 +1304,17 @@ function startWrongBookRound(chapter, bank, ids, originalIds = ids, previous = n
     wrongBookOriginalIds: originalIds,
     wrongBookRoundCounts: wrongBookRoundCounts(previous),
     wrongBookClearedAt: wrongBookClearedAt(previous, originalIds),
-  });
+    wrongBookStartedAt: previous ? previous.wrongBookStartedAt : Date.now(),
+  }, 0, changes);
 }
 
 function startWrongBookReview(chapter, bank) {
   if (!chapterPools.has(chapter)) return;
   const { draft, originalIds, startIds } = chapterReviewPlan(chapterStudy(chapter, bank));
+  continueWrongBookReview(chapter, bank, draft, originalIds, startIds);
+}
+
+function continueWrongBookReview(chapter, bank, draft, originalIds, startIds = []) {
   if (draft && !wrongBookFinished(draft)) {
     if (!draft.wrongBookReview || (!draft.wrongBookOriginalIds && wrongBookRoundNumber(draft) === 1)) {
       activateDraft({ ...draft, wrongBookReview: true, wrongBookOriginalIds: originalIds });
@@ -1308,7 +1325,7 @@ function startWrongBookReview(chapter, bank) {
   }
   const remaining = draft ? wrongBookRemaining(draft) : [];
   if (remaining.length) startWrongBookRound(chapter, bank, remaining, originalIds, draft);
-  else startWrongBookRound(chapter, bank, startIds);
+  else startWrongBookRound(chapter, bank, startIds, startIds, null, { separate: Boolean(draft) });
 }
 
 function reviewNextRoundLabel(session, count) {
@@ -1374,6 +1391,61 @@ function renderWrongBookHistory(section, originalIds, draft) {
   }));
 }
 
+function renderChapterReviewHistory(plan, review) {
+  const { chapter, bank } = plan;
+  const { draft, originalIds } = review;
+  const history = $("chapter-wrong-history");
+  renderWrongBookHistory(history, originalIds, draft);
+
+  const runs = wrongBookReviews(chapter, bank).filter((run) => run.sid !== draft?.sid);
+  if (draft) runs.push(draft);
+  runs.sort((first, second) => (first.wrongBookStartedAt || 0) - (second.wrongBookStartedAt || 0)
+    || first.sid.localeCompare(second.sid));
+  // The earliest saved original set stays the source for explicit replays.
+  const replayIds = runs.map((run) => run.wrongBookOriginalIds || (wrongBookRoundNumber(run) === 1 ? run.ids : []))
+    .find((ids) => ids.length) || originalIds;
+  const restart = $("chapter-review-replay");
+  restart.hidden = !draft || !replayIds.length;
+  restart.onclick = restart.hidden ? null : () => {
+    if (accountSwitching) return;
+    const needsSnapshot = draft !== state.session && draft !== state.drafts?.[draft.sid];
+    const saved = needsSnapshot && rememberSession({ ...draft, wrongBookReview: true, wrongBookOriginalIds: originalIds });
+    startWrongBookRound(chapter, bank, replayIds, replayIds, null, { separate: true, changes: saved ? [saved] : [] });
+  };
+
+  const currentTitle = $("chapter-review-run-title");
+  currentTitle.hidden = runs.length <= 1;
+  if (draft) currentTitle.textContent = `第 ${runs.indexOf(draft) + 1} 次复练`;
+  const previous = $("chapter-review-previous");
+  const expanded = new Set([...previous.querySelectorAll("details[open]")].map((details) => details.dataset.sid));
+  previous.replaceChildren(...runs.flatMap((run, index) => {
+    if (run === draft) return [];
+    const title = `第 ${index + 1} 次复练`;
+    const ids = run.wrongBookOriginalIds || (wrongBookRoundNumber(run) === 1 ? run.ids : []);
+    const details = document.createElement("details");
+    details.dataset.sid = run.sid;
+    details.open = expanded.has(run.sid);
+    const summary = document.createElement("summary");
+    const pending = !wrongBookFinished(run) || wrongBookRemaining(run).length > 0;
+    summary.textContent = `${title} · ${pending ? "未完成" : "已完成"}`;
+    const rounds = document.createElement("section");
+    rounds.className = "wrong-round-history";
+    rounds.setAttribute("aria-label", title);
+    rounds.append(document.createElement("ol"));
+    renderWrongBookHistory(rounds, ids, run);
+    details.append(summary, rounds);
+    if (pending) {
+      const resume = document.createElement("button");
+      resume.type = "button";
+      resume.textContent = wrongBookReviewLabel({ draft: run, startIds: [] });
+      resume.onclick = () => continueWrongBookReview(chapter, bank, run, ids);
+      details.append(resume);
+    }
+    return [details];
+  }));
+  previous.hidden = runs.length <= 1;
+}
+
 function renderLibrary() {
   const scope = profileLibrary || selectedTab;
   const { title, empty } = libraryTabs[scope];
@@ -1393,6 +1465,8 @@ function renderLibrary() {
   $("wrong-continue").hidden = true;
   $("wrong-test").hidden = true;
   $("chapter-wrong-history").hidden = true;
+  $("chapter-review-previous").hidden = true;
+  $("chapter-review-replay").hidden = true;
   $("library-start").classList.add("primary");
   if (wrong && !plan) {
     for (const id of ["library-start", "library-configure", "library-swipe-hint", "library-removal", "library-more"]) $(id).hidden = true;
@@ -1432,7 +1506,7 @@ function renderLibrary() {
     startButton.disabled = false;
     startButton.textContent = label;
     startButton.onclick = () => startWrongBookReview(plan.chapter, plan.bank);
-    renderWrongBookHistory($("chapter-wrong-history"), review.originalIds, review.draft);
+    renderChapterReviewHistory(plan, review);
     renderChapterStudy(plan);
   } else {
     startButton.hidden = done;
@@ -1763,7 +1837,7 @@ function randomId() {
   return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join("-");
 }
 
-function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
+function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0, changes = []) {
   if (accountSwitching) return;
   const queue = mode === "chapter-test" ? ids.filter(requiresAnswer) : ids;
   if (!queue.length) return;
@@ -1774,12 +1848,12 @@ function start(ids, mode = $("mode").value, chapterOptions = {}, index = 0) {
       repeatChapter: chapterOptions.repeatChapter, reuseSharedHistory: chapterOptions.reuseSharedHistory,
       wrongBookReview: chapterOptions.wrongBookReview, wrongBookRound: chapterOptions.wrongBookRound,
       wrongBookOriginalIds: chapterOptions.wrongBookOriginalIds, wrongBookRoundCounts: chapterOptions.wrongBookRoundCounts,
-      wrongBookClearedAt: chapterOptions.wrongBookClearedAt } : chapterOptions;
+      wrongBookClearedAt: chapterOptions.wrongBookClearedAt, wrongBookStartedAt: chapterOptions.wrongBookStartedAt } : chapterOptions;
   const previous = rememberSession(state.session);
-  const sid = options.wrongBookReview ? `wrong-book:${chapterOptions.bankScope}:${options.routePlan.chapter}` : randomId();
-  state.session = { sid, ids: queue, mode, index, results: {}, selected: [], ...options,
+  const sid = chapterOptions.sid || randomId();
+  state.session = { ...options, sid, ids: queue, mode, index, results: {}, selected: [],
     chapterStudy: { tests: state.chapterTests || {} } };
-  showStartedQuestion(previous ? [previous] : []);
+  showStartedQuestion([...(previous ? [previous] : []), ...changes]);
 }
 
 function showStartedQuestion(changes = []) {
