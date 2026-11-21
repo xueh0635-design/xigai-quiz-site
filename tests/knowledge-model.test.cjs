@@ -113,6 +113,104 @@ test("shipping rules keep superficially similar public questions in their curric
   assert(model.conceptsForQuestion("第九章-50").includes("c33"), "legal-system components are represented");
 });
 
+test("reviewed content mappings take precedence over plausible keyword matches", () => {
+  const question = item("reviewed", "核心概念在题干中出现，但本题考查另一概念");
+  const fixture = { ...smallCatalog, questionMappings: [{ questionId: question.id,
+    questionFingerprint: questionFingerprint(question), conceptIds: ["other"] }] };
+  const model = create({ questions: [question], catalog: fixture });
+  assert.deepEqual(model.conceptsForQuestion(question.id), ["other"]);
+  const mapping = model.getQuestion(question.id).mapping;
+  assert.equal(mapping.status, "matched");
+  assert.equal(mapping.method, "editorial");
+  assert.deepEqual(mapping.evidence, [{ conceptId: "other", field: "editorial", terms: [], questionId: question.id }]);
+  const snapshot = model.snapshot({ historyEntry: () => ({ wrong: true }) });
+  assert.equal(snapshot.stats.mappedReviewQuestions, 1);
+  assert.equal(snapshot.stats.unmappedReviewQuestions, 0);
+  assert.deepEqual(snapshot.nodes.find((node) => node.id === "other").wrongIds, [question.id]);
+  assert.deepEqual(snapshot.nodes.find((node) => node.id === "core").questionIds, []);
+  snapshot.questions[0].mapping.evidence[0].terms.push("changed");
+  assert.deepEqual(model.snapshot().questions[0].mapping.evidence[0].terms, []);
+});
+
+test("reviewed mappings with changed wording, options, answers, or invalid metadata fall back to keyword evidence", () => {
+  const question = item("reviewed", "核心概念问题");
+  const mapping = { questionId: question.id, questionFingerprint: questionFingerprint(question), conceptIds: ["other"] };
+  const revisedQuestions = [
+    { ...question, stem: "修订后的核心概念问题" },
+    { ...question, options: { A: "正确", B: "修订选项" } },
+    { ...question, answer: ["B"] },
+  ];
+  for (const revised of revisedQuestions) {
+    const model = create({ questions: [revised], catalog: { ...smallCatalog, questionMappings: [mapping] } });
+    assert.deepEqual(model.conceptsForQuestion(revised.id), ["core"]);
+    assert.equal(model.getQuestion(revised.id).mapping.method, "keywords");
+    assert.equal(model.getQuestion(revised.id).mapping.evidence[0].field, "stem");
+  }
+  for (const invalid of [null, { ...mapping, questionFingerprint: undefined },
+    { ...mapping, conceptIds: [] }, { ...mapping, conceptIds: ["other", "missing"] }]) {
+    const model = create({ questions: [question], catalog: { ...smallCatalog, questionMappings: [invalid] } });
+    assert.deepEqual(model.conceptsForQuestion(question.id), ["core"]);
+    assert.equal(model.getQuestion(question.id).mapping.method, "keywords");
+  }
+});
+
+test("a reviewed alias applies to the canonical question once, using its own option-order fingerprint", () => {
+  const canonical = item("a", "核心概念问题", { A: "是", B: "否" }, ["A"], { source: "思政云" });
+  const alias = item("b", "核心概念问题", { A: "否", B: "是" }, ["B"], { source: "学习通" });
+  assert.notEqual(questionFingerprint(canonical), questionFingerprint(alias));
+  const aliasMapping = { questionId: alias.id, questionFingerprint: questionFingerprint(alias), conceptIds: ["other"] };
+  const fixture = { ...smallCatalog, questionMappings: [aliasMapping] };
+  const model = create({ questions: [canonical, alias], catalog: fixture });
+  assert.equal(model.getQuestion(alias.id).id, canonical.id);
+  assert.deepEqual(model.conceptsForQuestion(canonical.id), ["other"]);
+  assert.deepEqual(model.conceptsForQuestion(alias.id), ["other"]);
+  assert.equal(model.getQuestion(canonical.id).mapping.evidence[0].questionId, alias.id);
+  const history = { a: { wrong: true, last: 10 }, b: { wrong: false, review: true, last: 20 } };
+  const snapshot = model.snapshot({ historyEntry: (id) => history[id] });
+  assert.equal(snapshot.stats.totalQuestions, 1);
+  assert.equal(snapshot.stats.reviewQuestions, 1);
+  assert.equal(snapshot.stats.retainedQuestions, 1);
+  assert.equal(snapshot.stats.wrongQuestions, 0);
+  assert.deepEqual(snapshot.nodes.find((node) => node.id === "other").retainedIds, [canonical.id]);
+
+  const bothReviewed = create({ questions: [canonical, alias], catalog: { ...fixture,
+    questionMappings: [aliasMapping, { questionId: canonical.id,
+      questionFingerprint: questionFingerprint(canonical), conceptIds: ["core"] }] } });
+  assert.deepEqual(bothReviewed.conceptsForQuestion(alias.id), ["core"], "the canonical review takes precedence over an alias review");
+});
+
+test("shipping reviewed mappings remain valid public content metadata and preserve the reviewed concept assignments", () => {
+  const model = create({ questions, catalog });
+  const publicQuestions = new Map(questions.map((question) => [question.id, question]));
+  const concepts = new Set(catalog.concepts.map((concept) => concept.id));
+  const mappedIds = new Set();
+  assert(catalog.questionMappings.length > 0);
+  for (const mapping of catalog.questionMappings) {
+    assert.deepEqual(Object.keys(mapping).sort(), ["conceptIds", "questionFingerprint", "questionId"]);
+    assert(!mappedIds.has(mapping.questionId), `${mapping.questionId}: duplicate editorial mapping`);
+    mappedIds.add(mapping.questionId);
+    const source = publicQuestions.get(mapping.questionId);
+    assert(source, `${mapping.questionId}: public question must exist`);
+    assert.equal(mapping.questionFingerprint, questionFingerprint(source), `${mapping.questionId}: review the association after changing the question`);
+    assert(mapping.conceptIds.length > 0 && mapping.conceptIds.every((id) => concepts.has(id)));
+    assert.deepEqual(model.conceptsForQuestion(mapping.questionId), mapping.conceptIds);
+    assert.equal(model.getQuestion(mapping.questionId).mapping.method, "editorial");
+  }
+  assert.deepEqual(Object.keys(catalog).sort(), ["cautions", "concepts", "questionMappings", "relations", "sourceNote", "title", "version"]);
+  const personalFields = new Set(["selected", "hasSelection", "currentWrong", "manualReview", "missing", "extra",
+    "wrongCount", "retainedCount", "reliableWrongCount", "history", "historyRows", "wrongBook", "snapshot",
+    "accountId", "userId", "email", "password", "access_token", "refresh_token"]);
+  function inspect(value) {
+    if (!value || typeof value !== "object") return;
+    for (const [key, child] of Object.entries(value)) {
+      assert(!personalFields.has(key), `public knowledge catalog must not contain ${key}`);
+      inspect(child);
+    }
+  }
+  inspect(catalog);
+  assert.equal(model.snapshot().stats.reviewQuestions, 0, "editorial associations do not imply a learner's wrong answers");
+});
+
 test("editorial cautions stay visible and count in the wrong book, but cannot enter knowledge practice", () => {
   const first = item("a", "核心概念", { A: "是", B: "否" }, ["A"], { source: "思政云" });
   const alias = item("b", "核心概念", { A: "否", B: "是" }, ["B"], { source: "学习通" });

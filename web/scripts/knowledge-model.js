@@ -13,8 +13,8 @@
   const normalize = (text) => String(text || "").normalize("NFKC")
     .toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "").replace(/的/g, "");
 
-  // A small change detector, not a security hash. Editorial cautions must be
-  // rechecked when a question's wording/options/answer change in a later bank.
+  // A small change detector, not a security hash. Reviewed mappings and cautions
+  // must be rechecked when wording/options/answers change in a later bank.
   function questionFingerprint(item) {
     const text = JSON.stringify([item?.stem, item?.options, item?.answer]);
     let hash = 0x811c9dc5;
@@ -55,6 +55,18 @@
       distinctions: [...(concept.distinctions || [])], method: concept.method || "",
       kind: "concept", needsMapping: false,
     }]));
+    const reviewedById = new Map();
+    for (const mapping of Array.isArray(catalog.questionMappings) ? catalog.questionMappings : []) {
+      const question = sourceById.get(mapping?.questionId);
+      // A reviewed association belongs to exact public question content. Reject
+      // incomplete/stale entries instead of silently pinning a changed question.
+      if (!question || mapping.questionFingerprint !== questionFingerprint(question) ||
+          !Array.isArray(mapping.conceptIds) || !mapping.conceptIds.length ||
+          !mapping.conceptIds.every((id) => typeof id === "string" && conceptById.has(id))) continue;
+      if (!reviewedById.has(mapping.questionId)) reviewedById.set(mapping.questionId, {
+        questionId: mapping.questionId, conceptIds: [...new Set(mapping.conceptIds)],
+      });
+    }
     const rules = definitions.map((concept) => ({ id: concept.id, chapter: concept.chapter,
       chapters: new Set([concept.chapter, ...(concept.chapters || [])]),
       terms: [...new Set((concept.keywords || []).map(normalize).filter((term) => term.length >= 2))],
@@ -73,7 +85,10 @@
     const mappedQuestions = canonical.map(({ id, aliases, item, stemText, answerText }) => {
       const candidates = [];
       const chapter = item.chapter || "其他";
-      for (const rule of rules) {
+      // Prefer the canonical wording's review, or a reviewed alias whose own
+      // fingerprint is valid. The canonical group still counts as one question.
+      const reviewed = [id, ...aliases].map((alias) => reviewedById.get(alias)).find(Boolean);
+      for (const rule of reviewed ? [] : rules) {
         // The mixed supplement has no curriculum chapter. Elsewhere, cross-
         // chapter use is opt-in in the public catalog: a passing mention of
         // "reform" in an education question must not change its subject.
@@ -111,7 +126,7 @@
         best.matches.some((match) => match.field === "stem") &&
         candidate.matches.some((match) => !best.matches.some((other) => other.term === match.term))
       )) : [];
-      let conceptIds = selected.map((candidate) => candidate.id);
+      let conceptIds = reviewed ? [...reviewed.conceptIds] : selected.map((candidate) => candidate.id);
       if (!conceptIds.length) {
         const fallbackId = `chapter:${chapter}`;
         if (!conceptById.has(fallbackId)) conceptById.set(fallbackId, {
@@ -125,8 +140,11 @@
       }
       const caution = [id, ...aliases].map((alias) => cautionsById.get(alias)).find(Boolean) || null;
       const result = { id, aliases: [...aliases], chapter, type: item.type, stem: item.stem, caution,
-        conceptIds, mapping: { status: best ? "matched" : "chapter",
-          evidence: selected.flatMap((candidate) => ["stem", "answer"].flatMap((field) => {
+        conceptIds, mapping: { status: reviewed || best ? "matched" : "chapter",
+          method: reviewed ? "editorial" : best ? "keywords" : "chapter",
+          evidence: reviewed ? reviewed.conceptIds.map((conceptId) => ({
+            conceptId, field: "editorial", terms: [], questionId: reviewed.questionId,
+          })) : selected.flatMap((candidate) => ["stem", "answer"].flatMap((field) => {
             const terms = candidate.matches.filter((match) => match.field === field).map((match) => match.term);
             return terms.length ? [{ conceptId: candidate.id, terms, field }] : [];
           })) } };

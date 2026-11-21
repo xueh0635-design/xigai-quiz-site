@@ -161,9 +161,9 @@ test("concept practice uses the existing account store, clears answered wrongs a
   const fixture = await page.evaluate(async () => {
     const model = window.QuizKnowledgeModel.create({ questions: window.QuizData, catalog: window.QuizKnowledgeCatalog });
     const node = model.snapshot({ historyEntry, inWrongLibrary }).nodes.find((item) => item.kind === "concept" &&
-      item.questionIds.filter((id) => byId.get(id)?.type === "单选").length >= 2);
+      item.practiceIds.filter((id) => byId.get(id)?.type === "单选").length >= 2);
     if (!node) throw new Error("The catalog must contain a concept linking at least two single-choice questions.");
-    const ids = node.questionIds.filter((id) => byId.get(id)?.type === "单选").slice(0, 2);
+    const ids = node.practiceIds.filter((id) => byId.get(id)?.type === "单选").slice(0, 2);
     startChapterTest("导论", "all");
     choose(Object.keys(current().options)[0]);
     await guestWrites;
@@ -216,6 +216,80 @@ test("concept practice uses the existing account store, clears answered wrongs a
     return { sid: state.session.sid, selected: [...state.session.selected] };
   });
   assert.deepEqual(resumed, fixture.exam);
+  assert.deepEqual(errors, []);
+});
+
+test("knowledge retries stay within their concept and preserve a paused chapter wrong-book round", async (t) => {
+  const { page, errors } = await open(t);
+  const fixture = await page.evaluate(async () => {
+    const model = window.QuizKnowledgeModel.create({ questions: window.QuizData, catalog: window.QuizKnowledgeCatalog });
+    const eligible = (node) => node.practiceIds.filter((id) =>
+      byId.get(id)?.type === "单选" && byId.get(id)?.chapter === node.chapter);
+    const node = model.snapshot().nodes.find((item) => item.kind === "concept" && eligible(item).length >= 2);
+    if (!node) throw new Error("The catalog must link two practice-ready single-choice questions in one chapter.");
+    const ids = eligible(node).slice(0, 2);
+    await guestStore.commit(ids.map((id, index) =>
+      ["history", sharedQuestionId(id), { wrong: true, last: 10 + index, selected: [] }]));
+    await restoreGuestState();
+    document.getElementById("auto-advance-delay").value = "0";
+    startWrongBookReview(node.chapter, "all");
+    const wrongLetter = Object.keys(current().options).find((letter) => !current().answer.includes(letter));
+    choose(wrongLetter);
+    moveQuestion(1);
+    await guestWrites;
+    const round = state.session;
+    return { id: node.id, title: node.title, chapter: node.chapter, ids,
+      paused: { sid: round.sid, ids: [...round.ids], index: round.index,
+        results: structuredClone(round.results), wrongBookRound: round.wrongBookRound,
+        wrongBookOriginalIds: [...round.wrongBookOriginalIds] } };
+  });
+
+  await enterKnowledge(page);
+  await page.locator("#knowledge-search").fill(fixture.title);
+  await page.locator("#knowledge-list-toggle").click();
+  await page.locator(`#knowledge-list [data-knowledge-concept="${fixture.id}"]`).click();
+  await page.locator("#knowledge-practice").click();
+  const failedId = await page.evaluate(() => current().id);
+  for (let index = 0; index < fixture.ids.length; index++) {
+    const answerIndex = await page.evaluate((shouldFail) => {
+      const item = current();
+      return Object.keys(item.options).findIndex((letter) => shouldFail
+        ? !item.answer.includes(letter) : item.answer.includes(letter));
+    }, index === 0);
+    await page.locator("#options .option").nth(answerIndex).click();
+    await page.keyboard.press("ArrowRight");
+  }
+  assert.equal(await page.locator("#result").isVisible(), true,
+    "knowledge practice must finish normally instead of entering the chapter wrong-book auto-round loop");
+  assert.equal(await page.locator("#retry").isVisible(), true);
+  await page.locator("#retry").click();
+  const retry = await page.evaluate(() => ({ ids: [...state.session.ids],
+    knowledgePractice: state.session.knowledgePractice, knowledgeConcept: state.session.knowledgeConcept,
+    knowledgeTitle: state.session.knowledgeTitle, wrongBookReview: Boolean(state.session.wrongBookReview),
+    answered: Boolean(questionResult(state.session, current().id)) }));
+  assert.deepEqual(retry, { ids: [failedId], knowledgePractice: true,
+    knowledgeConcept: fixture.id, knowledgeTitle: fixture.title, wrongBookReview: false, answered: false },
+  "retry must retain its knowledge destination and start a fresh attempt on only the failed concept question");
+  assert.match(await page.locator("#back").textContent(), /知识/);
+  const correctIndex = await page.evaluate(() => Object.keys(current().options).indexOf(current().answer[0]));
+  await page.locator("#options .option").nth(correctIndex).click();
+  await page.keyboard.press("ArrowRight");
+  await page.locator("#again").click();
+  assert.equal(await page.locator("#knowledge").isVisible(), true);
+  await page.evaluate(() => guestWrites);
+  assert.deepEqual(await summary(page), { reviewIds: [], wrongIds: [] });
+
+  // The current wrong-book projection may change, but a chapter round keeps
+  // its own already graded answers and still resumes at its unanswered item.
+  const resumed = await page.evaluate((chapter) => {
+    startWrongBookReview(chapter, "all");
+    const round = state.session;
+    return { sid: round.sid, ids: [...round.ids], index: round.index,
+      results: structuredClone(round.results), wrongBookRound: round.wrongBookRound,
+      wrongBookOriginalIds: [...round.wrongBookOriginalIds] };
+  }, fixture.chapter);
+  assert.deepEqual(resumed, fixture.paused,
+    "answering knowledge questions must not overwrite the paused chapter round's identity, progress, or first-round results");
   assert.deepEqual(errors, []);
 });
 

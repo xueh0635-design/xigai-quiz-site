@@ -1,7 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "title": "习概知识线索",
-  "sourceNote": "依据应用题库及教材摘录整理。题目与知识点按题干、正确答案中的关键词关联；关联结果是复习线索，请结合原题出处核对。",
+  "sourceNote": "依据应用题库及教材摘录整理。题目优先采用已核对的知识点对应关系；其余题目按题干与正确答案中的关键词关联。题目内容更新后重新核对对应关系。",
   "concepts": [
     {
       "id": "a01",
@@ -4578,6 +4578,3235 @@
       "reason": "题干遗漏深化二字，解析又否认报告提出相关改革目标；需明确是在考原文准确性还是历史事实后再判定。",
       "sourceUrl": "https://www.moe.gov.cn/s78/A21/A21_ztzl/s6948/s6950/s6954/201211/t20121113_144438.html",
       "questionFingerprint": "9ab86ab9"
+    }
+  ],
+  "questionMappings": [
+    {
+      "questionId": "新增（必刷）-1",
+      "questionFingerprint": "8186b28e",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-2",
+      "questionFingerprint": "88130d25",
+      "conceptIds": [
+        "c28"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-4",
+      "questionFingerprint": "397bf96f",
+      "conceptIds": [
+        "a35"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-10",
+      "questionFingerprint": "61bba820",
+      "conceptIds": [
+        "c19"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-16",
+      "questionFingerprint": "817ccc58",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-17",
+      "questionFingerprint": "5287a908",
+      "conceptIds": [
+        "c29"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-18",
+      "questionFingerprint": "7a971e43",
+      "conceptIds": [
+        "a30"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-21",
+      "questionFingerprint": "b056e517",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-22",
+      "questionFingerprint": "a3d6c290",
+      "conceptIds": [
+        "c21"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-23",
+      "questionFingerprint": "fced6433",
+      "conceptIds": [
+        "a06"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-24",
+      "questionFingerprint": "5e9bee04",
+      "conceptIds": [
+        "c45"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-25",
+      "questionFingerprint": "76e5e171",
+      "conceptIds": [
+        "b24"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-26",
+      "questionFingerprint": "ec22254b",
+      "conceptIds": [
+        "a08"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-27",
+      "questionFingerprint": "bdb2124f",
+      "conceptIds": [
+        "a31"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-32",
+      "questionFingerprint": "874c3387",
+      "conceptIds": [
+        "a37"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-34",
+      "questionFingerprint": "3b41f0ea",
+      "conceptIds": [
+        "c45"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-38",
+      "questionFingerprint": "a2d142f8",
+      "conceptIds": [
+        "c19"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-40",
+      "questionFingerprint": "4acf3d15",
+      "conceptIds": [
+        "b32"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-42",
+      "questionFingerprint": "8e8117da",
+      "conceptIds": [
+        "b12"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-44",
+      "questionFingerprint": "ae25e7a9",
+      "conceptIds": [
+        "c20"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-45",
+      "questionFingerprint": "5263c1cd",
+      "conceptIds": [
+        "c43"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-46",
+      "questionFingerprint": "b3cc67cf",
+      "conceptIds": [
+        "b28"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-47",
+      "questionFingerprint": "e715cafc",
+      "conceptIds": [
+        "a10"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-49",
+      "questionFingerprint": "833b47d7",
+      "conceptIds": [
+        "c03"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-51",
+      "questionFingerprint": "aa30b3a5",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-54",
+      "questionFingerprint": "02b4fe02",
+      "conceptIds": [
+        "b04"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-55",
+      "questionFingerprint": "635acde1",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-57",
+      "questionFingerprint": "e928861f",
+      "conceptIds": [
+        "a03"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-58",
+      "questionFingerprint": "75207de3",
+      "conceptIds": [
+        "b33"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-60",
+      "questionFingerprint": "a4afa990",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-63",
+      "questionFingerprint": "4d8bb4fc",
+      "conceptIds": [
+        "c27"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-66",
+      "questionFingerprint": "3db5e81e",
+      "conceptIds": [
+        "a15"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-69",
+      "questionFingerprint": "ce32332b",
+      "conceptIds": [
+        "c44"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-70",
+      "questionFingerprint": "af357d82",
+      "conceptIds": [
+        "a06"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-71",
+      "questionFingerprint": "88fecc2a",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-73",
+      "questionFingerprint": "db091121",
+      "conceptIds": [
+        "b45"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-75",
+      "questionFingerprint": "fa841a1f",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-79",
+      "questionFingerprint": "a607f0c0",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-81",
+      "questionFingerprint": "ea530abf",
+      "conceptIds": [
+        "c42"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-82",
+      "questionFingerprint": "28e50e90",
+      "conceptIds": [
+        "a08"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-83",
+      "questionFingerprint": "85c1bdef",
+      "conceptIds": [
+        "a30"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-84",
+      "questionFingerprint": "bb3fc4b2",
+      "conceptIds": [
+        "a12"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-87",
+      "questionFingerprint": "2eccf5ae",
+      "conceptIds": [
+        "c26"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-89",
+      "questionFingerprint": "6d8860d1",
+      "conceptIds": [
+        "b26"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-91",
+      "questionFingerprint": "59673f42",
+      "conceptIds": [
+        "c41"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-93",
+      "questionFingerprint": "8d7dc400",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-94",
+      "questionFingerprint": "616d96c6",
+      "conceptIds": [
+        "c21"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-95",
+      "questionFingerprint": "ccf9ff53",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-98",
+      "questionFingerprint": "fb8c9795",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-100",
+      "questionFingerprint": "492e6c9e",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-103",
+      "questionFingerprint": "1175ddd2",
+      "conceptIds": [
+        "a16"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-118",
+      "questionFingerprint": "34ff6a06",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-123",
+      "questionFingerprint": "37e4b4a0",
+      "conceptIds": [
+        "c21"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-125",
+      "questionFingerprint": "9ab86ab9",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "新增（必刷）-126",
+      "questionFingerprint": "701948ef",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "导论-4",
+      "questionFingerprint": "3b09a670",
+      "conceptIds": [
+        "c24"
+      ]
+    },
+    {
+      "questionId": "导论-10",
+      "questionFingerprint": "960e05c8",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "导论-12",
+      "questionFingerprint": "3af943d1",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "导论-13",
+      "questionFingerprint": "127f6597",
+      "conceptIds": [
+        "c25"
+      ]
+    },
+    {
+      "questionId": "导论-16",
+      "questionFingerprint": "eabd658f",
+      "conceptIds": [
+        "c21"
+      ]
+    },
+    {
+      "questionId": "导论-18",
+      "questionFingerprint": "c85a25bc",
+      "conceptIds": [
+        "c20"
+      ]
+    },
+    {
+      "questionId": "导论-19",
+      "questionFingerprint": "0ba0b7da",
+      "conceptIds": [
+        "c22"
+      ]
+    },
+    {
+      "questionId": "导论-38",
+      "questionFingerprint": "d5b18daf",
+      "conceptIds": [
+        "c19"
+      ]
+    },
+    {
+      "questionId": "第一章-2",
+      "questionFingerprint": "cc6d9480",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "第一章-4",
+      "questionFingerprint": "d6f0f5a1",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "第一章-5",
+      "questionFingerprint": "9953ada8",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "第一章-6",
+      "questionFingerprint": "846a4b0c",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "第一章-14",
+      "questionFingerprint": "5d66e933",
+      "conceptIds": [
+        "a03"
+      ]
+    },
+    {
+      "questionId": "第一章-17",
+      "questionFingerprint": "13d0e568",
+      "conceptIds": [
+        "a02"
+      ]
+    },
+    {
+      "questionId": "第一章-18",
+      "questionFingerprint": "ea0b7242",
+      "conceptIds": [
+        "a02"
+      ]
+    },
+    {
+      "questionId": "第一章-19",
+      "questionFingerprint": "fc6982f6",
+      "conceptIds": [
+        "a03"
+      ]
+    },
+    {
+      "questionId": "第一章-22",
+      "questionFingerprint": "bf7c8984",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "第一章-24",
+      "questionFingerprint": "5a00c858",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "第一章-25",
+      "questionFingerprint": "53420f95",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "第一章-26",
+      "questionFingerprint": "ba033eb8",
+      "conceptIds": [
+        "a05"
+      ]
+    },
+    {
+      "questionId": "第一章-27",
+      "questionFingerprint": "6ab1db73",
+      "conceptIds": [
+        "a09"
+      ]
+    },
+    {
+      "questionId": "第一章-28",
+      "questionFingerprint": "78519106",
+      "conceptIds": [
+        "a09"
+      ]
+    },
+    {
+      "questionId": "第一章-30",
+      "questionFingerprint": "3c3efe21",
+      "conceptIds": [
+        "a07"
+      ]
+    },
+    {
+      "questionId": "第一章-31",
+      "questionFingerprint": "776020c8",
+      "conceptIds": [
+        "a07"
+      ]
+    },
+    {
+      "questionId": "第一章-32",
+      "questionFingerprint": "78abfeef",
+      "conceptIds": [
+        "a08"
+      ]
+    },
+    {
+      "questionId": "第一章-38",
+      "questionFingerprint": "3513caab",
+      "conceptIds": [
+        "a02"
+      ]
+    },
+    {
+      "questionId": "第一章-40",
+      "questionFingerprint": "3dca7c8d",
+      "conceptIds": [
+        "a05"
+      ]
+    },
+    {
+      "questionId": "第一章-42",
+      "questionFingerprint": "bc94447a",
+      "conceptIds": [
+        "a09"
+      ]
+    },
+    {
+      "questionId": "第一章-47",
+      "questionFingerprint": "c06e5666",
+      "conceptIds": [
+        "a08"
+      ]
+    },
+    {
+      "questionId": "第一章-56",
+      "questionFingerprint": "5dfd41e0",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "第一章-59",
+      "questionFingerprint": "db122309",
+      "conceptIds": [
+        "a05"
+      ]
+    },
+    {
+      "questionId": "第一章-61",
+      "questionFingerprint": "8f622bd1",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "第二章-4",
+      "questionFingerprint": "46841a4d",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "第二章-5",
+      "questionFingerprint": "676a7438",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "第二章-6",
+      "questionFingerprint": "ea5e5449",
+      "conceptIds": [
+        "b12"
+      ]
+    },
+    {
+      "questionId": "第二章-7",
+      "questionFingerprint": "7c70035a",
+      "conceptIds": [
+        "b12"
+      ]
+    },
+    {
+      "questionId": "第二章-9",
+      "questionFingerprint": "807929e9",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "第二章-10",
+      "questionFingerprint": "2041c338",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "第二章-12",
+      "questionFingerprint": "fcb1bbff",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "第二章-13",
+      "questionFingerprint": "80a1b26b",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "第二章-14",
+      "questionFingerprint": "5095cf88",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "第二章-16",
+      "questionFingerprint": "12177a86",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "第二章-23",
+      "questionFingerprint": "e029d93f",
+      "conceptIds": [
+        "b15"
+      ]
+    },
+    {
+      "questionId": "第二章-39",
+      "questionFingerprint": "3e8f6a8d",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "第二章-40",
+      "questionFingerprint": "82147fba",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "第二章-46",
+      "questionFingerprint": "82bc2e37",
+      "conceptIds": [
+        "b16"
+      ]
+    },
+    {
+      "questionId": "第二章-57",
+      "questionFingerprint": "8f3b780c",
+      "conceptIds": [
+        "b12"
+      ]
+    },
+    {
+      "questionId": "第二章-60",
+      "questionFingerprint": "0036937d",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "第二章-65",
+      "questionFingerprint": "dbdbe0a7",
+      "conceptIds": [
+        "b16"
+      ]
+    },
+    {
+      "questionId": "第三章-1",
+      "questionFingerprint": "42bec310",
+      "conceptIds": [
+        "a35"
+      ]
+    },
+    {
+      "questionId": "第三章-3",
+      "questionFingerprint": "77a28b82",
+      "conceptIds": [
+        "a35"
+      ]
+    },
+    {
+      "questionId": "第三章-4",
+      "questionFingerprint": "5e82af67",
+      "conceptIds": [
+        "a39"
+      ]
+    },
+    {
+      "questionId": "第三章-14",
+      "questionFingerprint": "a0efe419",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "第三章-18",
+      "questionFingerprint": "ad39d6dc",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "第三章-24",
+      "questionFingerprint": "64c74b08",
+      "conceptIds": [
+        "a38"
+      ]
+    },
+    {
+      "questionId": "第三章-34",
+      "questionFingerprint": "53f45d80",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "第四章-15",
+      "questionFingerprint": "4330a11a",
+      "conceptIds": [
+        "b43"
+      ]
+    },
+    {
+      "questionId": "第四章-16",
+      "questionFingerprint": "8377589d",
+      "conceptIds": [
+        "b43"
+      ]
+    },
+    {
+      "questionId": "第四章-21",
+      "questionFingerprint": "66565575",
+      "conceptIds": [
+        "b44"
+      ]
+    },
+    {
+      "questionId": "第四章-22",
+      "questionFingerprint": "eaf89900",
+      "conceptIds": [
+        "b45"
+      ]
+    },
+    {
+      "questionId": "第四章-35",
+      "questionFingerprint": "23dd3c89",
+      "conceptIds": [
+        "b44"
+      ]
+    },
+    {
+      "questionId": "第四章-46",
+      "questionFingerprint": "d161c26b",
+      "conceptIds": [
+        "b44"
+      ]
+    },
+    {
+      "questionId": "第五章-2",
+      "questionFingerprint": "1b48b763",
+      "conceptIds": [
+        "b24"
+      ]
+    },
+    {
+      "questionId": "第五章-3",
+      "questionFingerprint": "249f3588",
+      "conceptIds": [
+        "b24"
+      ]
+    },
+    {
+      "questionId": "第五章-12",
+      "questionFingerprint": "5ea1bdce",
+      "conceptIds": [
+        "b24"
+      ]
+    },
+    {
+      "questionId": "第五章-15",
+      "questionFingerprint": "7082abcb",
+      "conceptIds": [
+        "b25"
+      ]
+    },
+    {
+      "questionId": "第五章-18",
+      "questionFingerprint": "cc220af3",
+      "conceptIds": [
+        "b25"
+      ]
+    },
+    {
+      "questionId": "第五章-21",
+      "questionFingerprint": "d8689bfc",
+      "conceptIds": [
+        "b25"
+      ]
+    },
+    {
+      "questionId": "第五章-22",
+      "questionFingerprint": "5de09c7e",
+      "conceptIds": [
+        "b28"
+      ]
+    },
+    {
+      "questionId": "第五章-41",
+      "questionFingerprint": "028f94a7",
+      "conceptIds": [
+        "b27"
+      ]
+    },
+    {
+      "questionId": "第六章-1",
+      "questionFingerprint": "b0741838",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "第六章-3",
+      "questionFingerprint": "4db02b25",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "第六章-5",
+      "questionFingerprint": "e35df4bf",
+      "conceptIds": [
+        "a12"
+      ]
+    },
+    {
+      "questionId": "第六章-12",
+      "questionFingerprint": "ce001d0c",
+      "conceptIds": [
+        "a10"
+      ]
+    },
+    {
+      "questionId": "第六章-14",
+      "questionFingerprint": "b969af08",
+      "conceptIds": [
+        "a14"
+      ]
+    },
+    {
+      "questionId": "第六章-22",
+      "questionFingerprint": "8e9de4f8",
+      "conceptIds": [
+        "a15"
+      ]
+    },
+    {
+      "questionId": "第六章-24",
+      "questionFingerprint": "135df766",
+      "conceptIds": [
+        "a16"
+      ]
+    },
+    {
+      "questionId": "第六章-25",
+      "questionFingerprint": "036c3e54",
+      "conceptIds": [
+        "a16"
+      ]
+    },
+    {
+      "questionId": "第六章-26",
+      "questionFingerprint": "e4cd52f1",
+      "conceptIds": [
+        "a16"
+      ]
+    },
+    {
+      "questionId": "第六章-27",
+      "questionFingerprint": "ae54eb91",
+      "conceptIds": [
+        "a16"
+      ]
+    },
+    {
+      "questionId": "第六章-29",
+      "questionFingerprint": "f3c32eaa",
+      "conceptIds": [
+        "a17"
+      ]
+    },
+    {
+      "questionId": "第六章-32",
+      "questionFingerprint": "bb70ddca",
+      "conceptIds": [
+        "a15"
+      ]
+    },
+    {
+      "questionId": "第六章-37",
+      "questionFingerprint": "ad1cb0c6",
+      "conceptIds": [
+        "a10"
+      ]
+    },
+    {
+      "questionId": "第六章-39",
+      "questionFingerprint": "3678a798",
+      "conceptIds": [
+        "a10"
+      ]
+    },
+    {
+      "questionId": "第六章-40",
+      "questionFingerprint": "bba191e8",
+      "conceptIds": [
+        "a42"
+      ]
+    },
+    {
+      "questionId": "第六章-41",
+      "questionFingerprint": "9900ba31",
+      "conceptIds": [
+        "a13"
+      ]
+    },
+    {
+      "questionId": "第六章-44",
+      "questionFingerprint": "71c4e8e5",
+      "conceptIds": [
+        "a15"
+      ]
+    },
+    {
+      "questionId": "第六章-53",
+      "questionFingerprint": "277f99f7",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "第七章-3",
+      "questionFingerprint": "bb6a93a8",
+      "conceptIds": [
+        "c10"
+      ]
+    },
+    {
+      "questionId": "第七章-5",
+      "questionFingerprint": "ff8587f2",
+      "conceptIds": [
+        "c13"
+      ]
+    },
+    {
+      "questionId": "第七章-6",
+      "questionFingerprint": "c9cd2f90",
+      "conceptIds": [
+        "c14"
+      ]
+    },
+    {
+      "questionId": "第七章-7",
+      "questionFingerprint": "19894c88",
+      "conceptIds": [
+        "c14"
+      ]
+    },
+    {
+      "questionId": "第七章-10",
+      "questionFingerprint": "f35895ab",
+      "conceptIds": [
+        "c12"
+      ]
+    },
+    {
+      "questionId": "第七章-13",
+      "questionFingerprint": "2b08ed93",
+      "conceptIds": [
+        "c12"
+      ]
+    },
+    {
+      "questionId": "第七章-14",
+      "questionFingerprint": "460fdc31",
+      "conceptIds": [
+        "c12"
+      ]
+    },
+    {
+      "questionId": "第七章-16",
+      "questionFingerprint": "b0fbc654",
+      "conceptIds": [
+        "c10"
+      ]
+    },
+    {
+      "questionId": "第七章-19",
+      "questionFingerprint": "050b0319",
+      "conceptIds": [
+        "c11"
+      ]
+    },
+    {
+      "questionId": "第七章-22",
+      "questionFingerprint": "4c77d966",
+      "conceptIds": [
+        "c15"
+      ]
+    },
+    {
+      "questionId": "第七章-23",
+      "questionFingerprint": "0e972012",
+      "conceptIds": [
+        "c16"
+      ]
+    },
+    {
+      "questionId": "第七章-24",
+      "questionFingerprint": "6f1b05af",
+      "conceptIds": [
+        "c16"
+      ]
+    },
+    {
+      "questionId": "第七章-25",
+      "questionFingerprint": "267d26c8",
+      "conceptIds": [
+        "c13"
+      ]
+    },
+    {
+      "questionId": "第七章-26",
+      "questionFingerprint": "c0389370",
+      "conceptIds": [
+        "c13"
+      ]
+    },
+    {
+      "questionId": "第七章-30",
+      "questionFingerprint": "7a472604",
+      "conceptIds": [
+        "c17"
+      ]
+    },
+    {
+      "questionId": "第七章-31",
+      "questionFingerprint": "993dd835",
+      "conceptIds": [
+        "c17"
+      ]
+    },
+    {
+      "questionId": "第七章-43",
+      "questionFingerprint": "aee54b3b",
+      "conceptIds": [
+        "c12"
+      ]
+    },
+    {
+      "questionId": "第七章-47",
+      "questionFingerprint": "64b7873c",
+      "conceptIds": [
+        "c11"
+      ]
+    },
+    {
+      "questionId": "第八章-3",
+      "questionFingerprint": "cf87d7eb",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "第八章-11",
+      "questionFingerprint": "f1694cd1",
+      "conceptIds": [
+        "c03"
+      ]
+    },
+    {
+      "questionId": "第八章-13",
+      "questionFingerprint": "cfb983db",
+      "conceptIds": [
+        "c05"
+      ]
+    },
+    {
+      "questionId": "第八章-14",
+      "questionFingerprint": "76d02e74",
+      "conceptIds": [
+        "c05"
+      ]
+    },
+    {
+      "questionId": "第八章-15",
+      "questionFingerprint": "8c105582",
+      "conceptIds": [
+        "c06"
+      ]
+    },
+    {
+      "questionId": "第八章-17",
+      "questionFingerprint": "1ee9b4f3",
+      "conceptIds": [
+        "c07"
+      ]
+    },
+    {
+      "questionId": "第八章-19",
+      "questionFingerprint": "7e24151b",
+      "conceptIds": [
+        "c08"
+      ]
+    },
+    {
+      "questionId": "第八章-24",
+      "questionFingerprint": "acf138b0",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "第八章-28",
+      "questionFingerprint": "9ec5857e",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第八章-31",
+      "questionFingerprint": "0a8667db",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第八章-32",
+      "questionFingerprint": "ef56e414",
+      "conceptIds": [
+        "c06"
+      ]
+    },
+    {
+      "questionId": "第八章-37",
+      "questionFingerprint": "c5605551",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第八章-39",
+      "questionFingerprint": "4f0609ee",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "第八章-40",
+      "questionFingerprint": "ad939285",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "第八章-42",
+      "questionFingerprint": "1dbdabdb",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第八章-45",
+      "questionFingerprint": "4fe14722",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第八章-47",
+      "questionFingerprint": "b9f7daf9",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "第九章-3",
+      "questionFingerprint": "84274b1a",
+      "conceptIds": [
+        "c30"
+      ]
+    },
+    {
+      "questionId": "第九章-5",
+      "questionFingerprint": "9b977f26",
+      "conceptIds": [
+        "c32"
+      ]
+    },
+    {
+      "questionId": "第九章-8",
+      "questionFingerprint": "4880e3bb",
+      "conceptIds": [
+        "c30"
+      ]
+    },
+    {
+      "questionId": "第九章-9",
+      "questionFingerprint": "e8bcb70a",
+      "conceptIds": [
+        "c29"
+      ]
+    },
+    {
+      "questionId": "第九章-11",
+      "questionFingerprint": "f4d214bd",
+      "conceptIds": [
+        "c33"
+      ]
+    },
+    {
+      "questionId": "第九章-13",
+      "questionFingerprint": "9f286769",
+      "conceptIds": [
+        "c33"
+      ]
+    },
+    {
+      "questionId": "第九章-16",
+      "questionFingerprint": "52f591da",
+      "conceptIds": [
+        "c29"
+      ]
+    },
+    {
+      "questionId": "第九章-19",
+      "questionFingerprint": "3a3288ab",
+      "conceptIds": [
+        "c28"
+      ]
+    },
+    {
+      "questionId": "第九章-22",
+      "questionFingerprint": "8095f45e",
+      "conceptIds": [
+        "c32"
+      ]
+    },
+    {
+      "questionId": "第九章-23",
+      "questionFingerprint": "865aa4ce",
+      "conceptIds": [
+        "c34"
+      ]
+    },
+    {
+      "questionId": "第九章-27",
+      "questionFingerprint": "12cd1ead",
+      "conceptIds": [
+        "c30"
+      ]
+    },
+    {
+      "questionId": "第九章-48",
+      "questionFingerprint": "57b6ff48",
+      "conceptIds": [
+        "c31"
+      ]
+    },
+    {
+      "questionId": "第九章-54",
+      "questionFingerprint": "be5f7faa",
+      "conceptIds": [
+        "c32"
+      ]
+    },
+    {
+      "questionId": "第十章-13",
+      "questionFingerprint": "48e79adb",
+      "conceptIds": [
+        "a31"
+      ]
+    },
+    {
+      "questionId": "第十章-15",
+      "questionFingerprint": "fb19f08e",
+      "conceptIds": [
+        "a31"
+      ]
+    },
+    {
+      "questionId": "第十章-28",
+      "questionFingerprint": "b5602788",
+      "conceptIds": [
+        "a30"
+      ]
+    },
+    {
+      "questionId": "第十章-35",
+      "questionFingerprint": "e2b9d17f",
+      "conceptIds": [
+        "a32"
+      ]
+    },
+    {
+      "questionId": "第十章-38",
+      "questionFingerprint": "5d9a7e20",
+      "conceptIds": [
+        "a34"
+      ]
+    },
+    {
+      "questionId": "第十章-39",
+      "questionFingerprint": "9852779a",
+      "conceptIds": [
+        "a34"
+      ]
+    },
+    {
+      "questionId": "第十章-40",
+      "questionFingerprint": "56d0fae3",
+      "conceptIds": [
+        "a30"
+      ]
+    },
+    {
+      "questionId": "第十章-42",
+      "questionFingerprint": "0c6aa2ba",
+      "conceptIds": [
+        "a31"
+      ]
+    },
+    {
+      "questionId": "第十章-57",
+      "questionFingerprint": "7ffc7493",
+      "conceptIds": [
+        "a43"
+      ]
+    },
+    {
+      "questionId": "第十章-59",
+      "questionFingerprint": "e4fa1fa2",
+      "conceptIds": [
+        "a30"
+      ]
+    },
+    {
+      "questionId": "第十一章-1",
+      "questionFingerprint": "dabc999f",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "第十一章-4",
+      "questionFingerprint": "e3dade2b",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "第十一章-6",
+      "questionFingerprint": "1c566732",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "第十一章-8",
+      "questionFingerprint": "db3a6a79",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "第十一章-11",
+      "questionFingerprint": "2bca523c",
+      "conceptIds": [
+        "b03"
+      ]
+    },
+    {
+      "questionId": "第十一章-12",
+      "questionFingerprint": "72acf6e1",
+      "conceptIds": [
+        "b03"
+      ]
+    },
+    {
+      "questionId": "第十一章-14",
+      "questionFingerprint": "494e6840",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "第十一章-15",
+      "questionFingerprint": "7536651e",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "第十一章-20",
+      "questionFingerprint": "d6d51344",
+      "conceptIds": [
+        "b03"
+      ]
+    },
+    {
+      "questionId": "第十一章-21",
+      "questionFingerprint": "1f2cd542",
+      "conceptIds": [
+        "b03"
+      ]
+    },
+    {
+      "questionId": "第十一章-24",
+      "questionFingerprint": "8a6d951a",
+      "conceptIds": [
+        "b03"
+      ]
+    },
+    {
+      "questionId": "第十一章-26",
+      "questionFingerprint": "5749c659",
+      "conceptIds": [
+        "b10"
+      ]
+    },
+    {
+      "questionId": "第十一章-27",
+      "questionFingerprint": "b9db7f1f",
+      "conceptIds": [
+        "b05"
+      ]
+    },
+    {
+      "questionId": "第十一章-29",
+      "questionFingerprint": "9367d7a1",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "第十一章-32",
+      "questionFingerprint": "4d6764b1",
+      "conceptIds": [
+        "b07"
+      ]
+    },
+    {
+      "questionId": "第十一章-35",
+      "questionFingerprint": "fcf0ef84",
+      "conceptIds": [
+        "b07"
+      ]
+    },
+    {
+      "questionId": "第十一章-42",
+      "questionFingerprint": "084b7d02",
+      "conceptIds": [
+        "b05"
+      ]
+    },
+    {
+      "questionId": "第十一章-43",
+      "questionFingerprint": "b055e5bc",
+      "conceptIds": [
+        "b05"
+      ]
+    },
+    {
+      "questionId": "第十一章-48",
+      "questionFingerprint": "4fce016a",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "第十一章-49",
+      "questionFingerprint": "77a928bc",
+      "conceptIds": [
+        "b07"
+      ]
+    },
+    {
+      "questionId": "第十一章-50",
+      "questionFingerprint": "13289c62",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "第十一章-55",
+      "questionFingerprint": "44ebfb5d",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "第十一章-56",
+      "questionFingerprint": "ef177090",
+      "conceptIds": [
+        "b05"
+      ]
+    },
+    {
+      "questionId": "第十一章-57",
+      "questionFingerprint": "7c3b671f",
+      "conceptIds": [
+        "b45"
+      ]
+    },
+    {
+      "questionId": "第十二章-1",
+      "questionFingerprint": "18266614",
+      "conceptIds": [
+        "b17"
+      ]
+    },
+    {
+      "questionId": "第十二章-2",
+      "questionFingerprint": "45f54ecc",
+      "conceptIds": [
+        "b17"
+      ]
+    },
+    {
+      "questionId": "第十二章-6",
+      "questionFingerprint": "d14e6372",
+      "conceptIds": [
+        "b18"
+      ]
+    },
+    {
+      "questionId": "第十二章-7",
+      "questionFingerprint": "2770444e",
+      "conceptIds": [
+        "b18"
+      ]
+    },
+    {
+      "questionId": "第十二章-9",
+      "questionFingerprint": "2fd283ae",
+      "conceptIds": [
+        "b18"
+      ]
+    },
+    {
+      "questionId": "第十二章-10",
+      "questionFingerprint": "ead24929",
+      "conceptIds": [
+        "b23"
+      ]
+    },
+    {
+      "questionId": "第十二章-13",
+      "questionFingerprint": "4d88dc1d",
+      "conceptIds": [
+        "b23"
+      ]
+    },
+    {
+      "questionId": "第十二章-19",
+      "questionFingerprint": "faacd294",
+      "conceptIds": [
+        "b19"
+      ]
+    },
+    {
+      "questionId": "第十二章-20",
+      "questionFingerprint": "685a752c",
+      "conceptIds": [
+        "b19"
+      ]
+    },
+    {
+      "questionId": "第十二章-22",
+      "questionFingerprint": "8aaaf1b2",
+      "conceptIds": [
+        "b20"
+      ]
+    },
+    {
+      "questionId": "第十二章-27",
+      "questionFingerprint": "9a953833",
+      "conceptIds": [
+        "b21"
+      ]
+    },
+    {
+      "questionId": "第十二章-28",
+      "questionFingerprint": "685f4141",
+      "conceptIds": [
+        "b21"
+      ]
+    },
+    {
+      "questionId": "第十二章-33",
+      "questionFingerprint": "e6a66f1d",
+      "conceptIds": [
+        "b22"
+      ]
+    },
+    {
+      "questionId": "第十二章-43",
+      "questionFingerprint": "4e391488",
+      "conceptIds": [
+        "b19"
+      ]
+    },
+    {
+      "questionId": "第十二章-45",
+      "questionFingerprint": "4876f2bd",
+      "conceptIds": [
+        "b19"
+      ]
+    },
+    {
+      "questionId": "第十二章-58",
+      "questionFingerprint": "707e7ff9",
+      "conceptIds": [
+        "b23"
+      ]
+    },
+    {
+      "questionId": "第十二章-64",
+      "questionFingerprint": "8211800b",
+      "conceptIds": [
+        "b23"
+      ]
+    },
+    {
+      "questionId": "第十三章-1",
+      "questionFingerprint": "3f195652",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "第十三章-3",
+      "questionFingerprint": "a0a3eea7",
+      "conceptIds": [
+        "b40"
+      ]
+    },
+    {
+      "questionId": "第十三章-5",
+      "questionFingerprint": "7cd4e292",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "第十三章-7",
+      "questionFingerprint": "c2d68de3",
+      "conceptIds": [
+        "b42"
+      ]
+    },
+    {
+      "questionId": "第十四章-2",
+      "questionFingerprint": "4aabbc72",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "第十四章-3",
+      "questionFingerprint": "d1f1b7d1",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "第十四章-4",
+      "questionFingerprint": "c0d0047e",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "第十四章-10",
+      "questionFingerprint": "5cd62e88",
+      "conceptIds": [
+        "a26"
+      ]
+    },
+    {
+      "questionId": "第十四章-11",
+      "questionFingerprint": "f5d70ff1",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "第十四章-13",
+      "questionFingerprint": "83654704",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "第十四章-14",
+      "questionFingerprint": "4f6a7af8",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "第十四章-15",
+      "questionFingerprint": "94aeef7d",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "第十四章-18",
+      "questionFingerprint": "e7e37004",
+      "conceptIds": [
+        "a28"
+      ]
+    },
+    {
+      "questionId": "第十四章-24",
+      "questionFingerprint": "6e1097d4",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "第十四章-26",
+      "questionFingerprint": "db618a1f",
+      "conceptIds": [
+        "a26"
+      ]
+    },
+    {
+      "questionId": "第十四章-62",
+      "questionFingerprint": "e81628eb",
+      "conceptIds": [
+        "a29"
+      ]
+    },
+    {
+      "questionId": "第十四章-63",
+      "questionFingerprint": "5f0d389b",
+      "conceptIds": [
+        "a29"
+      ]
+    },
+    {
+      "questionId": "第十五章-1",
+      "questionFingerprint": "431ea716",
+      "conceptIds": [
+        "a21"
+      ]
+    },
+    {
+      "questionId": "第十五章-2",
+      "questionFingerprint": "7e380568",
+      "conceptIds": [
+        "a19"
+      ]
+    },
+    {
+      "questionId": "第十五章-3",
+      "questionFingerprint": "6bffa5c2",
+      "conceptIds": [
+        "a20"
+      ]
+    },
+    {
+      "questionId": "第十五章-4",
+      "questionFingerprint": "4a77849e",
+      "conceptIds": [
+        "a20"
+      ]
+    },
+    {
+      "questionId": "第十五章-5",
+      "questionFingerprint": "5a373cf0",
+      "conceptIds": [
+        "a20"
+      ]
+    },
+    {
+      "questionId": "第十五章-12",
+      "questionFingerprint": "0fceef33",
+      "conceptIds": [
+        "a21"
+      ]
+    },
+    {
+      "questionId": "第十五章-13",
+      "questionFingerprint": "2ccb653b",
+      "conceptIds": [
+        "a21"
+      ]
+    },
+    {
+      "questionId": "第十五章-16",
+      "questionFingerprint": "8d3aff5b",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "第十五章-17",
+      "questionFingerprint": "6e3f60f5",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "第十五章-18",
+      "questionFingerprint": "74256d60",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "第十五章-19",
+      "questionFingerprint": "09556033",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "第十五章-21",
+      "questionFingerprint": "1b053d9b",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "第十五章-23",
+      "questionFingerprint": "7b1d5fbb",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "第十五章-29",
+      "questionFingerprint": "e684db64",
+      "conceptIds": [
+        "a19"
+      ]
+    },
+    {
+      "questionId": "第十五章-36",
+      "questionFingerprint": "6f3b735e",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "第十五章-42",
+      "questionFingerprint": "22d21303",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "第十五章-46",
+      "questionFingerprint": "5f5b8c44",
+      "conceptIds": [
+        "a24"
+      ]
+    },
+    {
+      "questionId": "第十五章-57",
+      "questionFingerprint": "debf5eaf",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "第十六章-12",
+      "questionFingerprint": "637aa07b",
+      "conceptIds": [
+        "b34"
+      ]
+    },
+    {
+      "questionId": "第十六章-18",
+      "questionFingerprint": "7dea0992",
+      "conceptIds": [
+        "b36"
+      ]
+    },
+    {
+      "questionId": "第十六章-19",
+      "questionFingerprint": "cbe79dcb",
+      "conceptIds": [
+        "b37"
+      ]
+    },
+    {
+      "questionId": "第十七章-1",
+      "questionFingerprint": "23c64ac7",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "第十七章-2",
+      "questionFingerprint": "0dc2695c",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "第十七章-21",
+      "questionFingerprint": "938c564c",
+      "conceptIds": [
+        "c38"
+      ]
+    },
+    {
+      "questionId": "第十七章-26",
+      "questionFingerprint": "eea3fb0e",
+      "conceptIds": [
+        "c39"
+      ]
+    },
+    {
+      "questionId": "第十七章-28",
+      "questionFingerprint": "066a6835",
+      "conceptIds": [
+        "c40"
+      ]
+    },
+    {
+      "questionId": "第十七章-30",
+      "questionFingerprint": "24b14298",
+      "conceptIds": [
+        "c39"
+      ]
+    },
+    {
+      "questionId": "第十七章-36",
+      "questionFingerprint": "b999311b",
+      "conceptIds": [
+        "c40"
+      ]
+    },
+    {
+      "questionId": "第十七章-39",
+      "questionFingerprint": "33bb9381",
+      "conceptIds": [
+        "c27"
+      ]
+    },
+    {
+      "questionId": "第十七章-50",
+      "questionFingerprint": "61b10daa",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "第十七章-62",
+      "questionFingerprint": "7b9d0abe",
+      "conceptIds": [
+        "c39"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-单选-5",
+      "questionFingerprint": "2443d88c",
+      "conceptIds": [
+        "c24"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-单选-6",
+      "questionFingerprint": "2b87b91e",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-单选-7",
+      "questionFingerprint": "c5716518",
+      "conceptIds": [
+        "c22"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-单选-8",
+      "questionFingerprint": "09087f23",
+      "conceptIds": [
+        "c19"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-多选-4",
+      "questionFingerprint": "e386b2f9",
+      "conceptIds": [
+        "c24"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-多选-5",
+      "questionFingerprint": "36c9db00",
+      "conceptIds": [
+        "c21"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-多选-6",
+      "questionFingerprint": "e0c90deb",
+      "conceptIds": [
+        "c22"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-多选-7",
+      "questionFingerprint": "81ed5c94",
+      "conceptIds": [
+        "c26"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-判断-6",
+      "questionFingerprint": "71d1d21b",
+      "conceptIds": [
+        "c25"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-判断-9",
+      "questionFingerprint": "e24c63e0",
+      "conceptIds": [
+        "c27"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-判断-11",
+      "questionFingerprint": "96dd1b89",
+      "conceptIds": [
+        "c25"
+      ]
+    },
+    {
+      "questionId": "章节自测-导论-判断-12",
+      "questionFingerprint": "b10ce14c",
+      "conceptIds": [
+        "c23"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-1",
+      "questionFingerprint": "4ea7a7a8",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-8",
+      "questionFingerprint": "d4793610",
+      "conceptIds": [
+        "a06"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-10",
+      "questionFingerprint": "e2153263",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-11",
+      "questionFingerprint": "85a49842",
+      "conceptIds": [
+        "a05"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-15",
+      "questionFingerprint": "bfefc855",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-16",
+      "questionFingerprint": "7ccc7658",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-19",
+      "questionFingerprint": "e4c979be",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-单选-20",
+      "questionFingerprint": "74bb905f",
+      "conceptIds": [
+        "a01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-多选-2",
+      "questionFingerprint": "4e2f3fb3",
+      "conceptIds": [
+        "a41"
+      ]
+    },
+    {
+      "questionId": "章节自测-第一章-多选-3",
+      "questionFingerprint": "9b982ee2",
+      "conceptIds": [
+        "a04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-单选-4",
+      "questionFingerprint": "ab225641",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-单选-6",
+      "questionFingerprint": "b6dcf4c7",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-单选-7",
+      "questionFingerprint": "f71fa01f",
+      "conceptIds": [
+        "b15"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-单选-10",
+      "questionFingerprint": "0dbde784",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-1",
+      "questionFingerprint": "535d5ee2",
+      "conceptIds": [
+        "b13"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-2",
+      "questionFingerprint": "66595a28",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-5",
+      "questionFingerprint": "3c9df13c",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-6",
+      "questionFingerprint": "f4c7c8b0",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-8",
+      "questionFingerprint": "5e07a136",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-多选-9",
+      "questionFingerprint": "c3ff0b71",
+      "conceptIds": [
+        "b11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-判断-4",
+      "questionFingerprint": "8e6f96e9",
+      "conceptIds": [
+        "b12"
+      ]
+    },
+    {
+      "questionId": "章节自测-第二章-判断-5",
+      "questionFingerprint": "894afc2c",
+      "conceptIds": [
+        "b14"
+      ]
+    },
+    {
+      "questionId": "章节自测-第三章-单选-9",
+      "questionFingerprint": "5acb6abe",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "章节自测-第三章-多选-5",
+      "questionFingerprint": "a08a1e30",
+      "conceptIds": [
+        "a35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第三章-多选-6",
+      "questionFingerprint": "9c546d0b",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "章节自测-第三章-判断-5",
+      "questionFingerprint": "f5868134",
+      "conceptIds": [
+        "a36"
+      ]
+    },
+    {
+      "questionId": "章节自测-第四章-单选-3",
+      "questionFingerprint": "f5f03cec",
+      "conceptIds": [
+        "b43"
+      ]
+    },
+    {
+      "questionId": "章节自测-第四章-单选-7",
+      "questionFingerprint": "599686ac",
+      "conceptIds": [
+        "b44"
+      ]
+    },
+    {
+      "questionId": "章节自测-第四章-多选-2",
+      "questionFingerprint": "bb969b74",
+      "conceptIds": [
+        "b29"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-6",
+      "questionFingerprint": "07890c39",
+      "conceptIds": [
+        "b27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-8",
+      "questionFingerprint": "c7d976e6",
+      "conceptIds": [
+        "b28"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-10",
+      "questionFingerprint": "5076bd08",
+      "conceptIds": [
+        "b24"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-14",
+      "questionFingerprint": "9d1faa04",
+      "conceptIds": [
+        "b26"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-15",
+      "questionFingerprint": "c886e39f",
+      "conceptIds": [
+        "b27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-17",
+      "questionFingerprint": "35f75708",
+      "conceptIds": [
+        "b30"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-单选-18",
+      "questionFingerprint": "74812453",
+      "conceptIds": [
+        "b27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-多选-1",
+      "questionFingerprint": "2163f21d",
+      "conceptIds": [
+        "b29"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-多选-3",
+      "questionFingerprint": "e204e590",
+      "conceptIds": [
+        "b31"
+      ]
+    },
+    {
+      "questionId": "章节自测-第五章-多选-5",
+      "questionFingerprint": "f6548629",
+      "conceptIds": [
+        "b26"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-3",
+      "questionFingerprint": "d7b6a381",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-8",
+      "questionFingerprint": "9b818330",
+      "conceptIds": [
+        "a12"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-9",
+      "questionFingerprint": "1462562a",
+      "conceptIds": [
+        "a13"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-11",
+      "questionFingerprint": "9481625a",
+      "conceptIds": [
+        "a13"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-12",
+      "questionFingerprint": "e39e9e49",
+      "conceptIds": [
+        "a11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-单选-13",
+      "questionFingerprint": "3bc30db5",
+      "conceptIds": [
+        "a12"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-多选-1",
+      "questionFingerprint": "6f83d9f5",
+      "conceptIds": [
+        "a18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-多选-3",
+      "questionFingerprint": "3279ab5b",
+      "conceptIds": [
+        "a12"
+      ]
+    },
+    {
+      "questionId": "章节自测-第六章-多选-7",
+      "questionFingerprint": "1caaab14",
+      "conceptIds": [
+        "a17"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-单选-2",
+      "questionFingerprint": "d167dd25",
+      "conceptIds": [
+        "c15"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-单选-3",
+      "questionFingerprint": "6b3d012f",
+      "conceptIds": [
+        "c13"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-单选-4",
+      "questionFingerprint": "5b016d29",
+      "conceptIds": [
+        "c16"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-单选-8",
+      "questionFingerprint": "55a8dbb0",
+      "conceptIds": [
+        "c10"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-单选-9",
+      "questionFingerprint": "32f45235",
+      "conceptIds": [
+        "c13"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-1",
+      "questionFingerprint": "5f0704dd",
+      "conceptIds": [
+        "c18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-3",
+      "questionFingerprint": "02ca4368",
+      "conceptIds": [
+        "c16"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-7",
+      "questionFingerprint": "4581010f",
+      "conceptIds": [
+        "c10"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-10",
+      "questionFingerprint": "c0e9c8f7",
+      "conceptIds": [
+        "c17"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-11",
+      "questionFingerprint": "3ee3d085",
+      "conceptIds": [
+        "c16"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-12",
+      "questionFingerprint": "b1bc74ab",
+      "conceptIds": [
+        "c17"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-多选-14",
+      "questionFingerprint": "eae9aec6",
+      "conceptIds": [
+        "c15"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-判断-3",
+      "questionFingerprint": "c7027410",
+      "conceptIds": [
+        "c18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-判断-5",
+      "questionFingerprint": "716958c2",
+      "conceptIds": [
+        "c18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第七章-判断-8",
+      "questionFingerprint": "9f01d905",
+      "conceptIds": [
+        "c11"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-单选-3",
+      "questionFingerprint": "c0fb7150",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-单选-9",
+      "questionFingerprint": "3e6d9570",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-单选-10",
+      "questionFingerprint": "75da53b4",
+      "conceptIds": [
+        "c01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-单选-11",
+      "questionFingerprint": "86ac331a",
+      "conceptIds": [
+        "c03"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-单选-13",
+      "questionFingerprint": "6ec33106",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-1",
+      "questionFingerprint": "02161a7a",
+      "conceptIds": [
+        "c07"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-3",
+      "questionFingerprint": "a03eb6e5",
+      "conceptIds": [
+        "c08"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-4",
+      "questionFingerprint": "daf2ab1b",
+      "conceptIds": [
+        "c05"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-5",
+      "questionFingerprint": "4326f49a",
+      "conceptIds": [
+        "c03"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-6",
+      "questionFingerprint": "bfc02fec",
+      "conceptIds": [
+        "c09"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-多选-7",
+      "questionFingerprint": "7aa675b3",
+      "conceptIds": [
+        "c09"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-判断-4",
+      "questionFingerprint": "89049e97",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-判断-8",
+      "questionFingerprint": "b9f292f1",
+      "conceptIds": [
+        "c04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-判断-14",
+      "questionFingerprint": "c473d5cf",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第八章-判断-15",
+      "questionFingerprint": "99d91e00",
+      "conceptIds": [
+        "c02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-单选-7",
+      "questionFingerprint": "1cd6c64f",
+      "conceptIds": [
+        "c28"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-单选-8",
+      "questionFingerprint": "309788b9",
+      "conceptIds": [
+        "c29"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-单选-9",
+      "questionFingerprint": "bc20fb62",
+      "conceptIds": [
+        "c34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-单选-12",
+      "questionFingerprint": "c7575297",
+      "conceptIds": [
+        "c28"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-多选-1",
+      "questionFingerprint": "f837eb72",
+      "conceptIds": [
+        "c31"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-多选-6",
+      "questionFingerprint": "180a9819",
+      "conceptIds": [
+        "c33"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-多选-8",
+      "questionFingerprint": "da761f70",
+      "conceptIds": [
+        "c34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-多选-10",
+      "questionFingerprint": "f0167d07",
+      "conceptIds": [
+        "c31"
+      ]
+    },
+    {
+      "questionId": "章节自测-第九章-判断-1",
+      "questionFingerprint": "bdad1514",
+      "conceptIds": [
+        "c30"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十章-单选-11",
+      "questionFingerprint": "2142c78a",
+      "conceptIds": [
+        "a33"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十章-多选-3",
+      "questionFingerprint": "28538309",
+      "conceptIds": [
+        "a32"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十章-多选-5",
+      "questionFingerprint": "00f0fbe7",
+      "conceptIds": [
+        "a34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十章-多选-8",
+      "questionFingerprint": "ce9b4761",
+      "conceptIds": [
+        "a34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-单选-4",
+      "questionFingerprint": "1159494f",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-单选-6",
+      "questionFingerprint": "1efb7433",
+      "conceptIds": [
+        "b08"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-单选-7",
+      "questionFingerprint": "730e1e7e",
+      "conceptIds": [
+        "b04"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-单选-9",
+      "questionFingerprint": "842a8d6e",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-1",
+      "questionFingerprint": "9b5870d8",
+      "conceptIds": [
+        "b09"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-2",
+      "questionFingerprint": "7fc2c4fa",
+      "conceptIds": [
+        "b08"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-3",
+      "questionFingerprint": "27fbb01e",
+      "conceptIds": [
+        "b02"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-6",
+      "questionFingerprint": "d0c8ffb4",
+      "conceptIds": [
+        "b05"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-7",
+      "questionFingerprint": "4b52fb2c",
+      "conceptIds": [
+        "b01"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-8",
+      "questionFingerprint": "55630312",
+      "conceptIds": [
+        "b10"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-10",
+      "questionFingerprint": "b42d2fe8",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-多选-11",
+      "questionFingerprint": "d67ebeee",
+      "conceptIds": [
+        "b07"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-判断-6",
+      "questionFingerprint": "e0b8af14",
+      "conceptIds": [
+        "b06"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十一章-判断-9",
+      "questionFingerprint": "a8b79845",
+      "conceptIds": [
+        "b09"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-单选-3",
+      "questionFingerprint": "ab8b4bb7",
+      "conceptIds": [
+        "b18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-单选-5",
+      "questionFingerprint": "117ae54e",
+      "conceptIds": [
+        "b20"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-单选-6",
+      "questionFingerprint": "b6c1d2a8",
+      "conceptIds": [
+        "b20"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-1",
+      "questionFingerprint": "beb84679",
+      "conceptIds": [
+        "b17"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-2",
+      "questionFingerprint": "a394611d",
+      "conceptIds": [
+        "b18"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-4",
+      "questionFingerprint": "84fc03d4",
+      "conceptIds": [
+        "b21"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-6",
+      "questionFingerprint": "026f55a2",
+      "conceptIds": [
+        "b20"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-8",
+      "questionFingerprint": "5620a730",
+      "conceptIds": [
+        "b21"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十二章-多选-9",
+      "questionFingerprint": "a26da7b1",
+      "conceptIds": [
+        "b22"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-单选-3",
+      "questionFingerprint": "9d04b154",
+      "conceptIds": [
+        "b41"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-单选-5",
+      "questionFingerprint": "133097ec",
+      "conceptIds": [
+        "b39"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-单选-6",
+      "questionFingerprint": "322cff9c",
+      "conceptIds": [
+        "b39"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-多选-1",
+      "questionFingerprint": "5d80bade",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-多选-3",
+      "questionFingerprint": "6079ad5e",
+      "conceptIds": [
+        "b40"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-多选-4",
+      "questionFingerprint": "240898a9",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-多选-5",
+      "questionFingerprint": "1f523fd2",
+      "conceptIds": [
+        "b38"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-多选-6",
+      "questionFingerprint": "223a8152",
+      "conceptIds": [
+        "b41"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十三章-判断-4",
+      "questionFingerprint": "f5ec1d2a",
+      "conceptIds": [
+        "b42"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-1",
+      "questionFingerprint": "d761b47d",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-3",
+      "questionFingerprint": "c1b6b0e9",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-4",
+      "questionFingerprint": "ac4e1d5d",
+      "conceptIds": [
+        "a26"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-5",
+      "questionFingerprint": "06cf4bb3",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-6",
+      "questionFingerprint": "daa20634",
+      "conceptIds": [
+        "a28"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-多选-9",
+      "questionFingerprint": "90e86606",
+      "conceptIds": [
+        "a25"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十四章-判断-9",
+      "questionFingerprint": "d06a67c7",
+      "conceptIds": [
+        "a27"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-单选-9",
+      "questionFingerprint": "b85f64a6",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-单选-13",
+      "questionFingerprint": "78406380",
+      "conceptIds": [
+        "a21"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-多选-3",
+      "questionFingerprint": "304a9d7d",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-多选-4",
+      "questionFingerprint": "93c759e8",
+      "conceptIds": [
+        "a23"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-多选-6",
+      "questionFingerprint": "e8c919dd",
+      "conceptIds": [
+        "a19"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-多选-7",
+      "questionFingerprint": "a347c4a7",
+      "conceptIds": [
+        "a24"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-判断-6",
+      "questionFingerprint": "26a01d15",
+      "conceptIds": [
+        "a19"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十五章-判断-7",
+      "questionFingerprint": "2e997071",
+      "conceptIds": [
+        "a22"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-单选-3",
+      "questionFingerprint": "e4a2c3b3",
+      "conceptIds": [
+        "b34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-单选-5",
+      "questionFingerprint": "1e32b91d",
+      "conceptIds": [
+        "b33"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-单选-6",
+      "questionFingerprint": "3307892a",
+      "conceptIds": [
+        "b37"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-单选-8",
+      "questionFingerprint": "a00a4ed0",
+      "conceptIds": [
+        "b35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-单选-9",
+      "questionFingerprint": "a1119057",
+      "conceptIds": [
+        "b32"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-1",
+      "questionFingerprint": "e8a5927d",
+      "conceptIds": [
+        "b35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-4",
+      "questionFingerprint": "027b7617",
+      "conceptIds": [
+        "b33"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-6",
+      "questionFingerprint": "f3a1b3cd",
+      "conceptIds": [
+        "b34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-10",
+      "questionFingerprint": "52543114",
+      "conceptIds": [
+        "b35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-12",
+      "questionFingerprint": "aa29f470",
+      "conceptIds": [
+        "b34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十六章-多选-13",
+      "questionFingerprint": "56381dfd",
+      "conceptIds": [
+        "b34"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-1",
+      "questionFingerprint": "7c3aefce",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-10",
+      "questionFingerprint": "0edfcf53",
+      "conceptIds": [
+        "c36"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-11",
+      "questionFingerprint": "dfdf0ac7",
+      "conceptIds": [
+        "c38"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-14",
+      "questionFingerprint": "e99d0d7f",
+      "conceptIds": [
+        "c37"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-15",
+      "questionFingerprint": "7b916508",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-单选-18",
+      "questionFingerprint": "517bbd42",
+      "conceptIds": [
+        "c35"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-多选-2",
+      "questionFingerprint": "a4550c5c",
+      "conceptIds": [
+        "c37"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-多选-3",
+      "questionFingerprint": "039efb5c",
+      "conceptIds": [
+        "c36"
+      ]
+    },
+    {
+      "questionId": "章节自测-第十七章-多选-4",
+      "questionFingerprint": "e274d48f",
+      "conceptIds": [
+        "c40"
+      ]
+    },
+    {
+      "questionId": "章节自测-结语-多选-2",
+      "questionFingerprint": "57127197",
+      "conceptIds": [
+        "a40"
+      ]
     }
   ]
 }

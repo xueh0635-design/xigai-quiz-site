@@ -275,7 +275,8 @@
             row.append(element("small", "knowledge-question-caution", "内容待核对：" + metadata.caution.reason));
           }
           const evidence = metadata?.mapping?.evidence?.find((value) => value.conceptId === node.id);
-          if (evidence?.terms?.length) row.append(element("small", "", "关联线索：" + evidence.terms.join("、")));
+          if (evidence?.field === "editorial") row.append(element("small", "", "已整理的考点关联"));
+          else if (evidence?.terms?.length) row.append(element("small", "", "关联线索：" + evidence.terms.join("、")));
           return row;
         }));
         if (order.length > state.questionLimit) items.append(button("显示更多关联题", () => {
@@ -286,7 +287,7 @@
       disclosure.append(items);
       panel.append(disclosure, element("p", "knowledge-caption", node.needsMapping
         ? "这些题暂按章节归组，尚未提炼出足够准确的细分考点。请结合原题解析复习。"
-        : "考点关联依据题干与正确答案中的线索，用于安排复习。掌握程度仍需通过作答检验。"));
+        : "优先使用已整理的考点关联，其余题目依据题干与正确答案中的线索归类。复习后可用关联题检验。"));
     }
     function renderCards(nodes) {
       const parent = field("cards-view");

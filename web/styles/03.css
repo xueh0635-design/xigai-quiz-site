@@ -90,6 +90,34 @@
 .chapter-study-steps [data-status="passed"] strong { color: var(--world-good-ink); }
 #chapter-study-last-test { margin: 10px 0 0; text-align: center; color: var(--world-muted); font-size: .82rem; }
 
+.wrong-round-history { margin: 0 0 14px; }
+
+.wrong-round-history ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wrong-round-history button {
+  min-height: 44px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: .8rem;
+}
+
+#result[data-review-cleared="true"] .wrong-round-history li:last-child button {
+  background: var(--world-good);
+  color: var(--world-good-ink);
+}
+
+#wrong-round-questions h2 { margin: 0; font-size: 1.14rem; }
+#wrong-round-questions header { margin-block-end: 12px; }
+#wrong-round-questions header button { min-height: 44px; white-space: nowrap; }
+#wrong-round-questions-list { display: grid; gap: 8px; }
+
 #library:has(#chapter-study-status:not([hidden])) .library-actions button {
   min-height: 44px;
   padding-inline: 12px;
