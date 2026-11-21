@@ -152,7 +152,8 @@ jobs:
           xcrun simctl install "$PHONE" "$RUNNER_TEMP/xigai-ios/Build/Products/Debug-iphonesimulator/App.app"
           xcrun simctl launch "$PHONE" "$APP_ID"
           swiftc mobile/tests/verify-ios-smoke.swift -o "$RUNNER_TEMP/verify-ios"
-          for attempt in 1 2 3 4 5; do
+          # The native shell can render before WebKit finishes its first cold launch.
+          for attempt in {1..20}; do
             xcrun simctl io "$PHONE" screenshot "$RUNNER_TEMP/xigai-check/ios-practice.png"
             if "$RUNNER_TEMP/verify-ios" "$RUNNER_TEMP/xigai-check/ios-practice.png"; then exit 0; fi
             sleep 3
