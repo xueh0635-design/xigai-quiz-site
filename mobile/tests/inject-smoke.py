@@ -291,6 +291,35 @@ window.addEventListener("load", async () => {
     check(state.session.mode === "chapter-test" && state.session.ids.length > 0 &&
       state.session.ids.every((id) => byId.get(id).type !== "填空") &&
       field("answer-summary").hidden, "chapter tests only include graded question types");
+
+    // Move the native host, then exercise the callback used by a native tab tap.
+    // Earlier assertions leave a live quiz session, so this also verifies that
+    // question gestures stop while the knowledge graph is being explored.
+    const selectStudyTab = async (tab) => {
+      if (window.QuizNativeUI) {
+        await window.webkit.messageHandlers.quizNativeUI.postMessage({ kind: "tab", tab, animate: false });
+        window.QuizNativeUI.selectTab(tab, false);
+      }
+      else document.querySelector(`[data-study-tab="${tab}"]`).click();
+    };
+    await selectStudyTab("knowledge");
+    await until(() => !field("knowledge").hidden && text("knowledge-count"), "knowledge tab opens");
+    const graph = field("knowledge-canvas");
+    await until(() => graph.width > 0 && graph.height > 0 && graph.getBoundingClientRect().width > 0,
+      "knowledge graph has a visible canvas");
+    check(field("quiz").hidden && !canSwipeQuestion() &&
+      !document.documentElement.classList.contains("question-swipe-active"), "graph disables question swipes");
+    const retainedIndex = state.session.index;
+    swipe(1, graph);
+    check(state.session.index === retainedIndex && !field("knowledge").hidden,
+      "graph drag leaves the saved question in place");
+    await selectStudyTab("profile");
+    const starred = document.querySelector('[data-profile-library="starred"]');
+    check(!field("profile").hidden && starred, "collection remains available from profile");
+    starred.click();
+    check(!field("library").hidden && text("library-title").includes("收藏"), "profile opens collection");
+    await selectStudyTab("practice");
+    check(!field("setup").hidden && field("knowledge").hidden, "native tabs return to study route");
     report.textContent = "XIGAI PASS";
   } catch (error) {
     report.textContent = "XIGAI FAIL: " + error.message;
